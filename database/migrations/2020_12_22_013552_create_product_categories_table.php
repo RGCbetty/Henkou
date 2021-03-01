@@ -16,11 +16,14 @@ class CreateProductCategoriesTable extends Migration
     {
         Schema::create('product_categories', function (Blueprint $table) {
             $table->id();
+            $table->string('product_key', 20);
             $table->string('product_name', 50);
-            $table->integer('sequence_no');
             $table->string('department_id', 5);
             $table->string('section_id', 5);
             $table->string('team_id', 5);
+            $table->smallInteger("waku_sequence");
+            $table->smallInteger("jiku_sequence");
+            $table->string('house_type', 20);
             $table->timestamps();
             $table->string('updated_by', 15)->nullable();
             $table->unique(['department_id', 'section_id', 'team_id', 'id'], "sequence");

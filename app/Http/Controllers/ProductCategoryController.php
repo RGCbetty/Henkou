@@ -31,8 +31,7 @@ class ProductCategoryController extends Controller
         $product_category = DB::connection('sqlsrv')->select(DB::raw('SELECT * FROM M_ProductCategories'));
         try {
             foreach ($product_category as $data) {
-                $result = json_decode(json_encode($data), true);
-                Log::info($result);
+                // $result = json_decode(json_encode($data), true);
                 ProductCategory::create([
                     'id' => $data->ProductID,
                     'product_name' => $data->ProductName,

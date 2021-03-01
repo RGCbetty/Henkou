@@ -38,7 +38,7 @@ class PendingController extends Controller
         // function pending($item)
         // {
         //     return array(
-        //         'product_id' => $item['ProductCode'],
+        //         'product_key' => $item['ProductCode'],
         //         'status_id' => $item['id'],
         //         'rev_no' => $item['rev_no'],
         //         'start_date' => $item['start'],
@@ -47,11 +47,9 @@ class PendingController extends Controller
         //     );
         // }
         // $pendings = array();
-        info($request);
         for ($i = 0; $i < count($request->all()); $i++) {
-            info($request[$i]['id']);
             Pending::firstOrCreate(array(
-                'product_id' => $request[$i]['product_id'],
+                'product_key' => $request[$i]['product_key'],
                 'status_id' =>  $request[$i]['id'],
                 'rev_no' =>  $request[$i]['rev_no'],
                 'start_date' =>  $request[$i]['start'],
@@ -60,7 +58,7 @@ class PendingController extends Controller
                 'duration' => $request[$i]['duration']
             ));
             // array_push($pendings, array(
-            //     'product_id' => $request[$i]['product_id'],
+            //     'product_key' => $request[$i]['product_key'],
             //     'status_id' =>  $request[$i]['id'],
             //     'rev_no' =>  $request[$i]['rev_no'],
             //     'start_date' =>  $request[$i]['start'],
@@ -71,7 +69,6 @@ class PendingController extends Controller
         }
         // info($pendings);
         // Pending::firstOrCreate($pendings);
-        info(Pending::all());
     }
 
     /**

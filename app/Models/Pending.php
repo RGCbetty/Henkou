@@ -7,20 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pending extends Model
 {
-    use HasFactory;
-    protected $fillable = [
-        'product_id',
-        'status_id',
-        'rev_no',
-        'start_date',
-        'reason',
-        'resume_date',
-        'duration',
-        'created_at',
-        'updated_at'
-    ];
-    public function statuses()
-    {
-        return $this->belongsTo(Status::class);
-    }
+  use HasFactory;
+  protected $fillable = [
+    'product_key',
+    'status_id',
+    'rev_no',
+    'start_date',
+    'reason',
+    'resume_date',
+    'duration',
+    'created_at',
+    'updated_at'
+  ];
+  public function statuses()
+  {
+    return $this->belongsTo(Status::class);
+  }
 }

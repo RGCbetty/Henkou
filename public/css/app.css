@@ -28173,6 +28173,14 @@ div.ant-typography-edit-content.ant-typography-rtl {
   background-image: url(/images/henkou.svg?4b9bb50778cb0391d1d6a90eac395952);
 }
 
+#col_title .project_title {
+  height: 60px;
+  background-position: -50px;
+  background-repeat: no-repeat;
+  background-size: 350px 200px;
+  background-image: url("/images/HRD Henkou.svg?d372bf8a62a8eda71c670197c9d97190");
+}
+
 .site-layout-sub-header-background {
   background: #fff;
 }
@@ -28251,5 +28259,11 @@ div.ant-typography-edit-content.ant-typography-rtl {
 
 .ant-modal-body {
   padding: 12px;
+}
+
+@media only screen and (max-width: 600px), screen and (max-height: 300px) {
+  #col_title .project_title {
+    background-size: 300px 100px;
+  }
 }
 

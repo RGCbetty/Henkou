@@ -8,11 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class Status extends Model
 {
     use HasFactory;
-    public $timestamps = false;
     protected $fillable = [
         'log',
         'updated_by',
-        'product_id',
+        'product_key',
         'start_date',
         'finished_date',
         'received_date',

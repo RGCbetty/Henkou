@@ -15,6 +15,7 @@ class Detail extends Model
         'plan_specification',
         'house_code',
         'house_type',
+        'method',
         'logs',
         'th_no',
         'floors',

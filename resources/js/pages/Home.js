@@ -90,7 +90,7 @@ const Home = ({ title, ...rest }) => {
 };
 
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.user
+	userInfo: state.auth.userInfo
 });
 
 export default connect(mapStateToProps)(Home);

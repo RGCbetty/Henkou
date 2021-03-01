@@ -39,9 +39,11 @@ class AttachmentController extends Controller
      */
     public function store(Request $request, $id)
     {
-        $request->validate([
+        info($request->all());
+        info($request);
+        $this->validate($request, [
             'files' => 'required',
-            'files.*' => 'mimes:csv,txt,xlx,xls,pdf'
+            'files.*' => 'mimes:csv,ods,xls,xlsx,pdf,txt'
         ]);
         try {
             $henkou = Detail::find($id);
@@ -93,7 +95,7 @@ class AttachmentController extends Controller
     {
         //
         $attachments = Attachment::select()->where('detail_id', $id)->get();
-        return $attachments;
+        return json_encode($attachments);
     }
 
     /**

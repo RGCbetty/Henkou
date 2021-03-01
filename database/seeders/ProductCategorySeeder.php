@@ -17,28 +17,37 @@ class ProductCategorySeeder extends Seeder
      */
     public function run()
     {
-        //
-        $product_category = DB::connection('sqlsrv')->select(DB::raw('SELECT * FROM M_ProductCategories'));
         try {
-            foreach ($product_category as $data) {
-                $result = json_decode(json_encode($data), true);
-                Log::info($result);
-                ProductCategory::create([
-                    'id' => $data->ProductID,
-                    'product_name' => $data->ProductName,
-                    "sequence_no" =>  $data->ProductID,
-                    "department_id" => $data->DeptCode,
-                    "section_id" => $data->SectionCode,
-                    "team_id" => $data->TeamCode,
-                    // "department_name" => $data->DeptName,
-                    // "section_name" => $data->SectionName,
-                    // "team_name" => $data->TeamName,
-                    'created_at' => $data->CreatedDate,
-                    'updated_at' => null,
-                    "updated_by" => null,
-                ]);
-                // Log::info();
+            $product_category = DB::connection('sqlsrv')->select(DB::raw('SELECT * FROM product_categories'));
+            // foreach ($product_category as $data) {
+            //     ProductCategory::create([
+            //         'product_key' => $data->ProductID,
+            //         'product_name' => $data->ProductName,
+            //         "department_id" => $data->DepartmentCode,
+            //         "section_id" => $data->SectionCode,
+            //         "team_id" => $data->TeamCode,
+            //         "waku_sequence" => $data->SeqWaku,
+            //         "jiku_sequence" => $data->SeqJiku,
+            //         "house_type" => $data->HouseType,
+            //     ]);
+            //     // Log::info();
+            // }
+            $products = array();
+            for ($i = 0; $i < count($product_category); $i++) {
+                array_push($products, array(
+                    'product_key' => $product_category[$i]->ProductID,
+                    'product_name' => $product_category[$i]->ProductName,
+                    "department_id" => $product_category[$i]->DepartmentCode,
+                    "section_id" => $product_category[$i]->SectionCode,
+                    "team_id" => $product_category[$i]->TeamCode,
+                    "waku_sequence" => $product_category[$i]->SeqWaku,
+                    "jiku_sequence" => $product_category[$i]->SeqJiku,
+                    "house_type" => $product_category[$i]->HouseType,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ));
             }
+            ProductCategory::insert($products);
         } catch (Exception $e) {
             error_log($e);
         }

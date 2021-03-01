@@ -15,7 +15,6 @@ const LoginForm = (props) => {
 	const { from } = state || { from: { pathname: '/' } };
 	const { dispatch, isAuthenticated } = props;
 	if (isAuthenticated) {
-		console.log(from);
 		return <Redirect to={from} />;
 	}
 
@@ -36,9 +35,9 @@ const LoginForm = (props) => {
 
 	return (
 		<Row type="flex" justify="center" align="middle" style={{ minHeight: '100vh' }}>
-			<Col span={12}>
+			<Col xs={20} sm={16} md={9} lg={7} xl={6}>
 				<Spin spinning={loadingState}>
-					<Card style={{ textAlign: 'center', width: '50%', margin: 'auto' }}>
+					<Card style={{ textAlign: 'center', width: '100%', margin: 'auto' }}>
 						<Form
 							name="normal_login"
 							className="login-form"

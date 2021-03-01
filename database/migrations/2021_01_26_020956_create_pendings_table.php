@@ -15,12 +15,12 @@ class CreatePendingsTable extends Migration
     {
         Schema::create('pendings', function (Blueprint $table) {
             $table->id();
-            $table->string("product_id", 20);
+            $table->string("product_key", 20);
             $table->string('rev_no', 8);
             $table->timestamp('start_date')->nullable();
             $table->text("reason");
             $table->timestamp('resume_date')->nullable();
-            $table->integer("duration");
+            $table->string("duration", 15)->nullable();
             $table->timestamps();
         });
         Schema::table('pendings', function (Blueprint $table) {

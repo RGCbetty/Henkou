@@ -8,8 +8,8 @@ use App\Models\Detail;
 use App\Models\Invoice;
 use App\Models\Status;
 use Exception;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class HenkouController extends Controller
 {
@@ -42,6 +42,7 @@ class HenkouController extends Controller
     public function store(Request $request)
     {
         try {
+            info($request);
             // if ($request->details['logs'] && $request->details['reason_id'] && $request->details['type_id']) {
             if (Detail::where('customer_code', $request->details['customer_code'])->first()) {
                 $latest_revision = Detail::where('customer_code', $request->details['customer_code'])->max('rev_no');
@@ -52,6 +53,7 @@ class HenkouController extends Controller
                     'plan_specification' => $request->details['plan_specification'],
                     'house_code' => $request->details['house_code'],
                     'house_type' => $request->details['house_type'],
+                    'method' => $request->details['method'],
                     'logs' => $request->details['logs'],
                     'th_no' => $request->details['th_no'],
                     'floors' => $request->details['floors'],
@@ -82,8 +84,8 @@ class HenkouController extends Controller
                 $invoice->save();
                 $construction_schedule->save();
 
-                $invoice->refresh();
-                $construction_schedule->refresh();
+                // $invoice->refresh();
+                // $construction_schedule->refresh();
                 $detail = new Detail([
                     'customer_code' => $request->details['customer_code'],
                     'plan_no' => $request->details['plan_no'],
@@ -91,6 +93,7 @@ class HenkouController extends Controller
                     'plan_specification' => $request->details['plan_specification'],
                     'house_code' => $request->details['house_code'],
                     'house_type' => $request->details['house_type'],
+                    'method' => $request->details['method'],
                     'logs' => $request->details['logs'],
                     'th_no' => $request->details['th_no'],
                     'floors' => $request->details['floors'],
@@ -103,33 +106,27 @@ class HenkouController extends Controller
                 $detail->save();
             }
             $max_revision = Detail::where('customer_code', $request->details['customer_code'])->max('rev_no');
-            for ($i = 0; $i < count($request->planStatus); $i++) {
-                if ($i == 0) {
-                    date_default_timezone_set('Asia/Manila');
-                    $status = new Status([
-                        'log' => null,
-                        'updated_by' => $request->details['updated_by'],
-                        'product_id' => $request->planStatus[$i]['ProductCode'],
-                        'start_date' => null,
-                        'finished_date' => null,
-                        'received_date' => date('Y-m-d H:i:s', time()),
-                        'assessment_id' => null,
-                        'detail_id' => Detail::select('id')->where('customer_code', $request->details['customer_code'])->where('rev_no', $max_revision)->first()->id
-                    ]);
-                } else {
-                    $status = new Status([
-                        'log' => null,
-                        'updated_by' => $request->details['updated_by'],
-                        'product_id' => $request->planStatus[$i]['ProductCode'],
-                        'start_date' => null,
-                        'finished_date' => null,
-                        'received_date' => null,
-                        'assessment_id' => null,
-                        'detail_id' => Detail::select('id')->where('customer_code', $request->details['customer_code'])->where('rev_no', $max_revision)->first()->id
-                    ]);
-                }
-                $status->save();
+            $status = array();
+            for ($i = 0; $i < count($request->product); $i++) {
+                array_push($status, array(
+                    'log' => isset($request->product[$i]['remarks']) ? $request->product[$i]['remarks'] : null,
+                    'updated_by' => $request->details['updated_by'],
+                    'product_key' => $request->product[$i]['product_key'],
+                    'start_date' => isset($request->product[$i]['start_date']) ? $request->product[$i]['start_date'] : null,
+                    'finished_date' => isset($request->product[$i]['finished_date']) ? $request->product[$i]['finished_date'] : null,
+                    'received_date' => isset($request->product[$i]['received_date']) ? $request->product[$i]['received_date'] : null,
+                    'assessment_id' => null,
+                    'detail_id' => Detail::select('id')->where('customer_code', $request->details['customer_code'])->where('rev_no', $max_revision)->first()->id,
+                    'product_id' => $request->product[$i]['id'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ));
             }
+            Status::insert($status);
+
+            return response()->json([
+                'status_code' => 200,
+            ]);
             // }
         } catch (Exception $error) {
             Log::info($error);
@@ -170,23 +167,22 @@ class HenkouController extends Controller
     public function update(Request $request, $id)
     {
         if (count($request->all()) == 2) {
-
-            Status::where('detail_id', $id)->where('product_id', $request[0]['ProductCode'])
+            Status::where('detail_id', $id)->where('product_key', $request[0]['product_key'])
                 ->update([
                     'assessment_id' => $request[0]['assessment_id'],
                     'start_date' => $request[0]['start_date'],
-                    'finished_date' => $request[0]['finish_date'],
+                    'finished_date' => $request[0]['finished_date'],
                 ]);
-            Status::where('detail_id', $id)->where('product_id', $request[1]['ProductCode'])
+            Status::where('detail_id', $id)->where('product_key', $request[1]['product_key'])
                 ->update([
                     'received_date' => $request[1]['received_date']
                 ]);
         } else {
-            Status::where('detail_id', $id)->where('product_id', $request['products']['ProductCode'])
+            Status::where('detail_id', $id)->where('product_key', $request['products']['product_key'])
                 ->update([
                     'assessment_id' => $request['products']['assessment_id'],
                     'start_date' => $request['products']['start_date'],
-                    'finished_date' => $request['products']['finish_date'],
+                    'finished_date' => $request['products']['finished_date'],
                 ]);
         }
         return Status::where('detail_id', $id)->get();

@@ -5,7 +5,7 @@ import { EyeOutlined } from '@ant-design/icons';
 const headers = [
 	{
 		title: 'Sequence',
-		dataIndex: 'Sequence',
+		dataIndex: 'sequence',
 		key: '1',
 		width: 70,
 		align: 'center',
@@ -20,36 +20,36 @@ const headers = [
 		fixed: 'left'
 	},
 	{
-		title: 'Department',
-		width: 120,
-		dataIndex: 'Department',
+		title: 'Product / Process',
 		key: '3',
+		width: 300,
+		dataIndex: 'product_name',
 		align: 'center',
 		fixed: 'left'
+	},
+
+	{
+		title: 'Department',
+		width: 120,
+		dataIndex: 'department',
+		key: '4',
+		align: 'center'
 	},
 	{
 		title: 'Section',
 		width: 200,
-		dataIndex: 'Section',
-		key: '4',
-		align: 'center',
-		fixed: 'left'
+		dataIndex: 'section',
+		key: '5',
+		align: 'center'
 	},
 	{
 		title: 'Team',
 		width: 150,
-		dataIndex: 'Team',
-		key: '5',
-		align: 'center',
-		fixed: 'left'
-	},
-	{
-		title: 'Product / Process',
+		dataIndex: 'team',
 		key: '6',
-		width: 300,
-		dataIndex: 'ProductCategory',
 		align: 'center'
 	},
+
 	{
 		title: 'Start',
 		key: '7',
@@ -64,14 +64,14 @@ const headers = [
 		title: 'Pending',
 		key: '8',
 		width: 70,
-		dataIndex: 'houseType',
+		dataIndex: 'house_type',
 		align: 'center',
 		render: () => <Button type="primary" shape="circle" icon={<EyeOutlined />} />
 	},
 	{
 		title: 'Finish',
 		key: '9',
-		dataIndex: 'finish_date',
+		dataIndex: 'finished_date',
 		align: 'center',
 		width: 150,
 		render: (text, row, index) => (text ? <b>{text}</b> : <></>)
@@ -80,7 +80,7 @@ const headers = [
 		title: 'Days in Process',
 		key: '10',
 		width: 100,
-		dataIndex: 'Sequence',
+		dataIndex: 'sequence',
 		align: 'center'
 	}
 ];

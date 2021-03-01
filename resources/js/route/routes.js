@@ -5,6 +5,8 @@ import Registration from '../pages/Registration';
 import Search from '../pages/Search';
 import Stop from '../pages/Stop';
 import PageNotFound from '../pages/PageNotFound';
+import Loginv2 from '../pages/Loginv2';
+import SignUp from '../pages/Signup';
 
 const routes = [
 	{
@@ -20,14 +22,21 @@ const routes = [
 		auth: true,
 		title: 'Henkou - Home Page',
 		component: Home,
-		fallback: Login
+		fallback: Loginv2
+	},
+	{
+		path: '/signup',
+		exact: true,
+		auth: false,
+		title: 'Henkou - Sign Up',
+		component: SignUp
 	},
 	{
 		path: '/login',
 		exact: true,
 		auth: false,
 		title: 'Henkou - Login',
-		component: Login
+		component: Loginv2
 	},
 	{
 		path: '/registration',

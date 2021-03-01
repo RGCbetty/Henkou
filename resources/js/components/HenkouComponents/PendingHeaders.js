@@ -69,9 +69,10 @@ const PendingHeaders = (handleStatus, handleReasonInput) => [
 				<b>{text}</b>
 			) : (
 				<>
+					{console.log(row)}
 					<Button
 						type="primary"
-						disabled={!row.isItemStarted}
+						disabled={!row.start}
 						onClick={() => handleStatus(row, 'resume', true)}
 						shape="circle"
 						icon={<PauseCircleOutlined />}

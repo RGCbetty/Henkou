@@ -23,7 +23,8 @@ class CreateDetailsTable extends Migration
             $table->string('plan_specification', 50);
             $table->string('house_code', 15);
             $table->string('house_type', 30);
-            $table->text('logs');
+            $table->integer('method');
+            $table->text('logs')->nullable();
             $table->tinyInteger('th_no')->nullable();
             $table->tinyInteger("floors");
             $table->timestamps();

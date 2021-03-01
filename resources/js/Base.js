@@ -29,7 +29,6 @@ const Base = ({ children, dispatch, ...rest }) => {
 		{ title: 'Search', url: '/search', icon: <FileSearchOutlined /> },
 		{ title: 'Stop', url: '/stop', icon: <StopOutlined /> }
 	];
-
 	const menu = (
 		<Menu>
 			<Menu.Item key="0">
@@ -63,11 +62,23 @@ const Base = ({ children, dispatch, ...rest }) => {
 			>
 				<div className="logo" />
 				<Menu theme="dark" mode="inline" defaultSelectedKeys={[pathname]}>
-					{drawerItems.map((item) => (
-						<Menu.Item key={item.url} icon={item.icon}>
-							<Link to={item.url}>{item.title}</Link>
-						</Menu.Item>
-					))}
+					{drawerItems
+						.filter((item) => {
+							if (
+								rest.userInfo.SectionCode !== '465' &&
+								rest.userInfo.TeamCode !== '0133'
+							) {
+								if (item.title == 'Registration') {
+									return false;
+								}
+							}
+							return true;
+						})
+						.map((item) => (
+							<Menu.Item key={item.url} icon={item.icon}>
+								<Link to={item.url}>{item.title}</Link>
+							</Menu.Item>
+						))}
 				</Menu>
 			</Sider>
 			<Layout>
@@ -75,12 +86,13 @@ const Base = ({ children, dispatch, ...rest }) => {
 					className="site-layout-sub-header-background"
 					style={{ paddingLeft: 15, paddingRight: 15 }}>
 					<Row>
-						<Col span={8} style={{ textAlign: 'left' }}>
-							<Title level={3} style={{ margin: 0, marginTop: 15 }}>
+						<Col id="col_title" span={9} style={{ textAlign: 'left' }}>
+							<div className="project_title"></div>
+							{/* <Title level={3} style={{ margin: 0, marginTop: 15 }}>
 								HRD Henkou 1.0.0
-							</Title>
+							</Title> */}
 						</Col>
-						<Col span={16} style={{ textAlign: 'right' }}>
+						<Col span={15} style={{ textAlign: 'right' }}>
 							<Dropdown overlay={menu} trigger={['click']}>
 								<Button
 									shape="round"
@@ -111,7 +123,7 @@ const Base = ({ children, dispatch, ...rest }) => {
 };
 const mapStateToProps = (state) => ({
 	isAuthenticated: state.auth.isAuthenticated,
-	userInfo: state.auth.user[0]
+	userInfo: state.auth.userInfo
 });
 
 export default connect(mapStateToProps)(React.memo(Base));

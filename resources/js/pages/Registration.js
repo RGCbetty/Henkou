@@ -1,8 +1,8 @@
 /* Utilities */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useLayoutEffect, useRef } from 'react';
 import Http from '../Http';
 import { connect } from 'react-redux';
-import Moment from 'moment';
+import moment from 'moment';
 import { isObject, toInteger } from 'lodash';
 
 /* Component */
@@ -13,33 +13,63 @@ import { headers } from '../components/RegistrationComponents/THPlansHeader';
 
 /* Material Design */
 import { Modal } from 'antd';
-import { Select, notification } from 'antd';
+import { notification } from 'antd';
 
 /* API */
-import { useThPlansRetriever, fetchThPlans } from '../api/TH';
+import { useThPlansRetriever, fetchThPlans, useTempThRetriever } from '../api/TH';
 import { useActivePlanStatus } from '../api/planstatus';
 import { fetchDetails } from '../api/details';
-import { useMasterDetails } from '../api/master';
+import { useMasterDetails, useMasterCompany } from '../api/master';
+import { useProductsRetriever } from '../api/products';
 
 const Registration = ({ title, ...rest }) => {
-	const [info, setInfo] = useMasterDetails();
-	const [tableTH, setTable] = useThPlansRetriever();
-	const [productCategoriesPCMS, setProductCategoriesPCMS] = useActivePlanStatus();
-	const [assignedProductCategoriesPCMS, setPlanDetail] = useState([]);
-	const [userProductCategoriesPCMS, setUserProducts] = useState([]);
-	const [subProductPCMS, setSubProduct] = useState(false);
-	const [henkouStatus, setStatus] = useState([]);
-	const { Option } = Select;
-	const { plans, pagination, loading } = tableTH;
 	const { userInfo } = rest;
 	useEffect(() => {
 		document.title = title || '';
 	}, [title]);
-
+	const [info, setInfo] = useMasterDetails();
+	const [company, setCompany] = useMasterCompany();
+	const [tableTH, setTable] = useThPlansRetriever(userInfo);
+	const [tempTh, setTempTh] = useTempThRetriever();
+	const [product, setProduct] = useProductsRetriever();
+	const [henkouStatus, setStatus] = useState([]);
 	const [isModalVisible, setIsModalVisible] = useState({
 		modal: false,
 		foundsList: []
 	});
+	const [details, setDetails] = useState({
+		customer_code: '',
+		house_code: '',
+		house_type: '',
+		method: '',
+		plan_no: '',
+		floors: '',
+		plan_specification: '',
+		joutou_date: '',
+		days_before_joutou: '',
+		kiso_start: '',
+		before_kiso_start: '',
+		dodai_invoice: '',
+		['1F_panel_invoice']: '',
+		['1F_hari_invoice']: '',
+		['1F_iq_invoice']: '',
+		rev_no: '',
+		type_id: '',
+		reason_id: '',
+		logs: '',
+		department_id: '',
+		section_id: '',
+		team_id: '',
+		updated_by: ''
+	});
+	const firstUpdate = useRef(true);
+	useLayoutEffect(() => {
+		if (!firstUpdate.current) {
+			firstUpdate.current = false;
+			console.log(details);
+		}
+	}, [details]);
+	const { plans, pagination, loading } = tableTH;
 
 	// const showModal = () => {
 	//     setIsModalVisible(true);
@@ -57,11 +87,14 @@ const Registration = ({ title, ...rest }) => {
 			e.preventDefault();
 			const instance = Http.create({
 				baseURL: 'http://hrdapps36:3100/',
-				withCredentials: false
+				withCredentials: false,
+				headers: {
+					'master-api': 'db588403f0a1d3b897442a28724166b4'
+				}
 			});
 			const { ConstructionCode, RequestAcceptedDate } = record;
 			const response = await instance.get(
-				`http://hrdapps36:3100/nodexjloc?searchDate=${Moment(RequestAcceptedDate).format(
+				`http://hrdapps36:3100/nodexjloc?searchDate=${moment(RequestAcceptedDate).format(
 					'YYYY-MM-DD'
 				)}&constructionCode=${ConstructionCode}&henkoutype=Japan`
 			);
@@ -88,10 +121,119 @@ const Registration = ({ title, ...rest }) => {
 		try {
 			const response = await fetchThPlans(setTable, page);
 			const { henkouPlans, pagination, total } = await response;
+			const THplans = henkouPlans.map((item, index) => {
+				return {
+					...item,
+					remarks: tempTh.find(
+						(el) =>
+							el.customer_code == item.ConstructionCode &&
+							el.plan_no == item.PlanNo &&
+							el.th_no == item.RequestNo
+					)
+						? tempTh.find(
+								(el) =>
+									el.customer_code == item.ConstructionCode &&
+									el.plan_no == item.PlanNo &&
+									el.th_no == item.RequestNo
+						  ).remarks
+						: null,
+					th_assessment_id: tempTh.find(
+						(el) =>
+							el.customer_code == item.ConstructionCode &&
+							el.plan_no == item.PlanNo &&
+							el.th_no == item.RequestNo
+					)
+						? tempTh.find(
+								(el) =>
+									el.customer_code == item.ConstructionCode &&
+									el.plan_no == item.PlanNo &&
+									el.th_no == item.RequestNo
+						  ).th_assessment_id
+						: null,
+					reason_id: tempTh.find(
+						(el) =>
+							el.customer_code == item.ConstructionCode &&
+							el.plan_no == item.PlanNo &&
+							el.th_no == item.RequestNo
+					)
+						? tempTh.find(
+								(el) =>
+									el.customer_code == item.ConstructionCode &&
+									el.plan_no == item.PlanNo &&
+									el.th_no == item.RequestNo
+						  ).reason_id
+						: null,
+					th_action_id: tempTh.find(
+						(el) =>
+							el.customer_code == item.ConstructionCode &&
+							el.plan_no == item.PlanNo &&
+							el.th_no == item.RequestNo
+					)
+						? tempTh.find(
+								(el) =>
+									el.customer_code == item.ConstructionCode &&
+									el.plan_no == item.PlanNo &&
+									el.th_no == item.RequestNo
+						  ).th_action_id
+						: null,
+					start_date: tempTh.find(
+						(el) =>
+							el.customer_code == item.ConstructionCode &&
+							el.plan_no == item.PlanNo &&
+							el.th_no == item.RequestNo
+					)
+						? tempTh.find(
+								(el) =>
+									el.customer_code == item.ConstructionCode &&
+									el.plan_no == item.PlanNo &&
+									el.th_no == item.RequestNo
+						  ).start_date
+						: null,
+					finished_date: tempTh.find(
+						(el) =>
+							el.customer_code == item.ConstructionCode &&
+							el.plan_no == item.PlanNo &&
+							el.th_no == item.RequestNo
+					)
+						? tempTh.find(
+								(el) =>
+									el.customer_code == item.ConstructionCode &&
+									el.plan_no == item.PlanNo &&
+									el.th_no == item.RequestNo
+						  ).finished_date
+						: null,
+					pending_start_date: tempTh.find(
+						(el) =>
+							el.customer_code == item.ConstructionCode &&
+							el.plan_no == item.PlanNo &&
+							el.th_no == item.RequestNo
+					)
+						? tempTh.find(
+								(el) =>
+									el.customer_code == item.ConstructionCode &&
+									el.plan_no == item.PlanNo &&
+									el.th_no == item.RequestNo
+						  ).pending_start_date
+						: null,
+					pending_resume_date: tempTh.find(
+						(el) =>
+							el.customer_code == item.ConstructionCode &&
+							el.plan_no == item.PlanNo &&
+							el.th_no == item.RequestNo
+					)
+						? tempTh.find(
+								(el) =>
+									el.customer_code == item.ConstructionCode &&
+									el.plan_no == item.PlanNo &&
+									el.th_no == item.RequestNo
+						  ).pending_resume_date
+						: null
+				};
+			});
 			if (mounted)
 				setTable({
 					loading: false,
-					plans: henkouPlans,
+					plans: THplans,
 					pagination: {
 						...pagination,
 						total: total,
@@ -104,30 +246,7 @@ const Registration = ({ title, ...rest }) => {
 			if (e) mounted = false;
 		}
 	};
-	const [details, setDetails] = useState({
-		customer_code: '',
-		house_code: '',
-		house_type: '',
-		plan_no: '',
-		floors: '',
-		plan_specification: '',
-		joutou_date: '',
-		days_before_joutou: '',
-		kiso_start: '',
-		before_kiso_start: '',
-		dodai_invoice: '',
-		['1F_panel_invoice']: '',
-		['1F_hari_invoice']: '',
-		['1F_iq_invoice']: '',
-		rev_no: '',
-		type_id: '',
-		reason_id: '',
-		logs: '',
-		department_id: '',
-		section_id: '',
-		team_id: '',
-		updated_by: ''
-	});
+
 	const handleOnChange = async (value, keys = null) => {
 		if (!keys) {
 			const e = value;
@@ -148,195 +267,273 @@ const Registration = ({ title, ...rest }) => {
 			message: 'Successfully Saved!'
 		});
 	};
-	const handleRegister = async (details) => {
-		const response = await Http.post('/api/details', {
-			details,
-			planStatus: assignedProductCategoriesPCMS
-		});
-
-		if (response.status == 200) {
-			openNotificationWithIcon('success');
-		}
-	};
-
-	const handleSpecs = async (constructionCode) => {
-		const response = await Http.get(`/api/plandetails/${constructionCode}`);
-		const responseRev = await Http.get(`/api/details/${constructionCode}`);
-
-		const instance = Http.create({
-			baseURL: 'http://hrdapps71:4900/',
-			withCredentials: false
-		});
-		/* PCMS */
-		let checkedPlanDetails = {};
-		let email = null;
-		let tempStat = '';
-		let arr = [];
-		let temp = {};
-		let planDetails = [];
-		let pending = '';
-		const responseCheckPlans = await instance.get(`get/checkPlan/${constructionCode}`);
-		if (responseCheckPlans.data[0].EmailedDate) {
-			email = responseCheckPlans.data[0].EmailedDate;
-		}
-		checkedPlanDetails = {
-			KakouIraiRequest: responseCheckPlans.data[0].KakouIraiRequest,
-			HouseTypeCode: responseCheckPlans.data[0].HouseTypeCode,
-			HouseClass: responseCheckPlans.data[0].HouseClass,
-			EmailedDate: email,
-			JoutouDate: responseCheckPlans.data[0].JoutouDate,
-			ShiageDelivery: responseCheckPlans.data[0].ShiageDelivery,
-			KisoStart: responseCheckPlans.data[0].KisoStart
-		};
-		const responsePlanStatus = await instance.get(`get/viewPlanStatus/${constructionCode}`);
-		for (let i = 0; i < productCategoriesPCMS.length; i++) {
-			if (
-				checkedPlanDetails.HouseClass == productCategoriesPCMS[i].HouseType ||
-				productCategoriesPCMS[i].HouseType == 'Both'
-			) {
-				let rems = false;
+	const handleRegister = async (details, row = null) => {
+		// const products = product.map((item, index) => {
+		// 	if (
+		// 		rest.userInfo.DepartmentCode == item.department_id &&
+		// 		rest.userInfo.SectionCode == item.section_id &&
+		// 		rest.userInfo.TeamCode == item.team_id
+		// 	) {
+		// 		return {
+		// 			...item,
+		// 			remarks: row.remarks,
+		// 			received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
+		// 			finished_date: row.finished_date,
+		// 			start_date: row.start_date,
+		// 			finished_date: row.finished_date
+		// 		};
+		// 	}
+		// 	return item;
+		// });
+		if (details.method == '2') {
+			const owner = product.filter((item, index) => {
 				if (
-					_.includes(
-						_.map(responsePlanStatus.data, 'Product'),
-						productCategoriesPCMS[i]._id
-					)
+					rest.userInfo.DepartmentCode == item.department_id &&
+					rest.userInfo.SectionCode == item.section_id &&
+					rest.userInfo.TeamCode == item.team_id
 				) {
-					let a = _.find(responsePlanStatus.data, [
-						'Product',
-						productCategoriesPCMS[i]._id
-					]);
-					if (a.Status == 'Received') {
-						tempStat = 'Not Yet Started';
-					} else {
-						tempStat = a.Status;
-						if (tempStat == 'Pending') {
-							rems = true;
-						}
-						if (a.Process != undefined) {
-							a.Process.forEach((val) => {
-								if (val.Remarks != undefined) {
-									if (val.Remarks) {
-										rems = true;
-									}
-								}
-								if (val.Pending != undefined && val.Pending.length > 0) {
-									pending = val.Pending.map((arr) => {
-										if (arr.PendingResume == null) {
-											return arr;
-										}
-									});
-								}
-							});
-						} else {
-							if (a.Remarks != undefined) {
-								if (a.Remarks) {
-									rems = true;
-								}
-							}
-							if (a.Pending != undefined) {
-								pending = a.Pending;
-							}
-						}
-						if (a.LeadersRemarks != undefined) {
-							if (a.LeadersRemarks) {
-								rems = true;
-							}
-						} else {
-							if (a.LeadersRemarksHistory && a.LeadersRemarksHistory.length > 0) {
-								rems = true;
-							}
-						}
-						if (productCategoriesPCMS[i]._id != 'aPi@wUk3D') {
-							arr.push({
-								ProductCode: productCategoriesPCMS[i]._id,
-								ProductCategory: productCategoriesPCMS[i].ProductCategory,
-								ProductType: productCategoriesPCMS[i].ProductType,
-								Department: productCategoriesPCMS[i].Department,
-								Section: productCategoriesPCMS[i].Res[0].Section,
-								Team: productCategoriesPCMS[i].Res[0].Team,
-								Sequence: parseInt(
-									productCategoriesPCMS[i].ProductSequence[
-										checkedPlanDetails.HouseClass
-									]
-								),
-								Status: tempStat,
-								FinishDate: a.FinishDate,
-								ReceiveDate: a.ReceiveDate,
-								Remarks: rems,
-								Pending: pending
-							});
-						} else {
-							if (a.ReKakouIrai != undefined && a.Status == 'Received') {
-								tempStat = 'Finished';
-							}
-							temp = {
-								ProductCode: productCategoriesPCMS[i]._id,
-								ProductCategory: productCategoriesPCMS[i].ProductCategory,
-								ProductType: productCategoriesPCMS[i].ProductType,
-								Department: productCategoriesPCMS[i].Department,
-								Section: productCategoriesPCMS[i].Res[0].Section,
-								Team: productCategoriesPCMS[i].Res[0].Team,
-								Sequence: parseInt(
-									productCategoriesPCMS[i].ProductSequence[
-										checkedPlanDetails.HouseClass
-									]
-								),
-								Status: tempStat,
-								FinishDate: a.FinishDate,
-								ReceiveDate: a.ReceiveDate,
-								Remarks: rems,
-								Pending: pending
-							};
+					return item;
+				}
+			});
+
+			const sortBySequenceOwner = _.sortBy(owner, ['sequence']);
+			let params = {};
+			for (let i = 0; i < sortBySequenceOwner.length; i++) {
+				params[`product_${i + 1}`] = owner[i].product_key;
+			}
+			const customerKey = await Http.get(`api/customer`, { params: params });
+			const customers = customerKey.data.map((item) => {
+				return {
+					...item,
+					products:
+						product.length > 0
+							? product.filter((el) => {
+									return el.product_key == item.customer_key;
+							  })
+							: null
+				};
+			});
+
+			let customer = [];
+			for (let i = 0; i < sortBySequenceOwner.length; i++) {
+				for (let j = 0; j < customers.length; j++) {
+					if (sortBySequenceOwner[i].product_key == customers[j].product_key) {
+						for (let k = 0; k < customers[j].products.length; k++) {
+							customer.push(customers[j].products[k]);
 						}
 					}
-				} else {
-					arr.push({
-						ProductCode: productCategoriesPCMS[i]._id,
-						ProductCategory: productCategoriesPCMS[i].ProductCategory,
-						ProductType: productCategoriesPCMS[i].ProductType,
-						Department: productCategoriesPCMS[i].Department,
-						Section: productCategoriesPCMS[i].Res[0].Section,
-						Team: productCategoriesPCMS[i].Res[0].Team,
-						Sequence: parseInt(
-							productCategoriesPCMS[i].ProductSequence[checkedPlanDetails.HouseClass]
-						),
-						Status: 'Not Yet Receive',
-						FinishDate: null,
-						ReceiveDate: null,
-						Remarks: rems,
-						Pending: pending
-					});
 				}
 			}
+			console.log(customer, 'uuuuuuuuuuiiiiiooooooo');
+			const products = product.map((item, index) => {
+				console.log(
+					customer.find((el) => {
+						return el.id == item.id;
+					})
+				);
+				if (
+					customer.find((el) => {
+						return el.id == item.id;
+					})
+				) {
+					return {
+						...item,
+						// remarks: row.remarks,
+						received_date: moment().format('YYYY-MM-DD HH:mm:ss')
+						// finished_date: row.finished_date,
+						// start_date: row.start_date,
+						// finished_date: row.finished_date
+					};
+				}
+				if (
+					rest.userInfo.DepartmentCode == item.department_id &&
+					rest.userInfo.SectionCode == item.section_id &&
+					rest.userInfo.TeamCode == item.team_id
+				) {
+					return {
+						...item,
+						remarks: row.remarks,
+						received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
+						finished_date: row.finished_date,
+						start_date: row.start_date,
+						finished_date: row.finished_date
+					};
+				}
+				return item;
+			});
+			console.log(products);
+			const sortedProducts = _.sortBy(products, ['waku_sequence', 'product_name']);
+			const response = await Http.post('/api/details', {
+				details,
+				product: sortedProducts
+			});
+			if (response.status == 200) {
+				openNotificationWithIcon('success');
+			}
+			setProduct(sortedProducts);
+		} else {
+			const owner = product.filter((item, index) => {
+				if (
+					rest.userInfo.DepartmentCode == item.department_id &&
+					rest.userInfo.SectionCode == item.section_id &&
+					rest.userInfo.TeamCode == item.team_id
+				) {
+					return item;
+				}
+			});
+
+			const sortBySequenceOwner = _.sortBy(owner, ['sequence']);
+			let params = {};
+			for (let i = 0; i < sortBySequenceOwner.length; i++) {
+				params[`product_${i + 1}`] = owner[i].product_key;
+			}
+			const customerKey = await Http.get(`api/customer`, { params: params });
+			const customers = customerKey.data.map((item) => {
+				return {
+					...item,
+					products:
+						product.length > 0
+							? product.filter((el) => {
+									return el.product_key == item.customer_key;
+							  })
+							: null
+				};
+			});
+
+			let customer = [];
+			for (let i = 0; i < sortBySequenceOwner.length; i++) {
+				for (let j = 0; j < customers.length; j++) {
+					if (sortBySequenceOwner[i].product_key == customers[j].product_key) {
+						for (let k = 0; k < customers[j].products.length; k++) {
+							customer.push(customers[j].products[k]);
+						}
+					}
+				}
+			}
+			const products = product.map((item, index) => {
+				console.log(
+					customer.find((el) => {
+						return el.id == item.id;
+					})
+				);
+				if (
+					customer.find((el) => {
+						return el.id == item.id;
+					})
+				) {
+					return {
+						...item,
+						// remarks: row.remarks,
+						received_date: moment().format('YYYY-MM-DD HH:mm:ss')
+						// finished_date: row.finished_date,
+						// start_date: row.start_date,
+						// finished_date: row.finished_date
+					};
+				}
+				if (
+					rest.userInfo.DepartmentCode == item.department_id &&
+					rest.userInfo.SectionCode == item.section_id &&
+					rest.userInfo.TeamCode == item.team_id
+				) {
+					return {
+						...item,
+						remarks: row.remarks,
+						received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
+						finished_date: row.finished_date,
+						start_date: row.start_date,
+						finished_date: row.finished_date
+					};
+				}
+				return item;
+			});
+			const sortedProducts = _.sortBy(products, ['jiku_sequence', 'product_name']);
+			const response = await Http.post('/api/details', {
+				details,
+				product: sortedProducts
+			});
+			if (response.status == 200) {
+				openNotificationWithIcon('success');
+			}
+			setProduct(sortedProducts);
 		}
-		planDetails = _.sortBy(arr, ['Sequence', 'ProductCategory']);
-		planDetails.unshift(temp);
-		let userProducts = [];
-		// setPlanStatus(planDetails);
-		const responseEmployeeProducts = await instance.get(`get/getID/${userInfo.EmployeeCode}`);
-		if (responseEmployeeProducts != undefined && responseEmployeeProducts.data.length > 0) {
-			// if (
-			//     responseEmployeeProducts.data[0].filtering == true &&
-			//     responseEmployeeProducts.data[0].filtering != undefined
-			// ) {
-			userProducts = responseEmployeeProducts.data[0][responseCheckPlans.data[0].HouseClass]
-				? responseEmployeeProducts.data[0][responseCheckPlans.data[0].HouseClass]
-				: [];
-			setUserProducts(userProducts);
-			// }
-			if (
-				responseEmployeeProducts.data[0].showSubProduct == true &&
-				responseEmployeeProducts.data[0].showSubProduct != undefined
-			) {
-				const showSubProducts = responseEmployeeProducts.data[0].showSubProduct
-					? responseEmployeeProducts.data[0].showSubProduct
-					: false;
-				setSubProduct(showSubProducts);
+	};
+	/* TH Actions */
+	const handleOnClickEvent = async (row, key = null) => {
+		row[key] = moment().format('YYYY-MM-DD HH:mm:ss');
+		if (key == 'finished_date') {
+			row.daysinprocess = moment(row.start_date).diff(row.finished_date, 'days');
+		}
+		row.employee_code = userInfo.EmployeeCode;
+		const toUpdatePlans = plans.map((item, index) => {
+			if (item.ConstructionCode == row.ConstructionCode && item.RequestNo == row.RequestNo) {
+				return row;
+			}
+			return item;
+		});
+		setTable({
+			loading: false,
+			plans: toUpdatePlans,
+			pagination: {
+				...pagination
+				// 200 is mock data, you should read it from server
+				// total: data.totalCount,
+			}
+		});
+		const response = await Http.post('/api/th/plan', row);
+		console.log(response);
+	};
+	const handleInputText = (event, key, row) => {
+		row[key] = event.target.value;
+
+		const toUpdatePlans = plans.map((item, index) => {
+			if (item.ConstructionCode == row.ConstructionCode && item.RequestNo == row.RequestNo) {
+				return row;
+			}
+			return item;
+		});
+		setTable({
+			loading: false,
+			plans: toUpdatePlans,
+			pagination: {
+				...pagination
+				// 200 is mock data, you should read it from server
+				// total: data.totalCount,
+			}
+		});
+	};
+	const handleSelectOption = async (val, key, row) => {
+		row[key] = val;
+		row.employee_code = userInfo.EmployeeCode;
+		const toUpdatePlans = plans.map((item, index) => {
+			if (item.ConstructionCode == row.ConstructionCode && item.RequestNo == row.RequestNo) {
+				return row;
+			}
+			return item;
+		});
+		setTable({
+			loading: false,
+			plans: toUpdatePlans,
+			pagination: {
+				...pagination
+				// 200 is mock data, you should read it from server
+				// total: data.totalCount,
+			}
+		});
+		console.log(row);
+		const response = await Http.post('/api/th/plan', row);
+
+		if (key == 'th_action_id') {
+			if (val == 4) {
+				await handleRegister(details, row);
 			}
 		}
-
-		/* PCMS */
-
+		await handleSpecs(row.ConstructionCode, row.RequestNo);
+	};
+	/* TH Actions */
+	const handleSpecs = async (constructionCode, th_no = null) => {
+		const response = await Http.get(`/api/plandetails/${constructionCode}`);
+		const responseRev = await Http.get(`/api/details/${constructionCode}`);
+		console.log(responseRev, 'rererev');
 		const { plan_specs } = response.data;
 		const planSpecs = plan_specs.map((item, index) => {
 			let str = '';
@@ -357,54 +554,138 @@ const Registration = ({ title, ...rest }) => {
 
 		let splitRevision = responseRev.data ? responseRev.data.rev_no.split('-') : '';
 		let secondaryRevision = toInteger(splitRevision[1]);
-		setDetails({
-			customer_code: constructionCode,
-			house_code: response.data.house[0].NameCode,
-			house_type: response.data.house[0].ConstructionTypeName,
-			plan_no: response.data.house[0].PlanNo,
-			floors: response.data.house[0].Floors,
-			joutou_date: response.data.construction_schedule[0].ExpectedHouseRaisingDate,
-			days_before_joutou: '',
-			kiso_start: response.data.construction_schedule[0].StartedFoundationWorkDate,
-			before_kiso_start: '',
-			dodai_invoice: response.data.invoice[0].InvoiceDodai,
-			['1F_panel_invoice']: response.data.invoice[0].InvoicePanel,
-			['1F_hari_invoice']: response.data.invoice[0].Invoice1FHari,
-			['1F_iq_invoice']: response.data.invoice[0].Invoice1FIQ,
-			plan_specification: planSpecs.join(),
-			existing_rev_no: responseRev.data.rev_no,
-			rev_no: responseRev.data ? `${splitRevision[0]}-${secondaryRevision + 1}` : '1-0',
-			type_id: '',
-			reason_id: '',
-			logs: '',
-			th_no: null,
-			department_id: userInfo.DepartmentCode,
-			section_id: userInfo.SectionCode,
-			team_id: userInfo.TeamCode,
-			updated_by: userInfo.EmployeeCode
+		setDetails((prevState) => {
+			return {
+				...prevState,
+				customer_code: constructionCode,
+				house_code: response.data.house[0].NameCode,
+				house_type: response.data.house[0].ConstructionTypeName,
+				method: response.data.house[0].Method,
+				plan_no: response.data.house[0].PlanNo,
+				floors: response.data.house[0].Floors,
+				joutou_date: response.data.construction_schedule[0].ExpectedHouseRaisingDate,
+				days_before_joutou: '',
+				kiso_start: response.data.construction_schedule[0].StartedFoundationWorkDate,
+				before_kiso_start: '',
+				dodai_invoice: response.data.invoice[0].InvoiceDodai,
+				['1F_panel_invoice']: response.data.invoice[0].InvoicePanel,
+				['1F_hari_invoice']: response.data.invoice[0].Invoice1FHari,
+				['1F_iq_invoice']: response.data.invoice[0].Invoice1FIQ,
+				plan_specification: planSpecs.join(),
+				existing_rev_no: responseRev.data.rev_no,
+				rev_no: responseRev.data ? `${splitRevision[0]}-${secondaryRevision + 1}` : '1-0',
+				type_id: '',
+				reason_id: '',
+				logs: '',
+				th_no: th_no ? th_no : null,
+				department_id: userInfo.DepartmentCode,
+				section_id: userInfo.SectionCode,
+				team_id: userInfo.TeamCode,
+				updated_by: userInfo.EmployeeCode
+			};
 		});
-		if (userProducts.length > 0) {
-			const assignedProductCategoriesPCMS = planDetails.filter((item) => {
-				return userProducts.includes(item.ProductCode);
-			});
-			const detailsItem = await fetchDetails(constructionCode);
-			if (detailsItem) {
-				const fetchStatus = await Http.get(`/api/status/${detailsItem.id}`);
-				setStatus(fetchStatus.data);
+		const detailsItem = await fetchDetails(constructionCode);
+		const instance = Http.create({
+			baseURL: 'http://adminsql1/api',
+			withCredentials: false,
+			headers: {
+				'master-api': 'db588403f0a1d3b897442a28724166b4'
 			}
-			setPlanDetail(assignedProductCategoriesPCMS);
+		});
+		const company = await instance.get('/company/department/section/team/hrd');
+		if (detailsItem) {
+			const fetchStatus = await Http.get(`/api/status/${detailsItem.id}`);
+			const productCategories = fetchStatus.data.map((item) => {
+				return {
+					...item,
+					department:
+						company.data.length > 0
+							? company.data.find((attr) => {
+									const prod = product.find(
+										(el) =>
+											attr.DepartmentCode == el.department_id &&
+											item.product_id == el.id
+									);
+
+									return prod ? attr.DepartmentCode == prod.department_id : false;
+							  }).DepartmentName
+							: null,
+					section:
+						company.data.length > 0
+							? company.data.find((attr) => {
+									const prod = product.find(
+										(el) =>
+											attr.SectionCode == el.section_id &&
+											item.product_id == el.id
+									);
+									return prod ? attr.SectionCode == prod.section_id : false;
+							  }).SectionName
+							: null,
+					team:
+						company.data.length > 0
+							? company.data.find((attr) => {
+									const prod = product.find(
+										(el) =>
+											attr.TeamCode == el.team_id && item.product_id == el.id
+									);
+									return prod ? attr.TeamCode == prod.team_id : false;
+							  }).TeamName
+							: null,
+					sequence:
+						details.method == '2'
+							? product.find((el) => el.id == item.product_id).waku_sequence
+							: product.find((el) => el.id == item.product_id).jiku_sequence,
+					product_name: product.find((el) => el.id == item.product_id).product_name
+				};
+			});
+			const sortBySequence = _.sortBy(productCategories, ['sequence', 'product_name']);
+			setStatus(sortBySequence);
+
+			// .filter((item, index) => {
+			// 	if (rest.userInfo.DesignationCode == '003') {
+			// 		if (
+			// 			rest.userInfo.DepartmentCode ==
+			// 				product.find((el) => el.product_key == item.product_key)
+			// 					.department_id &&
+			// 			rest.userInfo.SectionCode ==
+			// 				product.find((el) => el.product_key == item.product_key)
+			// 					.section_id
+			// 		) {
+			// 			return item;
+			// 		}
+			// 	} else {
+			// 		if (
+			// 			rest.userInfo.DepartmentCode ==
+			// 				product.find((el) => el.product_key == item.product_key)
+			// 					.department_id &&
+			// 			rest.userInfo.SectionCode ==
+			// 				product.find((el) => el.product_key == item.product_key)
+			// 					.section_id &&
+			// 			rest.userInfo.TeamCode ==
+			// 				product.find((el) => el.product_key == item.product_key).team_id
+			// 		) {
+			// 			return item;
+			// 		}
+			// 	}
+			// })
 		}
 	};
 	return (
 		<div style={{ height: '5%' }}>
-			{userInfo.SectionCode == '00465' && userInfo.TeamCode == '00133' ? (
+			{userInfo.SectionCode == '465' && userInfo.TeamCode == '0133' ? (
 				<>
 					<RegistrationTable
-						loading={loading}
-						headers={headers(handleClickPDF)}
+						headers={headers(
+							info,
+							handleClickPDF,
+							handleSelectOption,
+							handleOnClickEvent,
+							handleInputText
+						)}
 						plans={plans}
 						pagination={pagination}
-						event={handleTableChange}></RegistrationTable>
+						event={handleTableChange}
+						loading={loading}></RegistrationTable>
 					<Modal
 						title="PDF Lists"
 						onOk={handleOk}
@@ -421,10 +702,9 @@ const Registration = ({ title, ...rest }) => {
 						handleOnChange={handleOnChange}
 						handleRegister={handleRegister}
 						henkouInfo={info}
-						productCategoryPCMS={productCategoriesPCMS}
+						product={product}
 						status={henkouStatus}
-						details={details}
-						planStatusPCMS={assignedProductCategoriesPCMS}></ManualContainer>
+						details={details}></ManualContainer>
 				</>
 			)}
 		</div>
@@ -432,7 +712,7 @@ const Registration = ({ title, ...rest }) => {
 };
 
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.user[0]
+	userInfo: state.auth.userInfo
 });
 
 export default connect(mapStateToProps)(Registration);

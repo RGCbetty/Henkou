@@ -16,7 +16,7 @@ class CreateStatusesTable extends Migration
         Schema::create('statuses', function (Blueprint $table) {
             $table->id();
             $table->string('log')->nullable();
-            $table->string('product_id', 30);
+            $table->string('product_key', 20);
             $table->string('updated_by', 15);
             $table->timestamp('start_date')->nullable();
             $table->timestamp('finished_date')->nullable();
@@ -26,6 +26,7 @@ class CreateStatusesTable extends Migration
         Schema::table('statuses', function (Blueprint $table) {
             $table->foreignId('assessment_id')->nullable()->constrained('assessments');
             $table->foreignId('detail_id')->constrained('details');
+            $table->foreignId('product_id')->constrained('product_categories');
         });
     }
 

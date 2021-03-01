@@ -16,8 +16,12 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UsersTableSeeder::class, TypeSeeder::class,
             ReasonSeeder::class,
-            // ProductCategorySeeder::class,
-            AssessmentSeeder::class
+            ProductCategorySeeder::class,
+            AssessmentSeeder::class,
+            CustomerSeeder::class,
+            SupplierSeeder::class,
+            ActionThOptionSeeder::class,
+            AssessmentThOptionSeeder::class
         ]);
 
         // \App\Models\User::factory(10)->create();

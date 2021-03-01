@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { connect } from 'react-redux';
 import {
 	Form,
 	Row,
@@ -10,10 +11,9 @@ import {
 	DatePicker,
 	Modal,
 	Upload,
-	message
+	Table
 } from 'antd';
-import { DownOutlined, UpOutlined, UploadOutlined, EyeOutlined } from '@ant-design/icons';
-import HenkouTable from '../HenkouTable';
+import { DownOutlined, UpOutlined, UploadOutlined, SnippetsOutlined } from '@ant-design/icons';
 
 import { planStatusHeaders } from '../RegistrationComponents/PlanStatus(PCMS)Header';
 import headers from '../RegistrationComponents/HenkouStatusHeader';
@@ -21,21 +21,31 @@ import PlanDetails from '../RegistrationComponents/PlanDetails';
 
 import moment from 'moment';
 import Http from '../../Http';
+import { useActivePlanStatus } from '../../api/planstatus';
 
 const { Search, TextArea } = Input;
 const dateFormat = 'YYYY/MM/DD';
 const { Option } = Select;
 const { Title } = Typography;
 const ManualContainer = ({
+	product,
 	handleSpecs,
 	details,
 	henkouInfo,
 	handleOnChange,
 	handleRegister,
 	status,
-	planStatusPCMS
+	...rest
 }) => {
 	const { types, reasons, products } = henkouInfo;
+	/* PCMS */
+	const [assignedProductCategoriesPCMS, setPlanDetail] = useState([]);
+	const [productCategoriesPCMS, setProductCategoriesPCMS] = useActivePlanStatus();
+	const [userProductCategoriesPCMS, setUserProducts] = useState([]);
+	const [subProductPCMS, setSubProduct] = useState(false);
+	const [loading, setLoading] = useState(false);
+	/* PCMS */
+	const [henkouLoading, setHenkouLoading] = useState(false);
 	const [visible, setVisible] = useState(false);
 	const [expand, setExpand] = useState(false);
 	const [upload, setUpload] = useState({
@@ -47,7 +57,228 @@ const ManualContainer = ({
 	const onFinish = (values) => {
 		console.log('Received values of form: ', values);
 	};
+	const onClickPlanStatusBtn = async () => {
+		setVisible(true);
+		setCheckPlanStatus(true);
+		setLoading(true);
+		const instance = Http.create({
+			baseURL: 'http://hrdapps71:4900/',
+			withCredentials: false,
+			headers: {
+				'master-api': 'db588403f0a1d3b897442a28724166b4'
+			}
+		});
+		/* PCMS */
+		let checkedPlanDetails = {};
+		let email = null;
+		let tempStat = '';
+		let arr = [];
+		let temp = {};
+		let planDetails = [];
+		let pending = '';
+		const responseCheckPlans = await instance.get(`get/checkPlan/${details.customer_code}`);
+		console.log(responseCheckPlans);
+		if (responseCheckPlans.data.length > 0) {
+			if (responseCheckPlans.data[0].EmailedDate) {
+				email = responseCheckPlans.data[0].EmailedDate;
+			}
+			checkedPlanDetails = {
+				KakouIraiRequest: responseCheckPlans.data[0].KakouIraiRequest,
+				HouseTypeCode: responseCheckPlans.data[0].HouseTypeCode,
+				HouseClass: responseCheckPlans.data[0].HouseClass,
+				EmailedDate: email,
+				JoutouDate: responseCheckPlans.data[0].JoutouDate,
+				ShiageDelivery: responseCheckPlans.data[0].ShiageDelivery,
+				KisoStart: responseCheckPlans.data[0].KisoStart
+			};
+		} else {
+			checkedPlanDetails = {
+				HouseClass: details.method == 1 ? 'Jikugumi' : 'Wakugumi'
+			};
+		}
+		const responsePlanStatus = await instance.get(
+			`get/viewPlanStatus/${details.customer_code}`
+		);
+		for (let i = 0; i < productCategoriesPCMS.length; i++) {
+			if (
+				checkedPlanDetails.HouseClass == productCategoriesPCMS[i].HouseType ||
+				productCategoriesPCMS[i].HouseType == 'Both'
+			) {
+				let rems = false;
+				if (
+					_.includes(
+						_.map(responsePlanStatus.data, 'Product'),
+						productCategoriesPCMS[i]._id
+					)
+				) {
+					let a = _.find(responsePlanStatus.data, [
+						'Product',
+						productCategoriesPCMS[i]._id
+					]);
+					if (a.Status == 'Received') {
+						tempStat = 'Not Yet Started';
+					} else {
+						tempStat = a.Status;
+						if (tempStat == 'Pending') {
+							rems = true;
+						}
+						if (a.Process != undefined) {
+							a.Process.forEach((val) => {
+								if (val.Remarks != undefined) {
+									if (val.Remarks) {
+										rems = true;
+									}
+								}
+								if (val.Pending != undefined && val.Pending.length > 0) {
+									pending = val.Pending.map((arr) => {
+										if (arr.PendingResume == null) {
+											return arr;
+										}
+									});
+								}
+							});
+						} else {
+							if (a.Remarks != undefined) {
+								if (a.Remarks) {
+									rems = true;
+								}
+							}
+							if (a.Pending != undefined) {
+								pending = a.Pending;
+							}
+						}
+						if (a.LeadersRemarks != undefined) {
+							if (a.LeadersRemarks) {
+								rems = true;
+							}
+						} else {
+							if (a.LeadersRemarksHistory && a.LeadersRemarksHistory.length > 0) {
+								rems = true;
+							}
+						}
+						if (productCategoriesPCMS[i]._id != 'aPi@wUk3D') {
+							arr.push({
+								ProductCode: productCategoriesPCMS[i]._id,
+								ProductCategory: productCategoriesPCMS[i].ProductCategory,
+								ProductType: productCategoriesPCMS[i].ProductType,
+								Department: productCategoriesPCMS[i].Department,
+								Section:
+									productCategoriesPCMS[i].Res.length > 0
+										? productCategoriesPCMS[i].Res[0].Section
+										: null,
+								Team:
+									productCategoriesPCMS[i].Res.length > 0
+										? productCategoriesPCMS[i].Res[0].Team
+										: null,
+								Sequence: parseInt(
+									productCategoriesPCMS[i].ProductSequence[
+										checkedPlanDetails.HouseClass
+									]
+								),
+								Status: tempStat,
+								FinishDate: a.FinishDate,
+								ReceiveDate: a.ReceiveDate,
+								Remarks: rems,
+								Pending: pending
+							});
+						} else {
+							if (a.ReKakouIrai != undefined && a.Status == 'Received') {
+								tempStat = 'Finished';
+							}
+							temp = {
+								ProductCode: productCategoriesPCMS[i]._id,
+								ProductCategory: productCategoriesPCMS[i].ProductCategory,
+								ProductType: productCategoriesPCMS[i].ProductType,
+								Department: productCategoriesPCMS[i].Department,
+								Section:
+									productCategoriesPCMS[i].Res.length > 0
+										? productCategoriesPCMS[i].Res[0].Section
+										: null,
+								Team:
+									productCategoriesPCMS[i].Res.length > 0
+										? productCategoriesPCMS[i].Res[0].Team
+										: null,
+								Sequence: parseInt(
+									productCategoriesPCMS[i].ProductSequence[
+										checkedPlanDetails.HouseClass
+									]
+								),
+								Status: tempStat,
+								FinishDate: a.FinishDate,
+								ReceiveDate: a.ReceiveDate,
+								Remarks: rems,
+								Pending: pending
+							};
+						}
+					}
+				} else {
+					arr.push({
+						ProductCode: productCategoriesPCMS[i]._id,
+						ProductCategory: productCategoriesPCMS[i].ProductCategory,
+						ProductType: productCategoriesPCMS[i].ProductType,
+						Department: productCategoriesPCMS[i].Department,
+						Section:
+							productCategoriesPCMS[i].Res.length > 0
+								? productCategoriesPCMS[i].Res[0].Section
+								: null,
+						Team:
+							productCategoriesPCMS[i].Res.length > 0
+								? productCategoriesPCMS[i].Res[0].Team
+								: null,
+						Sequence: parseInt(
+							productCategoriesPCMS[i].ProductSequence[checkedPlanDetails.HouseClass]
+						),
+						Status: 'Not Yet Receive',
+						FinishDate: null,
+						ReceiveDate: null,
+						Remarks: rems,
+						Pending: pending
+					});
+				}
+			}
+		}
+		planDetails = _.sortBy(arr, ['Sequence', 'ProductCategory']);
+		planDetails.unshift(temp);
+		let userProducts = [];
+		// setPlanStatus(planDetails);
+		const responseEmployeeProducts = await instance.get(
+			`get/getID/${rest.userInfo.EmployeeCode}`
+		);
+		console.log(responseEmployeeProducts, '00000001010101');
+		if (responseEmployeeProducts != undefined && responseEmployeeProducts.data.length > 0) {
+			// if (
+			//     responseEmployeeProducts.data[0].filtering == true &&
+			//     responseEmployeeProducts.data[0].filtering != undefined
+			// ) {
+			userProducts = responseEmployeeProducts.data[0][checkedPlanDetails.HouseClass]
+				? responseEmployeeProducts.data[0][checkedPlanDetails.HouseClass]
+				: responseEmployeeProducts.data[0].myProducts;
+			setUserProducts(userProducts);
+			// }
+			if (
+				responseEmployeeProducts.data[0].showSubProduct == true &&
+				responseEmployeeProducts.data[0].showSubProduct != undefined
+			) {
+				const showSubProducts = responseEmployeeProducts.data[0].showSubProduct
+					? responseEmployeeProducts.data[0].showSubProduct
+					: false;
+				setSubProduct(showSubProducts);
+			}
+		}
+
+		/* PCMS */
+		if (userProducts.length > 0) {
+			const assignedProductCategoriesPCMS = planDetails.filter((item) => {
+				return userProducts.includes(item.ProductCode);
+			});
+			console.log(assignedProductCategoriesPCMS, '@@@#$%^&*(');
+
+			setPlanDetail(assignedProductCategoriesPCMS);
+		}
+		setLoading(false);
+	};
 	const handleEvent = async (value, keys = null) => {
+		setHenkouLoading(true);
 		if (!keys) {
 			const e = value;
 			await handleSpecs(e.target.value);
@@ -55,36 +286,36 @@ const ManualContainer = ({
 		} else {
 			handleOnChange(value, keys);
 		}
+		setHenkouLoading(false);
 	};
 	const handleUpload = async (details) => {
-		console.log('this is upload');
 		const { fileList } = upload;
 		const formData = new FormData();
 		fileList.forEach((file) => {
 			formData.append('files[]', file);
 		});
-
-		setUpload({
-			status: true
-		});
-
-		// You can use any AJAX library you like
-		try {
-			const response = await Http.get(`/api/details/${details.customer_code}`);
-			const uploadResponse = await Http.post(
-				`/api/henkou/attachment/${response.data.id}`,
-				formData
-			);
-			console.log(uploadResponse);
+		console.log(fileList, '@#$#$%#$#$%');
+		if (fileList.length > 0) {
 			setUpload({
-				fileList: [],
 				status: true
 			});
-		} catch (error) {
-			setUpload({
-				fileList: [],
-				status: true
-			});
+			// You can use any AJAX library you like
+			try {
+				const response = await Http.get(`/api/details/${details.customer_code}`);
+				const uploadResponse = await Http.post(
+					`/api/henkou/attachment/${response.data.id}`,
+					formData
+				);
+				setUpload({
+					fileList: [],
+					status: true
+				});
+			} catch (error) {
+				setUpload({
+					fileList: [],
+					status: true
+				});
+			}
 		}
 	};
 
@@ -177,18 +408,28 @@ const ManualContainer = ({
 				</Row>
 				{expand ? (
 					<Row gutter={[10, 10]}>
-						<Col span={8}>
+						<Col span={12}>
+							<Button
+								type="primary"
+								onClick={() => {
+									window.open('http://localhost:3000/storage/HenkouForm.xls');
+								}}
+								style={{ margin: '0 8px' }}
+								icon={<SnippetsOutlined />}
+								htmlType="button">
+								Henkou Form
+							</Button>
 							<Upload {...uploadProps}>
 								<Button type="primary" icon={<UploadOutlined />} htmlType="button">
 									Upload
 								</Button>
 							</Upload>
 						</Col>
-						<Col span={16} style={{ textAlign: 'right' }}>
+						<Col span={12} style={{ textAlign: 'right' }}>
 							<Button
 								type="primary"
 								htmlType="button"
-								onClick={() => (setVisible(true), setCheckPlanStatus(true))}>
+								onClick={() => onClickPlanStatusBtn()}>
 								Plan Status
 							</Button>
 							<Modal
@@ -199,9 +440,13 @@ const ManualContainer = ({
 								onOk={() => setVisible(false)}
 								onCancel={() => setVisible(false)}
 								width={1500}>
-								<HenkouTable
-									headers={planStatusHeaders}
-									data={planStatusPCMS.map((item, index) => {
+								<Table
+									style={{ marginTop: 10 }}
+									columns={planStatusHeaders}
+									loading={loading}
+									bordered
+									rowKey={(record) => record.id}
+									dataSource={assignedProductCategoriesPCMS.map((item, index) => {
 										if (index == 0) {
 											return {
 												id: index + 1,
@@ -216,6 +461,7 @@ const ManualContainer = ({
 											};
 										}
 									})}
+									scroll={{ x: 'max-content', y: 'calc(100vh - 23em)' }}
 								/>
 							</Modal>
 							<Button
@@ -306,58 +552,33 @@ const ManualContainer = ({
 					) : null}
 				</Row>
 			</Form>
-			{details.existing_rev_no || checkPlanStatus ? (
+			{(details.existing_rev_no || checkPlanStatus) && status.length > 0 ? (
 				<div style={{ padding: 5 }}>
 					<Title level={4} style={{ margin: 0 }}>
 						Henkou Status
 					</Title>
-					<HenkouTable
-						headers={headers}
-						data={planStatusPCMS.map((item, index) => {
-							if (index == '0') {
-								if (item.ProductCategory == 'KAKOU IRAI') {
-									return {
-										id: index + 1,
-										...item,
-										received_date:
-											status.length > 0 ? status[index].received_date : null,
-
-										start_date:
-											status.length > 0 ? status[index].start_date : null,
-										finish_date:
-											status.length > 0 ? status[index].finished_date : null,
-										assessment:
-											status.length > 0 ? status[index].assessment_id : null,
-										logs: details.logs
-									};
-								} else {
-									return {
-										id: index + 1,
-										...item,
-										received_date:
-											status.length > 0 ? status[index].received_date : null,
-										start_date:
-											status.length > 0 ? status[index].start_date : null,
-										finish_date:
-											status.length > 0 ? status[index].finished_date : null,
-										assessment:
-											status.length > 0 ? status[index].assessment_id : null
-									};
-								}
-							} else {
-								return {
-									id: index + 1,
-									...item,
-									start_date: status.length > 0 ? status[index].start_date : null,
-									finish_date:
-										status.length > 0 ? status[index].finished_date : null,
-									assessment:
-										status.length > 0 ? status[index].assessment_id : null,
-									received_date:
-										status.length > 0 ? status[index].received_date : null
-								};
-							}
+					<Table
+						style={{ marginTop: 10 }}
+						columns={headers}
+						loading={henkouLoading}
+						bordered
+						rowKey={(record) => record.id}
+						dataSource={status.map((item) => {
+							return {
+								id: item.id,
+								...item
+								// sequence:
+								// 	details.method == '2'
+								// 		? product.find((el) => el.product_key == item.product_key)
+								// 				.waku_sequence
+								// 		: product.find((el) => el.product_key == item.product_key)
+								// 				.jiku_sequence,
+								// product_name: product.find(
+								// 	(el) => el.product_key == item.product_key
+								// ).product_name
+							};
 						})}
+						scroll={{ x: 'max-content', y: 'calc(100vh - 23em)' }}
 					/>
 				</div>
 			) : (
@@ -388,5 +609,7 @@ const ManualContainer = ({
 		</>
 	);
 };
-
-export default ManualContainer;
+const mapStateToProps = (state) => ({
+	userInfo: state.auth.userInfo
+});
+export default connect(mapStateToProps)(ManualContainer);

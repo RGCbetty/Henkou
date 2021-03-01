@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import moment from 'moment';
 import Http from '../../Http';
+import { connect } from 'react-redux';
 
 /* Material Design */
 import { Form, Row, Col, Input, Typography, notification, Modal, Table, Button, List } from 'antd';
 import { DownOutlined, UpOutlined, PaperClipOutlined } from '@ant-design/icons';
 /* Component */
-import HenkouTable from '../HenkouTable';
 import { henkouStatusHeader } from '../HenkouComponents/HenkouStatusHeader';
 import { PlanCustomerInformation } from './PlanCustomerInformation';
 import PendingHeaders from '../HenkouComponents/PendingHeaders';
@@ -15,7 +15,16 @@ import PendingHeaders from '../HenkouComponents/PendingHeaders';
 const { Search, TextArea } = Input;
 const { Title } = Typography;
 const HenkouContainer = (props) => {
-	const { details, products, handleEvent, handleUpdate, plandetail, assessment, status } = props;
+	const {
+		details,
+		product,
+		handleEvent,
+		handleUpdate,
+		assessment,
+		status,
+		company,
+		...rest
+	} = props;
 	const [expand, setExpand] = useState(false);
 	const [row, setRow] = useState({});
 	const [isVisibleAttachmentModal, setVisibleAttachmentModal] = useState(false);
@@ -23,8 +32,20 @@ const HenkouContainer = (props) => {
 	const [pendingItems, setPendingItems] = useState([]);
 	const [isVisiblePendingModal, setVisiblePendingModal] = useState(false);
 	const [form] = Form.useForm();
-
 	/* HENKOU PROCESS */
+
+	const checkIfSupplier = (record) => {
+		if (
+			record.department == rest.userInfo.DepartmentName &&
+			record.section == rest.userInfo.SectionName &&
+			record.team == rest.userInfo.TeamName
+		) {
+			return false;
+		} else {
+			return true;
+		}
+	};
+
 	const handleStatus = (row, key, isPendingItems = null) => {
 		row[key] = moment().format('YYYY-MM-DD HH:mm:ss');
 		if (isPendingItems) {
@@ -32,15 +53,22 @@ const HenkouContainer = (props) => {
 				row.isItemStarted = true;
 			}
 			if (key == 'resume') {
-				row.duration = isNaN(moment(row.start).diff(row.resume, 'days'))
+				// const diff_seconds = moment(row.start).diff(row.resume, 'seconds');
+				const ms = moment(row.resume, 'YYYY-MM-DD HH:mm:ss').diff(
+					moment(row.start, 'YYYY-MM-DD HH:mm:ss')
+				);
+				const d = moment.duration(ms);
+
+				row.duration = isNaN(moment(row.start).diff(row.resume))
 					? ''
-					: moment(row.start).diff(row.resume, 'days');
+					: d.days() + ':' + d.hours() + ':' + d.minutes() + ':' + d.seconds();
 			}
 			pendingItems[row.index - 1] = row;
 			const clonePendingItems = [...pendingItems];
 			setPendingItems(clonePendingItems);
 		} else {
-			if (key == 'finish_date') {
+			console.log('ops');
+			if (key == 'finished_date') {
 				row.received_date = moment().format('YYYY-MM-DD HH:mm:ss');
 			}
 			if (key == 'start_date') {
@@ -51,6 +79,7 @@ const HenkouContainer = (props) => {
 	};
 	const handleAssessment = (value, key, row) => {
 		row[key] = value;
+		console.log(row);
 		if (value !== 3) {
 			row.toggleSelect = false;
 		} else {
@@ -71,6 +100,7 @@ const HenkouContainer = (props) => {
 		});
 	};
 	const onEnter = async (e) => {
+		console.log('onEnter');
 		const result = await handleEvent(e.target.value);
 		result == 'found' ? setExpand(true) : (setExpand(false), openNotificationWithIcon('info'));
 	};
@@ -87,7 +117,8 @@ const HenkouContainer = (props) => {
 					start: '',
 					reason: '',
 					resume: '',
-					product_id: record.ProductCode,
+					duration: '',
+					product_key: record.ProductCode,
 					...record
 				});
 			}
@@ -99,6 +130,7 @@ const HenkouContainer = (props) => {
 						index: index + 1,
 						start: item.start_date,
 						resume: item.resume_date,
+						duration: '',
 						...item,
 						id: item.status_id
 					};
@@ -117,7 +149,7 @@ const HenkouContainer = (props) => {
 		// .map(item=> {
 		//     return {
 		//         id
-		//         product_id
+		//         product_key
 		//         rev_no
 		//         start_date
 		//         reason
@@ -149,7 +181,8 @@ const HenkouContainer = (props) => {
 			start: '',
 			reason: '',
 			resume: '',
-			product_id: row.ProductCode,
+			duration: '',
+			product_key: row.ProductCode,
 			...row
 		});
 		let cloneItems = [...pendingItems];
@@ -175,6 +208,7 @@ const HenkouContainer = (props) => {
 		setVisibleAttachmentModal(true);
 	};
 	/* ATTACHMENT MODAL */
+
 	return (
 		<>
 			<Form
@@ -279,8 +313,9 @@ const HenkouContainer = (props) => {
 				/>
 			</Modal>
 			<Modal
-				title={`Pending ${row.ProductCategory}`}
+				title={`Pending ${row.product_name}`}
 				onOk={handleOk}
+				okText="Save"
 				onCancel={handleCancel}
 				bodyStyle={{ padding: 10 }}
 				width={650}
@@ -300,7 +335,7 @@ const HenkouContainer = (props) => {
 						disabled={pendingItems.some((item) => {
 							return !item.resume;
 						})}
-						onClick={() => addPendingItems(row, 'finish_date')}>
+						onClick={() => addPendingItems(row, 'finished_date')}>
 						Add
 					</Button>
 				</div>
@@ -310,7 +345,220 @@ const HenkouContainer = (props) => {
 					<Title level={4} style={{ margin: 0 }}>
 						Henkou Status
 					</Title>
-					<HenkouTable
+					<Table
+						rowKey={(record) => record.id}
+						columns={henkouStatusHeader(
+							assessment,
+							handleStatus,
+							handleAssessment,
+							handlePending,
+							checkIfSupplier
+						)}
+						bordered
+						rowKey={(record) => record.id}
+						dataSource={
+							status.map((item) => {
+								return {
+									id: item.id,
+									...item,
+									logs: item.log ? item.log : item.logs,
+									days_in_process: isNaN(
+										moment(item.start_date).diff(item.finished_date)
+									)
+										? ''
+										: moment(item.start_date).diff(item.finished_date, 'days')
+								};
+							})
+							// .filter((item, index) => {
+							// 	if (rest.userInfo.DesignationCode == '003') {
+							// 		if (
+							// 			rest.userInfo.DepartmentCode ==
+							// 				product.find((el) => el.product_key == item.product_key)
+							// 					.department_id &&
+							// 			rest.userInfo.SectionCode ==
+							// 				product.find((el) => el.product_key == item.product_key)
+							// 					.section_id
+							// 		) {
+							// 			return item;
+							// 		}
+							// 	} else {
+							// 		if (
+							// 			rest.userInfo.DepartmentCode ==
+							// 				product.find((el) => el.product_key == item.product_key)
+							// 					.department_id &&
+							// 			rest.userInfo.SectionCode ==
+							// 				product.find((el) => el.product_key == item.product_key)
+							// 					.section_id &&
+							// 			rest.userInfo.TeamCode ==
+							// 				product.find((el) => el.product_key == item.product_key)
+							// 					.team_id
+							// 		) {
+							// 			return item;
+							// 		}
+							// 	}
+							// })
+						}
+						// dataSource={product.map((item, index) => {
+						// 	if (index == '0') {
+						// 		if (item.ProductCategory == 'KAKOU IRAI') {
+						// 			return {
+						// 				toggleStatus: true,
+						// 				toggleSelect: true,
+						// 				...item,
+						// 				id: status[index].id,
+						// 				department:
+						// 					company.length > 0
+						// 						? company.find((attr) => {
+						// 								return (
+						// 									attr.DepartmentCode ==
+						// 									item.department_id
+						// 								);
+						// 						  }).DepartmentName
+						// 						: null,
+						// 				section:
+						// 					company.length > 0
+						// 						? company.find((attr) => {
+						// 								return attr.SectionCode == item.section_id;
+						// 						  }).SectionName
+						// 						: null,
+						// 				team:
+						// 					company.length > 0
+						// 						? company.find((attr) => {
+						// 								return attr.TeamCode == item.team_id;
+						// 						  }).TeamName
+						// 						: null,
+						// 				sequence:
+						// 					details.method == '2'
+						// 						? item.waku_sequence
+						// 						: item.jiku_sequence,
+						// 				received_date:
+						// 					status.length > 0 ? status[index].received_date : null,
+						// 				start_date:
+						// 					status.length > 0 ? status[index].start_date : null,
+						// 				finish_date:
+						// 					status.length > 0 ? status[index].finished_date : null,
+						// 				assessment_id:
+						// 					status.length > 0 ? status[index].assessment_id : null,
+
+						// 				logs: details ? details.logs : '',
+						// 				days_in_process: isNaN(
+						// 					moment(status[index].start_date).diff(
+						// 						status[index].finished_date,
+						// 						'days'
+						// 					)
+						// 				)
+						// 					? ''
+						// 					: moment(status[index].start_date).diff(
+						// 							status[index].finished_date,
+						// 							'days'
+						// 					  )
+						// 			};
+						// 		} else {
+						// 			return {
+						// 				toggleStatus: true,
+						// 				toggleSelect: true,
+						// 				...item,
+						// 				id: status[index].id,
+						// 				department:
+						// 					company.length > 0
+						// 						? company.find((attr) => {
+						// 								return (
+						// 									attr.DepartmentCode ==
+						// 									item.department_id
+						// 								);
+						// 						  }).DepartmentName
+						// 						: null,
+						// 				section:
+						// 					company.length > 0
+						// 						? company.find((attr) => {
+						// 								return attr.SectionCode == item.section_id;
+						// 						  }).SectionName
+						// 						: null,
+						// 				team:
+						// 					company.length > 0
+						// 						? company.find((attr) => {
+						// 								return attr.TeamCode == item.team_id;
+						// 						  }).TeamName
+						// 						: null,
+						// 				sequence:
+						// 					details.method == '2'
+						// 						? item.waku_sequence
+						// 						: item.jiku_sequence,
+						// 				received_date:
+						// 					status.length > 0 ? status[index].received_date : null,
+						// 				start_date:
+						// 					status.length > 0 ? status[index].start_date : null,
+						// 				finish_date:
+						// 					status.length > 0 ? status[index].finished_date : null,
+						// 				assessment_id:
+						// 					status.length > 0 ? status[index].assessment_id : null,
+						// 				days_in_process: isNaN(
+						// 					moment(status[index].start_date).diff(
+						// 						status[index].finished_date,
+						// 						'days'
+						// 					)
+						// 				)
+						// 					? ''
+						// 					: moment(status[index].start_date).diff(
+						// 							status[index].finished_date,
+						// 							'days'
+						// 					  )
+						// 			};
+						// 		}
+						// 	} else {
+						// 		return {
+						// 			toggleStatus: true,
+						// 			toggleSelect: true,
+						// 			...item,
+						// 			id: status[index].id,
+						// 			department:
+						// 				company.length > 0
+						// 					? company.find((attr) => {
+						// 							return (
+						// 								attr.DepartmentCode == item.department_id
+						// 							);
+						// 					  }).DepartmentName
+						// 					: null,
+						// 			section:
+						// 				company.length > 0
+						// 					? company.find((attr) => {
+						// 							return attr.SectionCode == item.section_id;
+						// 					  }).SectionName
+						// 					: null,
+						// 			team:
+						// 				company.length > 0
+						// 					? company.find((attr) => {
+						// 							return attr.TeamCode == item.team_id;
+						// 					  }).TeamName
+						// 					: null,
+						// 			sequence:
+						// 				details.method == '2'
+						// 					? item.waku_sequence
+						// 					: item.jiku_sequence,
+						// 			received_date:
+						// 				status.length > 0 ? status[index].received_date : null,
+						// 			start_date: status.length > 0 ? status[index].start_date : null,
+						// 			finish_date:
+						// 				status.length > 0 ? status[index].finished_date : null,
+						// 			assessment_id:
+						// 				status.length > 0 ? status[index].assessment_id : null,
+						// 			days_in_process: isNaN(
+						// 				moment(status[index].start_date).diff(
+						// 					status[index].finished_date,
+						// 					'days'
+						// 				)
+						// 			)
+						// 				? ''
+						// 				: moment(status[index].start_date).diff(
+						// 						status[index].finished_date,
+						// 						'days'
+						// 				  )
+						// 		};
+						// 	}
+						// })}
+						scroll={{ x: 'max-content', y: 'calc(100vh - 23em)' }}
+					/>
+					{/* <HenkouTable
 						headers={henkouStatusHeader(
 							assessment,
 							handleStatus,
@@ -335,17 +583,7 @@ const HenkouContainer = (props) => {
 											status.length > 0 ? status[index].assessment_id : null,
 
 										logs: details ? details.logs : '',
-										days_in_process: isNaN(
-											moment(status[index].start_date).diff(
-												status[index].finished_date,
-												'days'
-											)
-										)
-											? ''
-											: moment(status[index].start_date).diff(
-													status[index].finished_date,
-													'days'
-											  )
+
 									};
 								} else {
 									return {
@@ -363,14 +601,12 @@ const HenkouContainer = (props) => {
 											status.length > 0 ? status[index].assessment_id : null,
 										days_in_process: isNaN(
 											moment(status[index].start_date).diff(
-												status[index].finished_date,
-												'days'
+												status[index].finished_date
 											)
 										)
 											? ''
 											: moment(status[index].start_date).diff(
-													status[index].finished_date,
-													'days'
+													status[index].finished_date
 											  )
 									};
 								}
@@ -389,19 +625,17 @@ const HenkouContainer = (props) => {
 										status.length > 0 ? status[index].assessment_id : null,
 									days_in_process: isNaN(
 										moment(status[index].start_date).diff(
-											status[index].finished_date,
-											'days'
+											status[index].finished_date
 										)
 									)
 										? ''
 										: moment(status[index].start_date).diff(
-												status[index].finished_date,
-												'days'
+												status[index].finished_date
 										  )
 								};
 							}
 						})}
-					/>
+					/> */}
 				</div>
 			) : (
 				''
@@ -409,5 +643,7 @@ const HenkouContainer = (props) => {
 		</>
 	);
 };
-
-export default HenkouContainer;
+const mapStateToProps = (state) => ({
+	userInfo: state.auth.userInfo
+});
+export default connect(mapStateToProps)(HenkouContainer);

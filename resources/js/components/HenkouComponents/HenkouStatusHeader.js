@@ -1,11 +1,17 @@
 import React from 'react';
-import { Button, Select } from 'antd';
+import { Button, Select, Tag } from 'antd';
 import { PlayCircleOutlined, PauseCircleOutlined, FieldTimeOutlined } from '@ant-design/icons';
 const { Option } = Select;
-export const henkouStatusHeader = (assessment, handleStatus, handleAssessment, handlePending) => [
+export const henkouStatusHeader = (
+	assessment,
+	handleStatus,
+	handleAssessment,
+	handlePending,
+	checkIfSupplier
+) => [
 	{
 		title: 'Sequence',
-		dataIndex: 'Sequence',
+		dataIndex: 'sequence',
 		key: '1',
 		width: 70,
 		align: 'center',
@@ -20,48 +26,58 @@ export const henkouStatusHeader = (assessment, handleStatus, handleAssessment, h
 		fixed: 'left'
 	},
 	{
-		title: 'Department',
-		dataIndex: 'Department',
+		title: 'Product / Process',
 		key: '3',
+		width: 300,
+		dataIndex: 'product_name',
+		render: (text, row, index) => (
+			<b>
+				{checkIfSupplier(row) ? (
+					<Tag color="default">{text}</Tag>
+				) : (
+					<Tag color="success">{text}</Tag>
+				)}
+			</b>
+		),
 		align: 'center',
-		width: 150,
 		fixed: 'left'
+	},
+
+	{
+		title: 'Department',
+		dataIndex: 'department',
+		key: '4',
+		align: 'center',
+		width: 150
 	},
 	{
 		title: 'Section',
-		dataIndex: 'Section',
-		key: '4',
+		dataIndex: 'section',
+		key: '5',
 		align: 'center',
-		width: 170,
-		fixed: 'left'
+		width: 170
 	},
 	{
 		title: 'Team',
-		dataIndex: 'Team',
-		key: '5',
-		align: 'center',
-		width: 150,
-		fixed: 'left'
-	},
-	{
-		title: 'Product / Process',
+		dataIndex: 'team',
 		key: '6',
-		width: 300,
-		dataIndex: 'ProductCategory',
-		align: 'center'
+		align: 'center',
+		width: 150
 	},
+
 	{
 		title: 'Assessment',
 		key: '7',
 		dataIndex: 'assessment_id',
 		width: 80,
 		align: 'center',
-		render: (text, record, index) => {
+		render: (text, row, index) => {
 			return (
 				<Select
 					defaultValue=""
 					value={text}
-					onChange={(value) => handleAssessment(value, 'assessment_id', record)}
+					disabled={(!row.received_date, checkIfSupplier(row))}
+					onChange={(value) => handleAssessment(value, 'assessment_id', row)}
 					style={{ width: 175 }}>
 					{assessment.map((item, index) => {
 						return (
@@ -88,7 +104,8 @@ export const henkouStatusHeader = (assessment, handleStatus, handleAssessment, h
 				<>
 					<Button
 						type="primary"
-						disabled={row.assessment_id !== 1}
+						disabled={(checkIfSupplier(row), !row.received_date)}
+						// disabled={row.assessment_id !== 1}
 						onClick={() => handleStatus(row, 'start_date')}
 						shape="circle"
 						icon={<PlayCircleOutlined />}
@@ -105,7 +122,7 @@ export const henkouStatusHeader = (assessment, handleStatus, handleAssessment, h
 		render: (text, row) => (
 			<Button
 				type="primary"
-				disabled={row.toggleSelect}
+				disabled={(row.toggleSelect, !row.received_date, checkIfSupplier(row))}
 				onClick={() => handlePending(row)}
 				shape="circle"
 				icon={<FieldTimeOutlined />}
@@ -115,7 +132,7 @@ export const henkouStatusHeader = (assessment, handleStatus, handleAssessment, h
 	{
 		title: 'Finish',
 		key: '10',
-		dataIndex: 'finish_date',
+		dataIndex: 'finished_date',
 		align: 'center',
 
 		width: 150,
@@ -126,8 +143,8 @@ export const henkouStatusHeader = (assessment, handleStatus, handleAssessment, h
 				<>
 					<Button
 						type="primary"
-						disabled={row.toggleStatus}
-						onClick={() => handleStatus(row, 'finish_date')}
+						disabled={(!row.start_date, checkIfSupplier(row), !row.received_date)}
+						onClick={() => handleStatus(row, 'finished_date')}
 						shape="circle"
 						icon={<PauseCircleOutlined />}
 					/>

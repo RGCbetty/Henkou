@@ -14,7 +14,7 @@ class AssessmentController extends Controller
      */
     public function index()
     {
-        return Assessment::all();
+        return json_encode(Assessment::all());
     }
 
     /**

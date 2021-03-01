@@ -21,11 +21,9 @@ mix.react("resources/js/app.js", "public/js")
                 bottom: "20px"
             }
         },
-        watchOptions: {
-            ignored: /node_modules/
-        },
         ghostMode: false,
         logFileChanges: true,
-        watch: true
+        watch: true,
+        mode: "production"
     });
 mix.disableNotifications();

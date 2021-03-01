@@ -1,0 +1,92 @@
+.signup_form {
+    display: inline-block;
+    position: fixed;
+    top: 50vh;
+    left: 50vw;
+    transform: translate(-50%, -50%);
+    height: auto;
+    width: 1000px;
+    box-shadow: 0 3px 11px rgba(0, 0, 0, 0.5);
+}
+.signup_header {
+    width: 100%;
+    padding: 10px;
+    height: 50px;
+    background-color: #001529;
+    .header_title {
+        top: 20%;
+        font-weight: bolder;
+        color: white;
+    }
+}
+.signup_body {
+    width: 100%;
+    padding: 10px;
+    // height: calc(100% - 50px - 62px);
+    // background-color: red;
+}
+.signup_footer {
+    // position: sticky;
+    bottom: 0;
+    height: 62px;
+    width: 100%;
+    .footer_button {
+        // position: sticky;
+        float: right;
+        margin: 5px;
+        // display: inline-block;
+    }
+}
+$char-w: 1ch;
+$gap: 0.5 * $char-w;
+$n-char: 5;
+$in-w: $n-char * ($char-w + $gap);
+
+.emp_no {
+    display: block;
+    border: none;
+    padding: 0;
+    margin: 5px;
+    width: $in-w;
+    background: repeating-linear-gradient(
+            90deg,
+            dimgrey 0,
+            dimgrey $char-w,
+            transparent 0,
+            transparent $char-w + $gap
+        )
+        0 100% / #{$in-w - $gap} 2px no-repeat;
+    font: 2ch droid sans mono, consolas, monospace;
+    letter-spacing: $gap;
+
+    &:focus {
+        outline: none;
+        color: dodgerblue;
+    }
+}
+@media only screen and (max-width: 1000px) {
+    .signup_form {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        overflow-y: scroll;
+
+        top: 0;
+        transform: translate(0%, 0%);
+        z-index: 10;
+    }
+    // .signup_footer {
+    //     position: relative;
+    // }
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}

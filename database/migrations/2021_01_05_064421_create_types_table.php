@@ -17,7 +17,7 @@ class CreateTypesTable extends Migration
             $table->id();
             $table->string('type_name', 50);
             $table->timestamps();
-            $table->timestamp('updated_by')->nullable();
+            $table->string('updated_by', 15)->nullable();
         });
     }
 

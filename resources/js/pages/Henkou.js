@@ -13,224 +13,178 @@ const Henkou = ({ title, ...rest }) => {
 	useEffect(() => {
 		document.title = title || '';
 	}, [title]);
-	const [productState, setProduct] = useProductsRetriever();
+	const [product, setProduct] = useProductsRetriever();
 	const [details, setDetail] = useState({});
 	const [assessment, setAsssessment] = useState([]);
-	const [planStatus, setPlanStatus] = useActivePlanStatus();
 	const [planDetail, setPlanDetail] = useState([]);
-	const [userProduct, setUserProducts] = useState([]);
-	const [subProduct, setSubProduct] = useState(false);
-	const [statusState, setStatus] = useState([]);
+	const [company, setCompany] = useState([]);
+	const [status, setStatus] = useState([]);
 	const handleEvent = async (constructionCode) => {
 		const details = await fetchDetails(constructionCode);
-		const products = await fetchProducts(details);
-		const fetchAssessment = await Http.get('/api/assessments');
-
-		setAsssessment(fetchAssessment.data);
-		setProduct(products);
+		const assessment = await Http.get('/api/assessments');
+		setAsssessment(assessment.data);
 		setDetail(details);
-
 		const instance = Http.create({
-			baseURL: 'http://hrdapps71:4900/',
-			withCredentials: false
+			baseURL: 'http://adminsql1/api',
+			withCredentials: false,
+			headers: {
+				'master-api': 'db588403f0a1d3b897442a28724166b4'
+			}
 		});
-		/* PCMS */
-		let checkedPlanDetails = {};
-		let email = null;
-		let tempStat = '';
-		let arr = [];
-		let temp = {};
-		let planDetails = [];
-		let pending = '';
-		const responseCheckPlans = await instance.get(`get/checkPlan/${constructionCode}`);
-		if (responseCheckPlans.data[0].EmailedDate) {
-			email = responseCheckPlans.data[0].EmailedDate;
-		}
-		checkedPlanDetails = {
-			KakouIraiRequest: responseCheckPlans.data[0].KakouIraiRequest,
-			HouseTypeCode: responseCheckPlans.data[0].HouseTypeCode,
-			HouseClass: responseCheckPlans.data[0].HouseClass,
-			EmailedDate: email,
-			JoutouDate: responseCheckPlans.data[0].JoutouDate,
-			ShiageDelivery: responseCheckPlans.data[0].ShiageDelivery,
-			KisoStart: responseCheckPlans.data[0].KisoStart
-		};
-		const responsePlanStatus = await instance.get(`get/viewPlanStatus/${constructionCode}`);
-		for (let i = 0; i < planStatus.length; i++) {
-			if (
-				checkedPlanDetails.HouseClass == planStatus[i].HouseType ||
-				planStatus[i].HouseType == 'Both'
-			) {
-				let rems = false;
-				if (_.includes(_.map(responsePlanStatus.data, 'Product'), planStatus[i]._id)) {
-					let a = _.find(responsePlanStatus.data, ['Product', planStatus[i]._id]);
-					if (a.Status == 'Received') {
-						tempStat = 'Not Yet Started';
-					} else {
-						tempStat = a.Status;
-						if (tempStat == 'Pending') {
-							rems = true;
-						}
-						if (a.Process != undefined) {
-							a.Process.forEach((val) => {
-								if (val.Remarks != undefined) {
-									if (val.Remarks) {
-										rems = true;
-									}
-								}
-								if (val.Pending != undefined && val.Pending.length > 0) {
-									pending = val.Pending.map((arr) => {
-										if (arr.PendingResume == null) {
-											return arr;
-										}
-									});
-								}
-							});
-						} else {
-							if (a.Remarks != undefined) {
-								if (a.Remarks) {
-									rems = true;
-								}
-							}
-							if (a.Pending != undefined) {
-								pending = a.Pending;
-							}
-						}
-						if (a.LeadersRemarks != undefined) {
-							if (a.LeadersRemarks) {
-								rems = true;
-							}
-						} else {
-							if (a.LeadersRemarksHistory && a.LeadersRemarksHistory.length > 0) {
-								rems = true;
-							}
-						}
-						if (planStatus[i]._id != 'aPi@wUk3D') {
-							arr.push({
-								ProductCode: planStatus[i]._id,
-								ProductCategory: planStatus[i].ProductCategory,
-								ProductType: planStatus[i].ProductType,
-								Department: planStatus[i].Department,
-								Section: planStatus[i].Res[0].Section,
-								Team: planStatus[i].Res[0].Team,
-								Sequence: parseInt(
-									planStatus[i].ProductSequence[checkedPlanDetails.HouseClass]
-								),
-								Status: tempStat,
-								FinishDate: a.FinishDate,
-								ReceiveDate: a.ReceiveDate,
-								Remarks: rems,
-								Pending: pending
-							});
-						} else {
-							if (a.ReKakouIrai != undefined && a.Status == 'Received') {
-								tempStat = 'Finished';
-							}
-							temp = {
-								ProductCode: planStatus[i]._id,
-								ProductCategory: planStatus[i].ProductCategory,
-								ProductType: planStatus[i].ProductType,
-								Department: planStatus[i].Department,
-								Section: planStatus[i].Res[0].Section,
-								Team: planStatus[i].Res[0].Team,
-								Sequence: parseInt(
-									planStatus[i].ProductSequence[checkedPlanDetails.HouseClass]
-								),
-								Status: tempStat,
-								FinishDate: a.FinishDate,
-								ReceiveDate: a.ReceiveDate,
-								Remarks: rems,
-								Pending: pending
-							};
-						}
-					}
-				} else {
-					arr.push({
-						ProductCode: planStatus[i]._id,
-						ProductCategory: planStatus[i].ProductCategory,
-						ProductType: planStatus[i].ProductType,
-						Department: planStatus[i].Department,
-						Section: planStatus[i].Res[0].Section,
-						Team: planStatus[i].Res[0].Team,
-						Sequence: parseInt(
-							planStatus[i].ProductSequence[checkedPlanDetails.HouseClass]
-						),
-						Status: 'Not Yet Receive',
-						FinishDate: null,
-						ReceiveDate: null,
-						Remarks: rems,
-						Pending: pending
-					});
-				}
-			}
-		}
-		planDetails = _.sortBy(arr, ['Sequence', 'ProductCategory']);
-		planDetails.unshift(temp);
-		let userProducts = [];
-		// setPlanStatus(planDetails);
-		const responseEmployeeProducts = await instance.get(
-			`get/getID/${rest.userInfo[0].EmployeeCode}`
-		);
-		if (responseEmployeeProducts != undefined && responseEmployeeProducts.data.length > 0) {
-			// if (
-			//     responseEmployeeProducts.data[0].filtering == true &&
-			//     responseEmployeeProducts.data[0].filtering != undefined
-			// ) {
-			userProducts = responseEmployeeProducts.data[0][responseCheckPlans.data[0].HouseClass]
-				? responseEmployeeProducts.data[0][responseCheckPlans.data[0].HouseClass]
-				: [];
-			setUserProducts(userProducts);
-			// }
-			if (
-				responseEmployeeProducts.data[0].showSubProduct == true &&
-				responseEmployeeProducts.data[0].showSubProduct != undefined
-			) {
-				const showSubProducts = responseEmployeeProducts.data[0].showSubProduct
-					? responseEmployeeProducts.data[0].showSubProduct
-					: false;
-				setSubProduct(showSubProducts);
-			}
-		}
-		if (userProducts.length > 0) {
-			const assignedPlanDetails = planDetails.filter((item) => {
-				return userProducts.includes(item.ProductCode);
-			});
-			setPlanDetail(assignedPlanDetails);
-		}
-		/* PCMS */
-
+		const company = await instance.get('/company/department/section/team/hrd');
+		// setCompany(company.data);
 		if (details) {
 			const fetchStatus = await Http.get(`/api/status/${details.id}`);
-			console.log(fetchStatus);
-			setStatus(fetchStatus.data);
+			console.log(fetchStatus, '6969696969696');
+
+			const products = fetchStatus.data.map((item) => {
+				return {
+					...item,
+					department:
+						company.data.length > 0
+							? company.data.find((attr) => {
+									const prod = product.find(
+										(el) =>
+											attr.DepartmentCode == el.department_id &&
+											item.product_id == el.id
+									);
+
+									return prod ? attr.DepartmentCode == prod.department_id : false;
+							  }).DepartmentName
+							: null,
+					section:
+						company.data.length > 0
+							? company.data.find((attr) => {
+									const prod = product.find(
+										(el) =>
+											attr.SectionCode == el.section_id &&
+											item.product_id == el.id
+									);
+									return prod ? attr.SectionCode == prod.section_id : false;
+							  }).SectionName
+							: null,
+					team:
+						company.data.length > 0
+							? company.data.find((attr) => {
+									const prod = product.find(
+										(el) =>
+											attr.TeamCode == el.team_id && item.product_id == el.id
+									);
+									return prod ? attr.TeamCode == prod.team_id : false;
+							  }).TeamName
+							: null,
+					sequence:
+						details.method == '2'
+							? product.find((el) => el.id == item.product_id).waku_sequence
+							: product.find((el) => el.id == item.product_id).jiku_sequence,
+					product_name: product.find((el) => el.id == item.product_id).product_name
+				};
+			});
+			const owner = products.filter((item, index) => {
+				if (rest.userInfo.DesignationCode == '003') {
+					if (
+						rest.userInfo.DepartmentCode ==
+							product.find((el) => el.id == item.product_id).department_id &&
+						rest.userInfo.SectionCode ==
+							product.find((el) => el.id == item.product_id).section_id
+					) {
+						return item;
+					}
+				} else {
+					if (
+						rest.userInfo.DepartmentCode ==
+							product.find((el) => el.id == item.product_id).department_id &&
+						rest.userInfo.SectionCode ==
+							product.find((el) => el.id == item.product_id).section_id &&
+						rest.userInfo.TeamCode ==
+							product.find((el) => el.id == item.product_id).team_id
+					) {
+						return item;
+					}
+				}
+			});
+			console.log(owner, 'cqwrijqcwoirjqwoicrjqw');
+			const sortBySequenceOwner = _.sortBy(owner, ['sequence']);
+			let params = {};
+			for (let i = 0; i < sortBySequenceOwner.length; i++) {
+				params[`product_${i + 1}`] = owner[i].product_key;
+			}
+			console.log(params, 'paramssssssss');
+			const supplierKeys = await Http.get(`api/supplier`, { params: params });
+			const suppliers = supplierKeys.data.map((item) => {
+				return {
+					...item,
+					products:
+						products.length > 0
+							? products.filter((el) => {
+									return el.product_key == item.supplier_key;
+							  })
+							: null
+				};
+			});
+			console.log(supplierKeys, 'suppllierrsss!!!!!!!!!!!!!');
+
+			let concatenatedProducts = [];
+			let supplier = [];
+			console.log(sortBySequenceOwner, 'sortedOwner');
+			for (let i = 0; i < sortBySequenceOwner.length; i++) {
+				console.log(sortBySequenceOwner[i], 'each Ownerrrrrrrrrrr');
+				for (let j = 0; j < suppliers.length; j++) {
+					if (sortBySequenceOwner[i].product_key == suppliers[j].product_key) {
+						for (let k = 0; k < suppliers[j].products.length; k++) {
+							supplier.push(suppliers[j].products[k]);
+						}
+					}
+				}
+				const sortedSupplier = _.sortBy(supplier, ['sequence', 'product_name']);
+				for (let l = 0; l < sortedSupplier.length; l++) {
+					concatenatedProducts.push(sortedSupplier[l]);
+				}
+				supplier = [];
+				concatenatedProducts.push(sortBySequenceOwner[i]);
+			}
+			const uniqueProducts = _.uniqBy(concatenatedProducts, (obj) => obj.product_key);
+			console.log(concatenatedProducts, 'concatenated products!!!!!!!!!!!!');
+			setStatus(uniqueProducts);
+
+			if (details.method == '2') {
+				const sortedProducts = _.sortBy(product, ['waku_sequence', 'product_name']);
+				setProduct(sortedProducts);
+			} else {
+				const sortedProducts = _.sortBy(product, ['jiku_sequence', 'product_name']);
+				setProduct(sortedProducts);
+			}
 			return 'found';
 		} else {
 			return 'not found';
 		}
 	};
 	const handleUpdate = async (row, details, key) => {
-		const { received_date, ...attr } = row;
-		console.log(key);
-		if (key == 'finish_date') {
-			planDetail[row.id - 1] = row;
-			planDetail[row.id].received_date = received_date;
+		const { received_date, product_key, detail_id, ...attr } = row;
+
+		if (key == 'finished_date') {
+			status[status.findIndex((element) => element.product_id == row.id)] = row;
+			status[
+				status.findIndex((element) => element.product_id == row.id) + 1
+			].received_date = received_date;
 		} else {
-			planDetail[row.id - 1] = attr;
+			status[status.findIndex((element) => element.product_id == row.id)] = row;
 		}
-		const products = [...planDetail];
+		const products = [...status];
 		let updateStatus;
-		if (key == 'finish_date') {
+		if (key == 'finished_date') {
 			updateStatus = await Http.post(`/api/status/${details.id}`, [
-				products[row.id - 1],
-				products[row.id]
+				products[status.findIndex((element) => element.product_id == row.id)],
+				products[status.findIndex((element) => element.product_id == row.id) + 1]
 			]);
 		} else {
 			updateStatus = await Http.post(`/api/status/${details.id}`, {
-				products: products[row.id - 1]
+				products: products[status.findIndex((element) => element.product_id == row.id)]
 			});
 		}
-		setPlanDetail(products);
-		setStatus(updateStatus.data);
+		console.log(updateStatus.data);
+		// setProduct(products);
+		setStatus(products);
 		setDetail(details);
 		// setState({ details: state.details, products: state.products });
 	};
@@ -239,15 +193,16 @@ const Henkou = ({ title, ...rest }) => {
 			handleEvent={handleEvent}
 			handleUpdate={handleUpdate}
 			plandetail={planDetail}
-			status={statusState}
+			status={status}
 			details={details}
+			company={company}
 			assessment={assessment}
-			products={productState}></HenkouContainer>
+			product={product}></HenkouContainer>
 	);
 };
 
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.user
+	userInfo: state.auth.userInfo
 });
 
 export default connect(mapStateToProps)(Henkou);
