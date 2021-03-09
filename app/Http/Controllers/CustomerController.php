@@ -18,7 +18,7 @@ class CustomerController extends Controller
     {
         // info(ProductCategory::with('customers')->get());
         // info(Customer::with('product:id,product_key')->get());
-        info(Supplier::with('products')->get());
+        // info(Supplier::with('products')->get());
         // info(Customer::with('product')->get());
         // $products = ProductCategory::select('id', 'product_key')->with('customers:id,product_key')->get();
         // info($products);
@@ -58,7 +58,6 @@ class CustomerController extends Controller
      */
     public function show(Customer $customer, Request $request)
     {
-        info('test');
         // $request_arr = (array) $request;
         // $request_array =  json_decode(json_encode($request), true);
         $product_keys = array_values($request->all());
@@ -66,7 +65,7 @@ class CustomerController extends Controller
 
         $customer_keys = Customer::select('product_key', 'customer_key')->whereIn('product_key', $product_keys)->get();
         // $supplier_keys = Supplier::whereIn('product_key', $product_keys)->pluck('supplier_key')->toArray();
-        info($customer_keys);
+        // info($customer_keys);
         return json_encode($customer_keys);
     }
 

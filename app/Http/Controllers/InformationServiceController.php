@@ -74,13 +74,14 @@ class InformationServiceController extends Controller
     {
         try {
             $construction_schedule = DB::connection('HRDSQL')->select(DB::raw("SELECT ExpectedHouseRaisingDate, StartedFoundationWorkDate FROM ConstructionSchedule WHERE ConstructionCode = '$id'"));
-            $invoice = DB::connection('sqlsrv')->select(DB::raw("SELECT * FROM getInvoice ('$id')"));
             $house = DB::connection('HRDSQL')->select(DB::raw("SELECT A.Floors,B.ConstructionTypeName,B.Method,C.NameCode,C.PlanNo FROM Houses AS A
                 LEFT JOIN ConstructionTypes B
                 ON A.ConstructionTypeCode = B.ConstructionTypeCode
                 LEFT JOIN Constructions C
                 ON A.ConstructionCode = C.ConstructionCode
                 WHERE A.ConstructionCode = '{$id}'"));
+
+            $invoice = DB::connection('sqlsrv')->select(DB::raw("SELECT * FROM getInvoice ('$id')"));
             $plan_specs = DB::connection('sqlsrv')->select(DB::raw("SELECT * FROM getPlanSpecs ('$id')"));
             return response()->json([
                 'construction_schedule' => $construction_schedule,

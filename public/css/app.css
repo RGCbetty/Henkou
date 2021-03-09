@@ -28166,6 +28166,77 @@ div.ant-typography-edit-content.ant-typography-rtl {
   margin: 8px 0 0;
   padding: 0;
 }
+#product_name {
+  text-align: center;
+}
+
+#department {
+  text-align: center;
+}
+
+#section {
+  text-align: center;
+}
+
+#team {
+  text-align: center;
+}
+
+.ant-table {
+  display: block;
+}
+
+@media screen and (max-width: 600px) {
+  .ant-table-thead {
+    display: none;
+  }
+
+  .ant-table-thead > tr th:first-of-type,
+  .ant-table-thead > tr td:first-of-type,
+  .ant-table-tbody > tr th:first-of-type,
+  .ant-table-tbody > tr td:first-of-type {
+    padding-top: 1rem;
+  }
+
+  .ant-table-thead > tr th:last-of-type,
+  .ant-table-thead > tr td:last-of-type,
+  .ant-table-tbody > tr th:last-of-type,
+  .ant-table-tbody > tr td:last-of-type {
+    padding-bottom: 1rem;
+  }
+
+  .ant-table-thead > tr > th,
+  .ant-table-thead > tr > td,
+  .ant-table-tbody > tr > th,
+  .ant-table-tbody > tr > td {
+    display: block;
+    width: auto !important;
+    border: none;
+    padding: 0 1rem;
+    font-size: 1.1rem;
+  }
+
+  .ant-table-thead > tr > th:last-child,
+  .ant-table-thead > tr > td:last-child,
+  .ant-table-tbody > tr > th:last-child,
+  .ant-table-tbody > tr > td:last-child {
+    border-bottom: 1px solid #eee;
+  }
+}
+
+.ant-table-container,
+.ant-table-container table > thead > tr:first-child th:first-child {
+  border-top-left-radius: 2px;
+}
+
+#registration_page .th_plans {
+  height: 35px;
+  background-size: 100px 50px;
+  background-position: left;
+  background-repeat: no-repeat;
+  background-image: url(/images/THPlans.svg?9bdf4d3dee8af5bf7a7ae05c92eed671);
+}
+
 #components-layout-demo-responsive .logo {
   height: 80px;
   background-position: center;
@@ -28173,12 +28244,27 @@ div.ant-typography-edit-content.ant-typography-rtl {
   background-image: url(/images/henkou.svg?4b9bb50778cb0391d1d6a90eac395952);
 }
 
+#components-layout-demo-responsive .avatar {
+  display: inline-block;
+  margin: 0px 20px 0 20px;
+  color: white;
+  flex-direction: column;
+  align-content: center;
+}
+
+#components-layout-demo-responsive .avatar p {
+  margin: 5px 5px 5px 15px;
+  color: white;
+  font-size: 0.9vw;
+  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
+}
+
 #col_title .project_title {
   height: 60px;
   background-position: -50px;
   background-repeat: no-repeat;
   background-size: 350px 200px;
-  background-image: url("/images/HRD Henkou.svg?d372bf8a62a8eda71c670197c9d97190");
+  background-image: url("/images/HRD Henkou.svg?fe82530f58499da3b774670e0ab13222");
 }
 
 .site-layout-sub-header-background {

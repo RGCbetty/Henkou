@@ -18,6 +18,7 @@ class CreateSuppliersTable extends Migration
             $table->string('product_key', 50);
             $table->string('supplier_key', 50);
             $table->boolean('last_touch')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

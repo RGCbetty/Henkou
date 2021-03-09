@@ -7,7 +7,8 @@ export const henkouStatusHeader = (
 	handleStatus,
 	handleAssessment,
 	handlePending,
-	checkIfSupplier
+	checkIfSupplier,
+	checkIfOwner
 ) => [
 	{
 		title: 'Sequence',
@@ -32,7 +33,7 @@ export const henkouStatusHeader = (
 		dataIndex: 'product_name',
 		render: (text, row, index) => (
 			<b>
-				{checkIfSupplier(row) ? (
+				{checkIfOwner(row) ? (
 					<Tag color="default">{text}</Tag>
 				) : (
 					<Tag color="success">{text}</Tag>
@@ -72,6 +73,7 @@ export const henkouStatusHeader = (
 		width: 80,
 		align: 'center',
 		render: (text, row, index) => {
+			console.log(checkIfSupplier(row));
 			return (
 				<Select
 					defaultValue=""
@@ -104,7 +106,7 @@ export const henkouStatusHeader = (
 				<>
 					<Button
 						type="primary"
-						disabled={(checkIfSupplier(row), !row.received_date)}
+						disabled={(!row.received_date, checkIfSupplier(row))}
 						// disabled={row.assessment_id !== 1}
 						onClick={() => handleStatus(row, 'start_date')}
 						shape="circle"
@@ -143,7 +145,7 @@ export const henkouStatusHeader = (
 				<>
 					<Button
 						type="primary"
-						disabled={(!row.start_date, checkIfSupplier(row), !row.received_date)}
+						disabled={(!row.start_date, !row.received_date, checkIfSupplier(row))}
 						onClick={() => handleStatus(row, 'finished_date')}
 						shape="circle"
 						icon={<PauseCircleOutlined />}

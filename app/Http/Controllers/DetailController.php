@@ -42,6 +42,7 @@ class DetailController extends Controller
             //             AND A.customer_code = '{$customer_code}';"));
             // $max = Detail::where('customer_code', $customer_code)->max('rev_no');
             // $found = (empty($max)) ? null :  Detail::where('customer_code', $customer_code)->where('rev_no', $max)->first()->invoice()->where('customer_code', $customer_code)->first();
+            // info($result);
             return $result;
         } catch (Exception $e) {
             Log::error($e);

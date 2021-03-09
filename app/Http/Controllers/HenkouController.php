@@ -42,7 +42,8 @@ class HenkouController extends Controller
     public function store(Request $request)
     {
         try {
-            info($request);
+            $plan_specification = explode(',', $request->details['plan_specification']);
+            info($plan_specification);
             // if ($request->details['logs'] && $request->details['reason_id'] && $request->details['type_id']) {
             if (Detail::where('customer_code', $request->details['customer_code'])->first()) {
                 $latest_revision = Detail::where('customer_code', $request->details['customer_code'])->max('rev_no');
@@ -166,6 +167,7 @@ class HenkouController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // info($request);
         if (count($request->all()) == 2) {
             Status::where('detail_id', $id)->where('product_key', $request[0]['product_key'])
                 ->update([

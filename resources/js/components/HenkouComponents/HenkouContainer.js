@@ -11,6 +11,7 @@ import { DownOutlined, UpOutlined, PaperClipOutlined } from '@ant-design/icons';
 import { henkouStatusHeader } from '../HenkouComponents/HenkouStatusHeader';
 import { PlanCustomerInformation } from './PlanCustomerInformation';
 import PendingHeaders from '../HenkouComponents/PendingHeaders';
+import Legend from '../Legend';
 
 const { Search, TextArea } = Input;
 const { Title } = Typography;
@@ -22,9 +23,12 @@ const HenkouContainer = (props) => {
 		handleUpdate,
 		assessment,
 		status,
+		suppliers,
+		uniqueProducts,
 		company,
 		...rest
 	} = props;
+	const [showCollapse, setShowCollapse] = useState(false);
 	const [expand, setExpand] = useState(false);
 	const [row, setRow] = useState({});
 	const [isVisibleAttachmentModal, setVisibleAttachmentModal] = useState(false);
@@ -33,14 +37,38 @@ const HenkouContainer = (props) => {
 	const [isVisiblePendingModal, setVisiblePendingModal] = useState(false);
 	const [form] = Form.useForm();
 	/* HENKOU PROCESS */
-
-	const checkIfSupplier = (record) => {
+	// const uniqueProducts = _.uniqBy(concatenatedProducts, (obj) => obj.product_key);
+	const checkIfOwner = (record) => {
 		if (
 			record.department == rest.userInfo.DepartmentName &&
 			record.section == rest.userInfo.SectionName &&
 			record.team == rest.userInfo.TeamName
 		) {
 			return false;
+		} else {
+			return true;
+		}
+	};
+	const checkIfSupplier = (record) => {
+		if (
+			record.department == rest.userInfo.DepartmentName &&
+			record.section == rest.userInfo.SectionName &&
+			record.team == rest.userInfo.TeamName
+		) {
+			if (
+				suppliers.length > 0
+					? suppliers.find(
+							(item) => item.product_key == record.product_key && item.last_touch
+					  )
+						? suppliers.find((item) => item.product_key == record.product_key)
+								.last_touch
+						: false
+					: false
+			) {
+				return false;
+			} else {
+				return true;
+			}
 		} else {
 			return true;
 		}
@@ -102,7 +130,9 @@ const HenkouContainer = (props) => {
 	const onEnter = async (e) => {
 		console.log('onEnter');
 		const result = await handleEvent(e.target.value);
-		result == 'found' ? setExpand(true) : (setExpand(false), openNotificationWithIcon('info'));
+		result == 'found'
+			? (setExpand(true), setShowCollapse(true))
+			: (setExpand(false), openNotificationWithIcon('info'));
 	};
 	/*  */
 	/* PENDING MODAL */
@@ -204,6 +234,7 @@ const HenkouContainer = (props) => {
 	};
 	const handleAttachmentModal = async () => {
 		const responseLists = await Http.get(`/api/henkou/attachments/${details.id}`);
+		console.log(responseLists, 'tititiostoisejtiposejtpiosejtseipjt');
 		setAttachments(responseLists.data);
 		setVisibleAttachmentModal(true);
 	};
@@ -217,7 +248,7 @@ const HenkouContainer = (props) => {
 				className="ant-advanced-search-form"
 				onFinish={onFinish}>
 				<Row gutter={[10, 10]}>
-					<Col span={12}>
+					<Col span={8}>
 						<Search
 							placeholder="Enter Code"
 							allowClear
@@ -225,7 +256,10 @@ const HenkouContainer = (props) => {
 							onPressEnter={onEnter}
 							style={{ width: 300, margin: '0 0' }}></Search>
 					</Col>
-					<Col span={12} style={{ textAlign: 'right' }}>
+					<Col span={8} style={{ textAlign: 'center', padding: '10 0 0 0' }}>
+						Henkou Page
+					</Col>
+					<Col span={8} style={{ textAlign: 'right' }}>
 						{expand ? (
 							<Input
 								addonBefore="Registration Date"
@@ -282,15 +316,17 @@ const HenkouContainer = (props) => {
 						)}
 					</Col>
 
-					<Col span={24} style={{ textAlign: 'right' }}>
-						<a
-							style={{ fontSize: 12 }}
-							onClick={() => {
-								setExpand(!expand);
-							}}>
-							{expand ? <UpOutlined /> : <DownOutlined />} See Details
-						</a>
-					</Col>
+					{showCollapse ? (
+						<Col span={24} style={{ textAlign: 'right' }}>
+							<a
+								style={{ fontSize: 12 }}
+								onClick={() => {
+									setExpand(!expand);
+								}}>
+								{expand ? <UpOutlined /> : <DownOutlined />} Collapse
+							</a>
+						</Col>
+					) : null}
 				</Row>
 			</Form>
 			<Modal
@@ -342,9 +378,24 @@ const HenkouContainer = (props) => {
 			</Modal>
 			{expand ? (
 				<div style={{ padding: 5 }}>
-					<Title level={4} style={{ margin: 0 }}>
-						Henkou Status
-					</Title>
+					<div style={{ display: 'flex', justifyContent: 'space-between' }}>
+						<Title
+							level={4}
+							style={{ margin: 0, display: 'inline-block', verticalAlign: 'top' }}>
+							Henkou Status
+						</Title>
+						<div
+							style={{
+								display: 'inline-block',
+								verticalAlign: 'right'
+								// textAlign: 'right'
+							}}>
+							<Legend
+								hideSomeLegends={true}
+								title1={'Supplier'}
+								title2={'Owner'}></Legend>
+						</div>
+					</div>
 					<Table
 						rowKey={(record) => record.id}
 						columns={henkouStatusHeader(
@@ -352,10 +403,10 @@ const HenkouContainer = (props) => {
 							handleStatus,
 							handleAssessment,
 							handlePending,
-							checkIfSupplier
+							checkIfSupplier,
+							checkIfOwner
 						)}
 						bordered
-						rowKey={(record) => record.id}
 						dataSource={
 							status.map((item) => {
 								return {

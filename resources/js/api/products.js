@@ -3,14 +3,28 @@ import Http from '../Http';
 import moment from 'moment';
 
 export const useProductsRetriever = () => {
-	const [products, setProduct] = useState([]);
+	// const [products, setProduct] = useState({
+	// 	loading: false,
+	// 	pagination: {
+	// 		current_page: 1,
+	// 		per_page: 10
+	// 	}
+	// });
+	const [products, setProduct] = useState({ loading: false, data: [] });
 	useEffect(() => {
 		let mounted = true;
 		(async () => {
 			try {
-				const products = await fetchProducts();
+				const productsApi = await fetchProducts(setProduct, products);
+
 				if (mounted) {
-					setProduct(products);
+					// setProduct({ ...productsApi, ...products });
+					setProduct({
+						loading: false,
+						data: productsApi.map((item) => {
+							return { ...item };
+						})
+					});
 				}
 			} catch (error) {
 				if (Http.isCancel(error)) {
@@ -26,27 +40,10 @@ export const useProductsRetriever = () => {
 	}, []);
 	return [products, setProduct];
 };
-export const fetchProducts = async (details = null) => {
+export const fetchProducts = async (setProduct = null, products = null) => {
+	setProduct({ loading: true });
 	const response = await Http.get('/api/products');
-	const fetchAssessment = await Http.get('/api/assessments');
-	const { data } = response;
-	if (details) {
-		let result = data.map((item, index) => {
-			const items =
-				index == 0
-					? {
-							...item,
-							received_date: moment(details.created_at).format('YYYY-MM-DD HH:mm:ss'),
-							assessment: fetchAssessment.data
-					  }
-					: {
-							...item,
-							assessment: fetchAssessment.data
-					  };
-			return items;
-		});
-		return result;
-	} else {
-		return data;
-	}
+	// console.log(response);
+
+	return response.data;
 };

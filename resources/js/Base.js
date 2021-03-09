@@ -11,8 +11,11 @@ import {
 	FileSyncOutlined,
 	FileSearchOutlined,
 	UserOutlined,
-	StopOutlined
+	StopOutlined,
+	SettingFilled,
+	LogoutOutlined
 } from '@ant-design/icons';
+import Icon from '@ant-design/icons';
 
 const { Header, Content, Footer, Sider } = Layout;
 const { Title } = Typography;
@@ -32,14 +35,20 @@ const Base = ({ children, dispatch, ...rest }) => {
 	const menu = (
 		<Menu>
 			<Menu.Item key="0">
-				<a href="http://www.alipay.com/">1st menu item</a>
+				<Link to="/products">
+					<SettingFilled />
+					Manage Products
+				</Link>
 			</Menu.Item>
 			<Menu.Divider />
 			<Menu.Item key="1">
-				<a href="http://www.taobao.com/">2nd menu item</a>
+				<Link to="/users">
+					<UserOutlined />
+					Manage Users
+				</Link>
 			</Menu.Item>
 			<Menu.Divider />
-			<Menu.Item key="3" onClick={handleLogout}>
+			<Menu.Item icon={<LogoutOutlined />} key="3" onClick={handleLogout}>
 				Logout
 			</Menu.Item>
 		</Menu>
@@ -47,12 +56,16 @@ const Base = ({ children, dispatch, ...rest }) => {
 	return (
 		<Layout
 			style={{
-				height: '100vh'
+				minHeight: '100vh'
 			}}>
 			<Sider
 				id="components-layout-demo-responsive"
 				breakpoint="lg"
 				collapsedWidth="0"
+				// style={{
+				// 	overflow: 'auto'
+				// }}
+				// collapsed
 				// onBreakpoint={broken => {
 				//     console.log(broken);
 				// }}
@@ -61,12 +74,31 @@ const Base = ({ children, dispatch, ...rest }) => {
 				// }}
 			>
 				<div className="logo" />
-				<Menu theme="dark" mode="inline" defaultSelectedKeys={[pathname]}>
+				<div className="avatar">
+					{/* <Avatar
+						src={`http://adminsql1/photos/${rest.userInfo.EmployeeCode}.jpg`}
+						size="large"
+						style={{ verticalAlign: 'center' }}
+					/>
+					<p>{rest.userInfo.EmployeeName} Encoder</p> */}
+					<span>Department</span>
+					<p style={{ verticalAlign: 'top' }}>{rest.userInfo.DepartmentName}</p>
+					<span>Section</span>
+					<p style={{ verticalAlign: 'middle' }}>{rest.userInfo.SectionName}</p>
+					<span>Team</span>
+					<p style={{ verticalAlign: 'bottom' }}>{rest.userInfo.TeamName}</p>
+				</div>
+				<Menu
+					theme="dark"
+					mode="inline"
+					defaultSelectedKeys={[pathname]}
+					selectedKeys={[pathname]}>
 					{drawerItems
 						.filter((item) => {
 							if (
 								rest.userInfo.SectionCode !== '465' &&
-								rest.userInfo.TeamCode !== '0133'
+								rest.userInfo.TeamCode !== '0133' &&
+								rest.userInfo.DepartmentCode !== '122'
 							) {
 								if (item.title == 'Registration') {
 									return false;
@@ -97,7 +129,23 @@ const Base = ({ children, dispatch, ...rest }) => {
 								<Button
 									shape="round"
 									onClick={(e) => e.preventDefault()}
-									icon={<UserOutlined />}
+									icon={
+										<Icon
+											component={() => (
+												<Avatar
+													size="small"
+													style={{ margin: '-5px 0px 0px 0px' }}
+													// http://asd_sql/photos/38610.jpg
+
+													src={`http://asd_sql/photos/${rest.userInfo.EmployeeCode}.jpg`}
+													// src={`http://hrdapps48:3001/ftp/employee_pictures/${rest.userInfo.EmployeeCode}.jpg`}
+												></Avatar>
+												// <img
+												// 	src={`http://adminsql1/photos/${rest.userInfo.EmployeeCode}.jpg`}
+												// />
+											)}
+										/>
+									}
 									size="middle">
 									{rest.userInfo.EmployeeName}
 								</Button>

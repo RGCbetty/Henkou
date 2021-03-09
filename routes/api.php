@@ -31,9 +31,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{id}', 'AuthController@users');
 
     // Route::get('/masterlist/{id}', 'AuthController@userinfo');
-    /* Specifications */
+    /* HRD Information Service */
     Route::get('/plans', 'InformationServiceController@table');
     Route::get('/plandetails/{id}', 'InformationServiceController@specs');
+    Route::get('/stop', 'InformationServiceController@stop');
+
     /* Specifications */
     /* Master */
     Route::get('/reasons', 'ReasonController@index');
@@ -45,8 +47,10 @@ Route::middleware('auth:sanctum')->group(function () {
     /* Henkou Details Record */
     Route::get('/details/{customer_code}', 'DetailController@latest');
     Route::post('/details', 'HenkouController@store');
-    Route::get('/products', 'ProductCategoryController@index');
-    Route::get('/stop', 'InformationServiceController@stop');
+    Route::get('/product', 'ProductCategoryController@index');
+    Route::get('/products', 'ProductCategoryController@all');
+    Route::post('/productcategories', 'ProductCategoryController@update');
+
     Route::get('/status/{id}', 'HenkouController@show');
     Route::post('/status/{id}', 'HenkouController@update');
     /* Kouzou Pending */

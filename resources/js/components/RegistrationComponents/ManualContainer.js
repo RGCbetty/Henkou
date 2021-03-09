@@ -11,6 +11,7 @@ import {
 	DatePicker,
 	Modal,
 	Upload,
+	notification,
 	Table
 } from 'antd';
 import { DownOutlined, UpOutlined, UploadOutlined, SnippetsOutlined } from '@ant-design/icons';
@@ -44,10 +45,11 @@ const ManualContainer = ({
 	const [userProductCategoriesPCMS, setUserProducts] = useState([]);
 	const [subProductPCMS, setSubProduct] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [visible, setVisible] = useState(false);
 	/* PCMS */
 	const [henkouLoading, setHenkouLoading] = useState(false);
-	const [visible, setVisible] = useState(false);
 	const [expand, setExpand] = useState(false);
+	const [showCollapse, setShowCollapse] = useState(false);
 	const [upload, setUpload] = useState({
 		fileList: [],
 		status: false
@@ -277,24 +279,34 @@ const ManualContainer = ({
 		}
 		setLoading(false);
 	};
+	const openNotificationWithIcon = (type) => {
+		notification[type]({
+			message: 'Plan not yet registered!'
+		});
+	};
 	const handleEvent = async (value, keys = null) => {
 		setHenkouLoading(true);
 		if (!keys) {
 			const e = value;
-			await handleSpecs(e.target.value);
-			setExpand(true);
+			const result = await handleSpecs(e.target.value);
+			result == 'found'
+				? (setExpand(true), setShowCollapse(true))
+				: (setExpand(false), openNotificationWithIcon('info'));
+			// setExpand(true);
 		} else {
 			handleOnChange(value, keys);
 		}
 		setHenkouLoading(false);
 	};
-	const handleUpload = async (details) => {
+	const handleRegisterAndUpload = async (details) => {
+		/* Coming from Registration.js */
+		await handleRegister(details);
+		/* Coming from Registration.js */
 		const { fileList } = upload;
 		const formData = new FormData();
 		fileList.forEach((file) => {
 			formData.append('files[]', file);
 		});
-		console.log(fileList, '@#$#$%#$#$%');
 		if (fileList.length > 0) {
 			setUpload({
 				status: true
@@ -306,6 +318,7 @@ const ManualContainer = ({
 					`/api/henkou/attachment/${response.data.id}`,
 					formData
 				);
+				console.log(uploadResponse);
 				setUpload({
 					fileList: [],
 					status: true
@@ -377,7 +390,10 @@ const ManualContainer = ({
 							addonBefore="Customer Code"
 							style={{ width: 300, margin: '0 0' }}></Search>
 					</Col>
-					<Col span={16} style={{ textAlign: 'right' }}>
+					<Col span={8} style={{ textAlign: 'center', padding: '10 0 0 0' }}>
+						Registration Page
+					</Col>
+					<Col span={8} style={{ textAlign: 'right' }}>
 						<DatePicker
 							defaultValue={moment(moment().format('YYYY-MM-DD'), dateFormat)}
 							disabled
@@ -474,13 +490,15 @@ const ManualContainer = ({
 						</Col>
 					</Row>
 				) : null}
-				<a
-					style={{ fontSize: 12, textAlign: 'right' }}
-					onClick={() => {
-						setExpand(!expand);
-					}}>
-					{expand ? <UpOutlined /> : <DownOutlined />} Collapse
-				</a>
+				{showCollapse ? (
+					<a
+						style={{ fontSize: 12, textAlign: 'right' }}
+						onClick={() => {
+							setExpand(!expand);
+						}}>
+						{expand ? <UpOutlined /> : <DownOutlined />} Collapse
+					</a>
+				) : null}
 				<Row>
 					{expand ? (
 						<Col span={24} style={{ textAlign: 'center' }}>
@@ -598,7 +616,7 @@ const ManualContainer = ({
 							style={{ textAlign: 'right' }}
 							type="primary"
 							htmlType="submit"
-							onClick={() => (handleRegister(details), handleUpload(details))}>
+							onClick={() => handleRegisterAndUpload(details)}>
 							Save
 						</Button>
 					</Col>

@@ -47,15 +47,16 @@ class SupplierController extends Controller
      */
     public function show(Supplier $supplier, Request $request)
     {
-        info('test');
+        // info($request);
         // $request_arr = (array) $request;
         // $request_array =  json_decode(json_encode($request), true);
         $product_keys = array_values($request->all());
         // info($product_keys);
 
-        $supplier_keys = Supplier::select('product_key', 'supplier_key')->whereIn('product_key', $product_keys)->get();
+        $supplier_keys = Supplier::select('product_key', 'supplier_key', 'last_touch')->whereIn('product_key', $product_keys)->get();
+
         // $supplier_keys = Supplier::whereIn('product_key', $product_keys)->pluck('supplier_key')->toArray();
-        info($supplier_keys);
+        // info($supplier_keys);
         return json_encode($supplier_keys);
 
         // return Supplier::select()->where('product_key', $product_key)->get();

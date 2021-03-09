@@ -27,9 +27,7 @@ const Login = (props) => {
 		try {
 			const result = await dispatch(api.login(formData));
 			console.log(result);
-			if (result.status_code == 200) {
-				window.location.href = `http://${window.location.host}/`;
-			}
+			window.location.href = `http://${window.location.host}/`;
 			// let res = await Http.get('/api/user');
 			// console.log(res);
 			if (result.status_code == 500) throw result.message;

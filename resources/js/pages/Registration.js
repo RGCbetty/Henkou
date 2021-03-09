@@ -6,14 +6,12 @@ import moment from 'moment';
 import { isObject, toInteger } from 'lodash';
 
 /* Component */
-import RegistrationTable from '../components/RegistrationComponents/RegistrationTable';
 import PDFLists from '../components/RegistrationComponents/PDFLists';
 import ManualContainer from '../components/RegistrationComponents/ManualContainer';
 import { headers } from '../components/RegistrationComponents/THPlansHeader';
 
 /* Material Design */
-import { Modal } from 'antd';
-import { notification } from 'antd';
+import { Modal, notification, Table } from 'antd';
 
 /* API */
 import { useThPlansRetriever, fetchThPlans, useTempThRetriever } from '../api/TH';
@@ -237,9 +235,7 @@ const Registration = ({ title, ...rest }) => {
 					pagination: {
 						...pagination,
 						total: total,
-						showTotal: (total) => `Total ${total} items`
-						// 200 is mock data, you should read it from server
-						// total: data.totalCount,
+						showTotal: (total) => `Total ${total} items.`
 					}
 				});
 		} catch (e) {
@@ -268,25 +264,8 @@ const Registration = ({ title, ...rest }) => {
 		});
 	};
 	const handleRegister = async (details, row = null) => {
-		// const products = product.map((item, index) => {
-		// 	if (
-		// 		rest.userInfo.DepartmentCode == item.department_id &&
-		// 		rest.userInfo.SectionCode == item.section_id &&
-		// 		rest.userInfo.TeamCode == item.team_id
-		// 	) {
-		// 		return {
-		// 			...item,
-		// 			remarks: row.remarks,
-		// 			received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
-		// 			finished_date: row.finished_date,
-		// 			start_date: row.start_date,
-		// 			finished_date: row.finished_date
-		// 		};
-		// 	}
-		// 	return item;
-		// });
 		if (details.method == '2') {
-			const owner = product.filter((item, index) => {
+			const owner = product.data.filter((item, index) => {
 				if (
 					rest.userInfo.DepartmentCode == item.department_id &&
 					rest.userInfo.SectionCode == item.section_id &&
@@ -306,8 +285,8 @@ const Registration = ({ title, ...rest }) => {
 				return {
 					...item,
 					products:
-						product.length > 0
-							? product.filter((el) => {
+						product.data.length > 0
+							? product.data.filter((el) => {
 									return el.product_key == item.customer_key;
 							  })
 							: null
@@ -324,13 +303,7 @@ const Registration = ({ title, ...rest }) => {
 					}
 				}
 			}
-			console.log(customer, 'uuuuuuuuuuiiiiiooooooo');
-			const products = product.map((item, index) => {
-				console.log(
-					customer.find((el) => {
-						return el.id == item.id;
-					})
-				);
+			const products = product.data.map((item, index) => {
 				if (
 					customer.find((el) => {
 						return el.id == item.id;
@@ -338,11 +311,10 @@ const Registration = ({ title, ...rest }) => {
 				) {
 					return {
 						...item,
-						// remarks: row.remarks,
-						received_date: moment().format('YYYY-MM-DD HH:mm:ss')
-						// finished_date: row.finished_date,
-						// start_date: row.start_date,
-						// finished_date: row.finished_date
+						remarks: row ? row.remarks : null,
+						received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
+						start_date: row ? row.start_date : null,
+						finished_date: row ? row.finished_date : null
 					};
 				}
 				if (
@@ -352,16 +324,14 @@ const Registration = ({ title, ...rest }) => {
 				) {
 					return {
 						...item,
-						remarks: row.remarks,
+						remarks: row ? row.remarks : null,
 						received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
-						finished_date: row.finished_date,
-						start_date: row.start_date,
-						finished_date: row.finished_date
+						start_date: row ? row.start_date : null,
+						finished_date: row ? row.finished_date : null
 					};
 				}
 				return item;
 			});
-			console.log(products);
 			const sortedProducts = _.sortBy(products, ['waku_sequence', 'product_name']);
 			const response = await Http.post('/api/details', {
 				details,
@@ -372,7 +342,7 @@ const Registration = ({ title, ...rest }) => {
 			}
 			setProduct(sortedProducts);
 		} else {
-			const owner = product.filter((item, index) => {
+			const owner = product.data.filter((item, index) => {
 				if (
 					rest.userInfo.DepartmentCode == item.department_id &&
 					rest.userInfo.SectionCode == item.section_id &&
@@ -392,8 +362,8 @@ const Registration = ({ title, ...rest }) => {
 				return {
 					...item,
 					products:
-						product.length > 0
-							? product.filter((el) => {
+						product.data.length > 0
+							? product.data.filter((el) => {
 									return el.product_key == item.customer_key;
 							  })
 							: null
@@ -410,12 +380,7 @@ const Registration = ({ title, ...rest }) => {
 					}
 				}
 			}
-			const products = product.map((item, index) => {
-				console.log(
-					customer.find((el) => {
-						return el.id == item.id;
-					})
-				);
+			const products = product.data.map((item, index) => {
 				if (
 					customer.find((el) => {
 						return el.id == item.id;
@@ -423,11 +388,10 @@ const Registration = ({ title, ...rest }) => {
 				) {
 					return {
 						...item,
-						// remarks: row.remarks,
-						received_date: moment().format('YYYY-MM-DD HH:mm:ss')
-						// finished_date: row.finished_date,
-						// start_date: row.start_date,
-						// finished_date: row.finished_date
+						remarks: row.remarks,
+						received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
+						start_date: row ? row.start_date : null,
+						finished_date: row ? row.finished_date : null
 					};
 				}
 				if (
@@ -437,11 +401,11 @@ const Registration = ({ title, ...rest }) => {
 				) {
 					return {
 						...item,
-						remarks: row.remarks,
+						remarks: row ? row.remarks : null,
 						received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
-						finished_date: row.finished_date,
-						start_date: row.start_date,
-						finished_date: row.finished_date
+						finished_date: row ? row.finished_date : null,
+						start_date: row ? row.start_date : null,
+						finished_date: row ? row.finished_date : null
 					};
 				}
 				return item;
@@ -532,76 +496,103 @@ const Registration = ({ title, ...rest }) => {
 	/* TH Actions */
 	const handleSpecs = async (constructionCode, th_no = null) => {
 		const response = await Http.get(`/api/plandetails/${constructionCode}`);
-		const responseRev = await Http.get(`/api/details/${constructionCode}`);
-		console.log(responseRev, 'rererev');
+		const revision = await Http.get(`/api/details/${constructionCode}`);
+		console.log(response);
 		const { plan_specs } = response.data;
-		const planSpecs = plan_specs.map((item, index) => {
-			let str = '';
-			if (item.Menshin !== '0') {
-				str += 'Menshin';
+		let plan_specification = [];
+		for (let i = 0; i < plan_specs.length; i++) {
+			for (const property in plan_specs[i]) {
+				console.log(plan_specs[i]);
+				if (plan_specs[i][property] !== '0') {
+					plan_specification.push(property);
+				}
 			}
-			if (item.Gousetsu !== '0') {
-				str ? (str += ',Gousetsu') : (str += 'Gousetsu');
-			}
-			if (item.CY !== '0') {
-				str ? (str += ',CY') : (str += 'CY');
-			}
-			if (item['3Storey'] !== '0') {
-				str ? (str += ',3Storey') : (str += '3Storey');
-			}
-			return str;
-		});
+		}
+		console.log(plan_specification);
+		// const planSpecs = plan_specs.map((item, index) => {
+		// 	let str = '';
+		// 	if (item.Menshin !== '0') {
+		// 		str += 'Menshin';
+		// 	}
+		// 	if (item.Gousetsu !== '0') {
+		// 		str ? (str += ',Gousetsu') : (str += 'Gousetsu');
+		// 	}
+		// 	if (item.CY !== '0') {
+		// 		str ? (str += ',CY') : (str += 'CY');
+		// 	}
+		// 	if (item['3Storey'] !== '0') {
+		// 		str ? (str += ',3Storey') : (str += '3Storey');
+		// 	}
+		// 	return str;
+		// });
 
-		let splitRevision = responseRev.data ? responseRev.data.rev_no.split('-') : '';
+		// console.log(planSpecs);
+		let splitRevision = revision.data ? revision.data.rev_no.split('-') : '';
 		let secondaryRevision = toInteger(splitRevision[1]);
-		setDetails((prevState) => {
-			return {
-				...prevState,
-				customer_code: constructionCode,
-				house_code: response.data.house[0].NameCode,
-				house_type: response.data.house[0].ConstructionTypeName,
-				method: response.data.house[0].Method,
-				plan_no: response.data.house[0].PlanNo,
-				floors: response.data.house[0].Floors,
-				joutou_date: response.data.construction_schedule[0].ExpectedHouseRaisingDate,
-				days_before_joutou: '',
-				kiso_start: response.data.construction_schedule[0].StartedFoundationWorkDate,
-				before_kiso_start: '',
-				dodai_invoice: response.data.invoice[0].InvoiceDodai,
-				['1F_panel_invoice']: response.data.invoice[0].InvoicePanel,
-				['1F_hari_invoice']: response.data.invoice[0].Invoice1FHari,
-				['1F_iq_invoice']: response.data.invoice[0].Invoice1FIQ,
-				plan_specification: planSpecs.join(),
-				existing_rev_no: responseRev.data.rev_no,
-				rev_no: responseRev.data ? `${splitRevision[0]}-${secondaryRevision + 1}` : '1-0',
-				type_id: '',
-				reason_id: '',
-				logs: '',
-				th_no: th_no ? th_no : null,
-				department_id: userInfo.DepartmentCode,
-				section_id: userInfo.SectionCode,
-				team_id: userInfo.TeamCode,
-				updated_by: userInfo.EmployeeCode
-			};
-		});
+		if (response.data.house.length > 0 && response.data.construction_schedule.length > 0)
+			setDetails((prevState) => {
+				return {
+					...prevState,
+					customer_code: constructionCode,
+					house_code:
+						response.data.house.length > 0 ? response.data.house[0].NameCode : null,
+					house_type:
+						response.data.house.length > 0
+							? response.data.house[0].ConstructionTypeName
+							: null,
+					method: response.data.house.length > 0 ? response.data.house[0].Method : null,
+					plan_no: response.data.house.length > 0 ? response.data.house[0].PlanNo : null,
+					floors: response.data.house.length > 0 ? response.data.house[0].Floors : null,
+					joutou_date:
+						response.data.construction_schedule.length > 0
+							? response.data.construction_schedule[0].ExpectedHouseRaisingDate
+							: null,
+					days_before_joutou: '',
+					kiso_start:
+						response.data.construction_schedule.length > 0
+							? response.data.construction_schedule[0].StartedFoundationWorkDate
+							: null,
+					before_kiso_start: '',
+					dodai_invoice:
+						response.data.invoice.length > 0
+							? response.data.invoice[0].InvoiceDodai
+							: null,
+					['1F_panel_invoice']:
+						response.data.invoice.length > 0
+							? response.data.invoice[0].InvoicePanel
+							: null,
+					['1F_hari_invoice']:
+						response.data.invoice.length > 0
+							? response.data.invoice[0].Invoice1FHari
+							: null,
+					['1F_iq_invoice']:
+						response.data.invoice.length > 0
+							? response.data.invoice[0].Invoice1FIQ
+							: null,
+					plan_specification: plan_specification.join(),
+					existing_rev_no: revision.data.rev_no,
+					rev_no: revision.data ? `${splitRevision[0]}-${secondaryRevision + 1}` : '1-0',
+					type_id: '',
+					reason_id: '',
+					logs: '',
+					th_no: th_no ? th_no : null,
+					department_id: userInfo.DepartmentCode,
+					section_id: userInfo.SectionCode,
+					team_id: userInfo.TeamCode,
+					updated_by: userInfo.EmployeeCode
+				};
+			});
 		const detailsItem = await fetchDetails(constructionCode);
-		const instance = Http.create({
-			baseURL: 'http://adminsql1/api',
-			withCredentials: false,
-			headers: {
-				'master-api': 'db588403f0a1d3b897442a28724166b4'
-			}
-		});
-		const company = await instance.get('/company/department/section/team/hrd');
+
 		if (detailsItem) {
 			const fetchStatus = await Http.get(`/api/status/${detailsItem.id}`);
 			const productCategories = fetchStatus.data.map((item) => {
 				return {
 					...item,
 					department:
-						company.data.length > 0
-							? company.data.find((attr) => {
-									const prod = product.find(
+						company.length > 0
+							? company.find((attr) => {
+									const prod = product.data.find(
 										(el) =>
 											attr.DepartmentCode == el.department_id &&
 											item.product_id == el.id
@@ -611,9 +602,9 @@ const Registration = ({ title, ...rest }) => {
 							  }).DepartmentName
 							: null,
 					section:
-						company.data.length > 0
-							? company.data.find((attr) => {
-									const prod = product.find(
+						company.length > 0
+							? company.find((attr) => {
+									const prod = product.data.find(
 										(el) =>
 											attr.SectionCode == el.section_id &&
 											item.product_id == el.id
@@ -622,9 +613,9 @@ const Registration = ({ title, ...rest }) => {
 							  }).SectionName
 							: null,
 					team:
-						company.data.length > 0
-							? company.data.find((attr) => {
-									const prod = product.find(
+						company.length > 0
+							? company.find((attr) => {
+									const prod = product.data.find(
 										(el) =>
 											attr.TeamCode == el.team_id && item.product_id == el.id
 									);
@@ -633,59 +624,37 @@ const Registration = ({ title, ...rest }) => {
 							: null,
 					sequence:
 						details.method == '2'
-							? product.find((el) => el.id == item.product_id).waku_sequence
-							: product.find((el) => el.id == item.product_id).jiku_sequence,
-					product_name: product.find((el) => el.id == item.product_id).product_name
+							? product.data.find((el) => el.id == item.product_id).waku_sequence
+							: product.data.find((el) => el.id == item.product_id).jiku_sequence,
+					product_name: product.data.find((el) => el.id == item.product_id).product_name
 				};
 			});
 			const sortBySequence = _.sortBy(productCategories, ['sequence', 'product_name']);
 			setStatus(sortBySequence);
-
-			// .filter((item, index) => {
-			// 	if (rest.userInfo.DesignationCode == '003') {
-			// 		if (
-			// 			rest.userInfo.DepartmentCode ==
-			// 				product.find((el) => el.product_key == item.product_key)
-			// 					.department_id &&
-			// 			rest.userInfo.SectionCode ==
-			// 				product.find((el) => el.product_key == item.product_key)
-			// 					.section_id
-			// 		) {
-			// 			return item;
-			// 		}
-			// 	} else {
-			// 		if (
-			// 			rest.userInfo.DepartmentCode ==
-			// 				product.find((el) => el.product_key == item.product_key)
-			// 					.department_id &&
-			// 			rest.userInfo.SectionCode ==
-			// 				product.find((el) => el.product_key == item.product_key)
-			// 					.section_id &&
-			// 			rest.userInfo.TeamCode ==
-			// 				product.find((el) => el.product_key == item.product_key).team_id
-			// 		) {
-			// 			return item;
-			// 		}
-			// 	}
-			// })
 		}
+		return 'found';
 	};
 	return (
-		<div style={{ height: '5%' }}>
+		<div id="registration_page" style={{ height: '5%' }}>
 			{userInfo.SectionCode == '465' && userInfo.TeamCode == '0133' ? (
 				<>
-					<RegistrationTable
-						headers={headers(
+					<div className="th_plans" />
+					<Table
+						size="small"
+						columns={headers(
 							info,
 							handleClickPDF,
 							handleSelectOption,
 							handleOnClickEvent,
 							handleInputText
 						)}
-						plans={plans}
+						loading={loading}
+						bordered
 						pagination={pagination}
-						event={handleTableChange}
-						loading={loading}></RegistrationTable>
+						dataSource={plans}
+						scroll={{ x: 'max-content', y: 'calc(100vh - 20em)' }}
+						onChange={handleTableChange}
+					/>
 					<Modal
 						title="PDF Lists"
 						onOk={handleOk}
@@ -702,7 +671,7 @@ const Registration = ({ title, ...rest }) => {
 						handleOnChange={handleOnChange}
 						handleRegister={handleRegister}
 						henkouInfo={info}
-						product={product}
+						product={product.data}
 						status={henkouStatus}
 						details={details}></ManualContainer>
 				</>

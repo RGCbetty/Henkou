@@ -25,6 +25,7 @@ class CreateProductCategoriesTable extends Migration
             $table->smallInteger("jiku_sequence");
             $table->string('house_type', 20);
             $table->timestamps();
+            $table->softDeletes();
             $table->string('updated_by', 15)->nullable();
             $table->unique(['department_id', 'section_id', 'team_id', 'id'], "sequence");
         });

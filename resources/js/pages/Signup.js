@@ -184,7 +184,7 @@ const SignUp = (props) => {
 									lg: { span: 10 }
 								}}
 								name={['user', 'confirm']}
-								label="Confirm Password"
+								label="Password"
 								dependencies={['password']}
 								hasFeedback
 								rules={[

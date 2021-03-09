@@ -2,10 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 // import Legend from '../components/HomeComponents/Legend';
 import HomeTable from '../components/HomeComponents/HomeTable';
-import Legend from '../components/HomeComponents/Legend';
+import Legend from '../components/Legend';
 import FilterContainer from '../components/HomeComponents/FilterContainer';
+import { useMasterDetails, useMasterDepartment } from '../api/master';
 
 const Home = ({ title, ...rest }) => {
+	const [departments, setDepartments] = useMasterDepartment();
+	const [info, setInfo] = useMasterDetails();
+	const { types } = info;
 	const [state, setState] = useState({
 		department: '',
 		section: '',
@@ -68,10 +72,15 @@ const Home = ({ title, ...rest }) => {
 
 	return (
 		<>
-			<FilterContainer></FilterContainer>
+			<FilterContainer types={types} departments={departments}></FilterContainer>
 			<div style={{ padding: 5 }}>
 				<div style={{ textAlign: 'right' }}>
-					<Legend></Legend>
+					<Legend
+						hideSomeLegends={false}
+						title1={'Not yet started'}
+						title2={'On Going'}
+						title3={'Finished'}
+						title4={'Pending'}></Legend>
 				</div>
 				<HomeTable
 					products={[

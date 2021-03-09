@@ -1,6 +1,8 @@
 import Henkou from '../pages/Henkou';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
+import Products from '../pages/Products';
+import Users from '../pages/Users';
 import Registration from '../pages/Registration';
 import Search from '../pages/Search';
 import Stop from '../pages/Stop';
@@ -58,6 +60,20 @@ const routes = [
 		auth: true,
 		title: 'Henkou - Stop Plans',
 		component: Stop
+	},
+	{
+		path: '/products',
+		exact: true,
+		auth: true,
+		title: 'Henkou - Product Settings',
+		component: Products
+	},
+	{
+		path: '/users',
+		exact: true,
+		auth: true,
+		title: 'Henkou - Manage Users',
+		component: Users
 	},
 	{
 		path: '',

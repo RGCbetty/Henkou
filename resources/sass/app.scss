@@ -8,12 +8,90 @@
 
 // Bootstrap
 // @import "~bootstrap/scss/bootstrap";
+#product_name {
+    text-align: center;
+}
+#department {
+    text-align: center;
+}
+#section {
+    text-align: center;
+}
+#team {
+    text-align: center;
+}
+.ant-table {
+    display: block;
 
+    @media screen and (max-width: 600px) {
+        &-thead {
+            display: none;
+        }
+
+        &-thead > tr,
+        &-tbody > tr {
+            th,
+            td {
+                &:first-of-type {
+                    padding-top: 1rem;
+                }
+
+                &:last-of-type {
+                    padding-bottom: 1rem;
+                }
+            }
+
+            > th,
+            > td {
+                display: block;
+                width: auto !important;
+                border: none;
+                padding: 0 1rem;
+                font-size: 1.1rem;
+
+                &:last-child {
+                    border-bottom: 1px solid #eee;
+                }
+            }
+        }
+    }
+}
+.ant-table-container,
+.ant-table-container table > thead > tr:first-child th:first-child {
+    border-top-left-radius: 2px;
+}
+#registration_page .th_plans {
+    height: 35px;
+    background-size: 100px 50px;
+    background-position: left;
+    background-repeat: no-repeat;
+    background-image: url("../../public/THPlans.svg");
+}
 #components-layout-demo-responsive .logo {
     height: 80px;
     background-position: center;
     background-repeat: no-repeat;
     background-image: url("../../public/henkou.svg");
+}
+
+#components-layout-demo-responsive .avatar {
+    display: inline-block;
+    // border-radius: 50%;
+    margin: 0px 20px 0 20px;
+    color: white;
+    flex-direction: column;
+    align-content: center;
+    p {
+        // vertical-align: middle;
+        // margin-top: auto;
+        // word-wrap: break-word;
+        margin: 5px 5px 5px 15px;
+        color: white;
+        font-size: 0.9vw;
+        font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+            "Lucida Sans", Arial, sans-serif;
+    }
+    // background-image: url("../../public/henkou.svg");
 }
 
 #col_title .project_title {

@@ -26,8 +26,8 @@ class AuthController extends Controller
             $flatten_array = collect($array)->flatMap(function ($item) {
                 return $item;
             })->all();
-            info($flatten_array);
-            info(count($flatten_array));
+            // info($flatten_array);
+            // info(count($flatten_array));
             if (count($flatten_array) <= 0) {
                 throw new Exception('User not found!');
             }
@@ -82,7 +82,7 @@ class AuthController extends Controller
     {
 
         try {
-            info($request->user['employeecode']);
+            // info($request->user['employeecode']);
             User::create([
                 'employee_no' => $request->user['employeecode'],
                 'access_level' => 3,
