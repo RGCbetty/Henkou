@@ -12,6 +12,7 @@ import {
 const { TextArea } = Input;
 const { Option } = Select;
 export const headers = (
+	columnSearch,
 	{ reasons, thActions, thAssessments, fetching },
 	handleClickPDF,
 	handleSelectOption,
@@ -28,18 +29,20 @@ export const headers = (
 	},
 	{
 		title: 'Customer Code',
-		width: 133,
+		width: 150,
 		dataIndex: 'ConstructionCode',
 		key: '2',
 		fixed: 'left',
-		align: 'center'
+		align: 'center',
+		...columnSearch('ConstructionCode', 'Customer Code')
 	},
 	{
 		title: 'House Code',
-		width: 115,
+		width: 150,
 		dataIndex: 'NameCode',
 		key: '3',
-		align: 'center'
+		align: 'center',
+		...columnSearch('NameCode', 'House Code')
 	},
 	{
 		title: 'House Type',
@@ -105,6 +108,31 @@ export const headers = (
 		}
 	},
 	{
+		title: 'Reason',
+		width: 115,
+		dataIndex: 'reason_id',
+		align: 'center',
+		key: '11',
+		render: (text, record) => {
+			return (
+				<Select
+					defaultValue=""
+					value={text}
+					onChange={(value) => handleSelectOption(value, 'reason_id', record)}
+					disabled={fetching}
+					style={{ width: 175 }}>
+					{reasons.map((item, index) => {
+						return (
+							<Option key={item.id} value={item.id}>
+								{item.reason_name}
+							</Option>
+						);
+					})}
+				</Select>
+			);
+		}
+	},
+	{
 		title: 'Start',
 		width: 150,
 		dataIndex: 'start_date',
@@ -145,31 +173,6 @@ export const headers = (
 			)
 	},
 	{
-		title: 'Reason',
-		width: 115,
-		dataIndex: 'reason_id',
-		align: 'center',
-		key: '11',
-		render: (text, record) => {
-			return (
-				<Select
-					defaultValue=""
-					value={text}
-					onChange={(value) => handleSelectOption(value, 'reason_id', record)}
-					disabled={fetching}
-					style={{ width: 175 }}>
-					{reasons.map((item, index) => {
-						return (
-							<Option key={item.id} value={item.id}>
-								{item.reason_name}
-							</Option>
-						);
-					})}
-				</Select>
-			);
-		}
-	},
-	{
 		title: 'Pending Resume',
 		width: 150,
 		dataIndex: 'pending_resume_date',
@@ -191,6 +194,14 @@ export const headers = (
 			)
 	},
 	{
+		title: 'Plan Status',
+		width: 200,
+		dataIndex: 'plan_status',
+		render: (text, record) => (text ? text.plan_status_name : null),
+		align: 'center',
+		key: '14'
+	},
+	{
 		title: 'Action',
 		width: 115,
 		dataIndex: 'th_action_id',
@@ -200,12 +211,12 @@ export const headers = (
 			return (
 				<Select
 					defaultValue=""
-					disabled={
-						!record.finished_date ||
-						!record.th_assessment_id ||
-						!record.reason_id ||
-						!record.remarks
-					}
+					// disabled={
+					// 	!record.finished_date ||
+					// 	!record.th_assessment_id ||
+					// 	!record.reason_id ||
+					// 	!record.remarks
+					// }
 					value={text}
 					onChange={(value) => handleSelectOption(value, 'th_action_id', record)}
 					style={{ width: 125 }}>

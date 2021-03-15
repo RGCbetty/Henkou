@@ -12,6 +12,7 @@ import { henkouStatusHeader } from '../HenkouComponents/HenkouStatusHeader';
 import { PlanCustomerInformation } from './PlanCustomerInformation';
 import PendingHeaders from '../HenkouComponents/PendingHeaders';
 import Legend from '../Legend';
+import ActionHeaders from './ActionHeaders';
 
 const { Search, TextArea } = Input;
 const { Title } = Typography;
@@ -26,15 +27,22 @@ const HenkouContainer = (props) => {
 		suppliers,
 		uniqueProducts,
 		company,
+		affectedProducts,
 		...rest
 	} = props;
 	const [showCollapse, setShowCollapse] = useState(false);
 	const [expand, setExpand] = useState(false);
 	const [row, setRow] = useState({});
-	const [isVisibleAttachmentModal, setVisibleAttachmentModal] = useState(false);
+	const [isVisible, setVisibilty] = useState({
+		attachmentModal: false,
+		pendingModal: false,
+		actionModal: false
+	});
+
 	const [attachments, setAttachments] = useState([]);
 	const [pendingItems, setPendingItems] = useState([]);
-	const [isVisiblePendingModal, setVisiblePendingModal] = useState(false);
+	const [actionItems, setActionItems] = useState([]);
+
 	const [form] = Form.useForm();
 	/* HENKOU PROCESS */
 	// const uniqueProducts = _.uniqBy(concatenatedProducts, (obj) => obj.product_key);
@@ -86,16 +94,16 @@ const HenkouContainer = (props) => {
 					moment(row.start, 'YYYY-MM-DD HH:mm:ss')
 				);
 				const d = moment.duration(ms);
-
+				row.resume_date = row[key];
 				row.duration = isNaN(moment(row.start).diff(row.resume))
 					? ''
-					: d.days() + ':' + d.hours() + ':' + d.minutes() + ':' + d.seconds();
+					: durationAsString(row.start, row.resume);
 			}
 			pendingItems[row.index - 1] = row;
 			const clonePendingItems = [...pendingItems];
+			console.log(clonePendingItems);
 			setPendingItems(clonePendingItems);
 		} else {
-			console.log('ops');
 			if (key == 'finished_date') {
 				row.received_date = moment().format('YYYY-MM-DD HH:mm:ss');
 			}
@@ -107,7 +115,6 @@ const HenkouContainer = (props) => {
 	};
 	const handleAssessment = (value, key, row) => {
 		row[key] = value;
-		console.log(row);
 		if (value !== 3) {
 			row.toggleSelect = false;
 		} else {
@@ -128,7 +135,6 @@ const HenkouContainer = (props) => {
 		});
 	};
 	const onEnter = async (e) => {
-		console.log('onEnter');
 		const result = await handleEvent(e.target.value);
 		result == 'found'
 			? (setExpand(true), setShowCollapse(true))
@@ -137,6 +143,7 @@ const HenkouContainer = (props) => {
 	/*  */
 	/* PENDING MODAL */
 	const handlePending = async (record) => {
+		console.log(record);
 		const pendingResource = await Http.get(`/api/henkou/pending/${record.id}`);
 		if (pendingResource.data.length <= 0) {
 			let pending = [];
@@ -157,10 +164,10 @@ const HenkouContainer = (props) => {
 			setPendingItems(
 				pendingResource.data.map((item, index) => {
 					return {
+						pending_id: item.id,
 						index: index + 1,
 						start: item.start_date,
 						resume: item.resume_date,
-						duration: '',
 						...item,
 						id: item.status_id
 					};
@@ -169,42 +176,29 @@ const HenkouContainer = (props) => {
 		}
 		setRow(record);
 
-		setVisiblePendingModal(true);
+		setVisibilty({ ...isVisible, pendingModal: true });
 	};
 
-	const handleOk = async () => {
+	const handlePendingOk = async () => {
 		const filteredPendingItems = pendingItems.filter((item) => {
 			return item.start || item.resume || item.reason;
 		});
-		// .map(item=> {
-		//     return {
-		//         id
-		//         product_key
-		//         rev_no
-		//         start_date
-		//         reason
-		//         resume_date
-		//         duration
-		//         status_id
-		//     }
-		// })
+		console.log(filteredPendingItems, 'pendingOk');
 		if (filteredPendingItems.length > 0) {
 			const response = await Http.post('/api/henkou/pending', filteredPendingItems);
-			console.log(response);
 		}
-		setVisiblePendingModal(false);
+		setVisibilty({ ...isVisible, pendingModal: false });
 		setPendingItems([]);
 		setRow({});
 	};
 
-	const handleCancel = () => {
-		setVisiblePendingModal(false);
+	const handlePendingCancel = () => {
+		setVisibilty({ ...isVisible, pendingModal: false });
 		setPendingItems([]);
 		setRow({});
 	};
 
 	const addPendingItems = (row, key) => {
-		console.log(row);
 		pendingItems.push({
 			index: pendingItems.length + 1,
 			rev_no: details.rev_no,
@@ -227,18 +221,62 @@ const HenkouContainer = (props) => {
 	/* PENDING MODAL */
 	/* ATTACHMENT MODAL */
 	const attachmentModalOk = () => {
-		setVisibleAttachmentModal(false);
+		setVisibilty({ ...isVisible, attachmentModal: false });
 	};
 	const attachmentModalCancel = () => {
-		setVisibleAttachmentModal(false);
+		setVisibilty({ ...isVisible, attachmentModal: false });
 	};
 	const handleAttachmentModal = async () => {
 		const responseLists = await Http.get(`/api/henkou/attachments/${details.id}`);
-		console.log(responseLists, 'tititiostoisejtiposejtpiosejtseipjt');
 		setAttachments(responseLists.data);
-		setVisibleAttachmentModal(true);
+		setVisibilty({ ...isVisible, attachmentModal: true });
 	};
 	/* ATTACHMENT MODAL */
+	/* ACTION MODAL */
+	const handleAction = async (record) => {
+		setRow(record);
+		setVisibilty({ ...isVisible, actionModal: true });
+	};
+
+	const handleActionOk = async () => {
+		// const filteredPendingItems = pendingItems.filter((item) => {
+		// 	return item.start || item.resume || item.reason;
+		// });
+		// if (filteredPendingItems.length > 0) {
+		// 	const response = await Http.post('/api/henkou/pending', filteredPendingItems);
+		// }
+		setVisibilty({ ...isVisible, actionModal: false });
+		setPendingItems([]);
+		setRow({});
+	};
+
+	const handleActionCancel = () => {
+		setVisibilty({ ...isVisible, actionModal: false });
+		setPendingItems([]);
+		setRow({});
+	};
+
+	/* ACTION MODAL */
+	const durationAsString = (start, end) => {
+		const duration = moment.duration(moment(end).diff(moment(start)));
+
+		//Get Days
+		const days = Math.floor(duration.asDays()); // .asDays returns float but we are interested in full days only
+		const daysFormatted = days ? `${days}d ` : ''; // if no full days then do not display it at all
+
+		//Get Hours
+		const hours = duration.hours();
+		const hoursFormatted = hours ? `${hours}h ` : '';
+
+		//Get Minutes
+		const minutes = duration.minutes();
+		const minutesFormatted = minutes ? `${minutes}m ` : '';
+
+		const seconds = duration.seconds();
+		const secondsFormatted = `${seconds}s`;
+
+		return [daysFormatted, hoursFormatted, minutesFormatted, secondsFormatted].join('');
+	};
 
 	return (
 		<>
@@ -277,7 +315,7 @@ const HenkouContainer = (props) => {
 
 					{expand ? (
 						PlanCustomerInformation(details).map((item, index) => (
-							<Col style={{ textAlign: item.textAlign }} span={12} key={index}>
+							<Col style={{ textAlign: item.textAlign }} span={6} key={index}>
 								<Form.Item
 									style={{ marginBottom: '0px' }}
 									rules={[
@@ -334,7 +372,7 @@ const HenkouContainer = (props) => {
 				onOk={attachmentModalOk}
 				onCancel={attachmentModalCancel}
 				bodyStyle={{ padding: 0 }}
-				visible={isVisibleAttachmentModal}>
+				visible={isVisible.attachmentModal}>
 				<List
 					size="small"
 					bordered
@@ -350,17 +388,68 @@ const HenkouContainer = (props) => {
 			</Modal>
 			<Modal
 				title={`Pending ${row.product_name}`}
-				onOk={handleOk}
+				onOk={handlePendingOk}
 				okText="Save"
-				onCancel={handleCancel}
+				onCancel={handlePendingCancel}
 				bodyStyle={{ padding: 10 }}
 				width={650}
-				visible={isVisiblePendingModal}>
+				visible={isVisible.pendingModal}>
 				{/* <HenkouTable headers={PendingHeaders()} data={pendingItems} /> */}
 				<Table
 					rowKey={(record) => record.index}
 					columns={PendingHeaders(handleStatus, handleReasonInput)}
-					dataSource={pendingItems}
+					dataSource={
+						pendingItems
+						//     .map((item) => {
+						// 	return {
+						// 		...item,
+						// 		duration: isNaN(moment(item.start).diff(item.resume))
+						// 			? ''
+						// 			: durationAsString(item.start, item.resume)
+						// 	};
+						// })
+					}
+					pagination={false}
+					bordered
+				/>
+				<div style={{ textAlign: 'right' }}>
+					<Button
+						style={{ margin: 10 }}
+						type="primary"
+						disabled={pendingItems.some((item) => {
+							return !item.resume;
+						})}
+						onClick={() => addPendingItems(row, 'finished_date')}>
+						Add
+					</Button>
+				</div>
+			</Modal>
+			<Modal
+				title={`${row.product_name}`}
+				onOk={handleActionOk}
+				okText="Save"
+				onCancel={handleActionCancel}
+				bodyStyle={{ padding: 10 }}
+				width={650}
+				visible={isVisible.actionModal}>
+				{/* <HenkouTable headers={PendingHeaders()} data={pendingItems} /> */}
+				<Table
+					rowKey={(record) => record.index}
+					columns={ActionHeaders(handleStatus, handleReasonInput)}
+					dataSource={status
+						.map((item) => {
+							return {
+								id: item.id,
+								...item,
+								logs: item.log ? item.log : item.logs,
+								days_in_process: isNaN(
+									moment(item.start_date).diff(item.finished_date)
+								)
+									? ''
+									: durationAsString(item.start_date, item.finished_date)
+							};
+						})
+						.filter((item) => item.product_name == row.product_name)}
 					pagination={false}
 					bordered
 				/>
@@ -401,292 +490,31 @@ const HenkouContainer = (props) => {
 						columns={henkouStatusHeader(
 							assessment,
 							handleStatus,
-							handleAssessment,
-							handlePending,
+							{ handleAction, handleAssessment, handlePending },
 							checkIfSupplier,
 							checkIfOwner
 						)}
 						bordered
-						dataSource={
-							status.map((item) => {
-								return {
-									id: item.id,
-									...item,
-									logs: item.log ? item.log : item.logs,
-									days_in_process: isNaN(
-										moment(item.start_date).diff(item.finished_date)
-									)
-										? ''
-										: moment(item.start_date).diff(item.finished_date, 'days')
-								};
-							})
-							// .filter((item, index) => {
-							// 	if (rest.userInfo.DesignationCode == '003') {
-							// 		if (
-							// 			rest.userInfo.DepartmentCode ==
-							// 				product.find((el) => el.product_key == item.product_key)
-							// 					.department_id &&
-							// 			rest.userInfo.SectionCode ==
-							// 				product.find((el) => el.product_key == item.product_key)
-							// 					.section_id
-							// 		) {
-							// 			return item;
-							// 		}
-							// 	} else {
-							// 		if (
-							// 			rest.userInfo.DepartmentCode ==
-							// 				product.find((el) => el.product_key == item.product_key)
-							// 					.department_id &&
-							// 			rest.userInfo.SectionCode ==
-							// 				product.find((el) => el.product_key == item.product_key)
-							// 					.section_id &&
-							// 			rest.userInfo.TeamCode ==
-							// 				product.find((el) => el.product_key == item.product_key)
-							// 					.team_id
-							// 		) {
-							// 			return item;
-							// 		}
-							// 	}
-							// })
-						}
-						// dataSource={product.map((item, index) => {
-						// 	if (index == '0') {
-						// 		if (item.ProductCategory == 'KAKOU IRAI') {
-						// 			return {
-						// 				toggleStatus: true,
-						// 				toggleSelect: true,
-						// 				...item,
-						// 				id: status[index].id,
-						// 				department:
-						// 					company.length > 0
-						// 						? company.find((attr) => {
-						// 								return (
-						// 									attr.DepartmentCode ==
-						// 									item.department_id
-						// 								);
-						// 						  }).DepartmentName
-						// 						: null,
-						// 				section:
-						// 					company.length > 0
-						// 						? company.find((attr) => {
-						// 								return attr.SectionCode == item.section_id;
-						// 						  }).SectionName
-						// 						: null,
-						// 				team:
-						// 					company.length > 0
-						// 						? company.find((attr) => {
-						// 								return attr.TeamCode == item.team_id;
-						// 						  }).TeamName
-						// 						: null,
-						// 				sequence:
-						// 					details.method == '2'
-						// 						? item.waku_sequence
-						// 						: item.jiku_sequence,
-						// 				received_date:
-						// 					status.length > 0 ? status[index].received_date : null,
-						// 				start_date:
-						// 					status.length > 0 ? status[index].start_date : null,
-						// 				finish_date:
-						// 					status.length > 0 ? status[index].finished_date : null,
-						// 				assessment_id:
-						// 					status.length > 0 ? status[index].assessment_id : null,
-
-						// 				logs: details ? details.logs : '',
-						// 				days_in_process: isNaN(
-						// 					moment(status[index].start_date).diff(
-						// 						status[index].finished_date,
-						// 						'days'
-						// 					)
-						// 				)
-						// 					? ''
-						// 					: moment(status[index].start_date).diff(
-						// 							status[index].finished_date,
-						// 							'days'
-						// 					  )
-						// 			};
-						// 		} else {
-						// 			return {
-						// 				toggleStatus: true,
-						// 				toggleSelect: true,
-						// 				...item,
-						// 				id: status[index].id,
-						// 				department:
-						// 					company.length > 0
-						// 						? company.find((attr) => {
-						// 								return (
-						// 									attr.DepartmentCode ==
-						// 									item.department_id
-						// 								);
-						// 						  }).DepartmentName
-						// 						: null,
-						// 				section:
-						// 					company.length > 0
-						// 						? company.find((attr) => {
-						// 								return attr.SectionCode == item.section_id;
-						// 						  }).SectionName
-						// 						: null,
-						// 				team:
-						// 					company.length > 0
-						// 						? company.find((attr) => {
-						// 								return attr.TeamCode == item.team_id;
-						// 						  }).TeamName
-						// 						: null,
-						// 				sequence:
-						// 					details.method == '2'
-						// 						? item.waku_sequence
-						// 						: item.jiku_sequence,
-						// 				received_date:
-						// 					status.length > 0 ? status[index].received_date : null,
-						// 				start_date:
-						// 					status.length > 0 ? status[index].start_date : null,
-						// 				finish_date:
-						// 					status.length > 0 ? status[index].finished_date : null,
-						// 				assessment_id:
-						// 					status.length > 0 ? status[index].assessment_id : null,
-						// 				days_in_process: isNaN(
-						// 					moment(status[index].start_date).diff(
-						// 						status[index].finished_date,
-						// 						'days'
-						// 					)
-						// 				)
-						// 					? ''
-						// 					: moment(status[index].start_date).diff(
-						// 							status[index].finished_date,
-						// 							'days'
-						// 					  )
-						// 			};
-						// 		}
-						// 	} else {
-						// 		return {
-						// 			toggleStatus: true,
-						// 			toggleSelect: true,
-						// 			...item,
-						// 			id: status[index].id,
-						// 			department:
-						// 				company.length > 0
-						// 					? company.find((attr) => {
-						// 							return (
-						// 								attr.DepartmentCode == item.department_id
-						// 							);
-						// 					  }).DepartmentName
-						// 					: null,
-						// 			section:
-						// 				company.length > 0
-						// 					? company.find((attr) => {
-						// 							return attr.SectionCode == item.section_id;
-						// 					  }).SectionName
-						// 					: null,
-						// 			team:
-						// 				company.length > 0
-						// 					? company.find((attr) => {
-						// 							return attr.TeamCode == item.team_id;
-						// 					  }).TeamName
-						// 					: null,
-						// 			sequence:
-						// 				details.method == '2'
-						// 					? item.waku_sequence
-						// 					: item.jiku_sequence,
-						// 			received_date:
-						// 				status.length > 0 ? status[index].received_date : null,
-						// 			start_date: status.length > 0 ? status[index].start_date : null,
-						// 			finish_date:
-						// 				status.length > 0 ? status[index].finished_date : null,
-						// 			assessment_id:
-						// 				status.length > 0 ? status[index].assessment_id : null,
-						// 			days_in_process: isNaN(
-						// 				moment(status[index].start_date).diff(
-						// 					status[index].finished_date,
-						// 					'days'
-						// 				)
-						// 			)
-						// 				? ''
-						// 				: moment(status[index].start_date).diff(
-						// 						status[index].finished_date,
-						// 						'days'
-						// 				  )
-						// 		};
-						// 	}
-						// })}
+						dataSource={status.map((item) => {
+							return {
+								id: item.id,
+								...item,
+								logs: item.log ? item.log : item.logs,
+								days_in_process: isNaN(
+									moment(item.start_date).diff(item.finished_date)
+								)
+									? ''
+									: durationAsString(item.start_date, item.finished_date),
+								product_key: affectedProducts.find(
+									(el) => el.id == item.affected_id
+								)
+									? affectedProducts.find((el) => el.id == item.affected_id)
+											.product_category_id
+									: null
+							};
+						})}
 						scroll={{ x: 'max-content', y: 'calc(100vh - 23em)' }}
 					/>
-					{/* <HenkouTable
-						headers={henkouStatusHeader(
-							assessment,
-							handleStatus,
-							handleAssessment,
-							handlePending
-						)}
-						data={plandetail.map((item, index) => {
-							if (index == '0') {
-								if (item.ProductCategory == 'KAKOU IRAI') {
-									return {
-										id: index + 1,
-										toggleStatus: true,
-										toggleSelect: true,
-										...item,
-										received_date:
-											status.length > 0 ? status[index].received_date : null,
-										start_date:
-											status.length > 0 ? status[index].start_date : null,
-										finish_date:
-											status.length > 0 ? status[index].finished_date : null,
-										assessment_id:
-											status.length > 0 ? status[index].assessment_id : null,
-
-										logs: details ? details.logs : '',
-
-									};
-								} else {
-									return {
-										id: index + 1,
-										toggleStatus: true,
-										toggleSelect: true,
-										...item,
-										received_date:
-											status.length > 0 ? status[index].received_date : null,
-										start_date:
-											status.length > 0 ? status[index].start_date : null,
-										finish_date:
-											status.length > 0 ? status[index].finished_date : null,
-										assessment_id:
-											status.length > 0 ? status[index].assessment_id : null,
-										days_in_process: isNaN(
-											moment(status[index].start_date).diff(
-												status[index].finished_date
-											)
-										)
-											? ''
-											: moment(status[index].start_date).diff(
-													status[index].finished_date
-											  )
-									};
-								}
-							} else {
-								return {
-									id: index + 1,
-									toggleStatus: true,
-									toggleSelect: true,
-									...item,
-									received_date:
-										status.length > 0 ? status[index].received_date : null,
-									start_date: status.length > 0 ? status[index].start_date : null,
-									finish_date:
-										status.length > 0 ? status[index].finished_date : null,
-									assessment_id:
-										status.length > 0 ? status[index].assessment_id : null,
-									days_in_process: isNaN(
-										moment(status[index].start_date).diff(
-											status[index].finished_date
-										)
-									)
-										? ''
-										: moment(status[index].start_date).diff(
-												status[index].finished_date
-										  )
-								};
-							}
-						})}
-					/> */}
 				</div>
 			) : (
 				''

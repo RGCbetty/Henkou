@@ -4,10 +4,21 @@ import { connect } from 'react-redux';
 import HomeTable from '../components/HomeComponents/HomeTable';
 import Legend from '../components/Legend';
 import FilterContainer from '../components/HomeComponents/FilterContainer';
-import { useMasterDetails, useMasterDepartment } from '../api/master';
+import Http from '../Http';
+import {
+	useMasterDetails,
+	useMasterDepartment,
+	useMasterSectionByDepartment,
+	useMasterTeamByDepartmentAndSection
+} from '../api/master';
 
 const Home = ({ title, ...rest }) => {
 	const [departments, setDepartments] = useMasterDepartment();
+	const [sections, setSections] = useMasterSectionByDepartment(rest.userInfo.DepartmentCode);
+	const [teams, setTeams] = useMasterTeamByDepartmentAndSection(
+		rest.userInfo.DepartmentCode,
+		rest.userInfo.SectionCode
+	);
 	const [info, setInfo] = useMasterDetails();
 	const { types } = info;
 	const [state, setState] = useState({
@@ -16,63 +27,48 @@ const Home = ({ title, ...rest }) => {
 		team: ''
 	});
 	const { department, section, team } = state;
-	const handleChange = (e) => {
-		setState({ ...state, [e.target.name]: e.target.value });
+	const handleSelectOnChange = async (value, title, form) => {
+		// setState({ ...state, [e.target.name]: e.target.value });
+		switch (title) {
+			case 'Department':
+				const sections = await Http.get('api/sections', {
+					params: { department_id: value }
+				});
+				form.setFieldsValue({
+					Section: ''
+				});
+				setSections(sections.data);
+				break;
+			case 'Section':
+				const teams = await Http.get('api/teams', {
+					params: { department_id: value }
+				});
+				form.setFieldsValue({
+					Team: ''
+				});
+				setTeams(teams.data);
+				break;
+			case 'Team':
+				break;
+			case 'House Type':
+				break;
+			case 'Henkou Type':
+				break;
+			case 'Status':
+				break;
+		}
+		// console.log(value);
 	};
 	useEffect(() => {
 		document.title = title || '';
 	}, [title]);
-	// useEffect(() => {
-	//     const fetchUser = async () => {
-	//         const userData = JSON.parse(localStorage.getItem('user'));
-	//         const { employee_no } = userData;
-	//         let response = await Http.get(`/api/userinfo/${employee_no}`);
-	//         const { DepartmentName, SectionName, TeamName } = response.data[0];
-	//         console.log(DepartmentName, SectionName, TeamName);
-
-	//         setState({
-	//             department: DepartmentName,
-	//             section: SectionName,
-	//             team: TeamName
-	//         });
-	//     };
-	//     fetchUser();
-	// }, []);
-	const columns = [
-		{
-			id: '1',
-			field: 'reg_data',
-			headerName: 'Registration Date',
-			type: 'date',
-			width: '20%'
-		},
-		{ id: '2', field: 'rec_date', headerName: 'Received Date', type: 'date', width: '20%' },
-		{ id: '3', field: 'dep', headerName: 'Department', width: '20%' },
-		{ id: '4', field: 'sec', headerName: 'Section', width: '20%' },
-		{ id: '5', field: 'team', headerName: 'Team', width: '20%' }
-	];
-	const rows = [
-		{
-			id: '1',
-			reg_data: '10/17/2019',
-			rec_date: '12/27/2019',
-			dep: 'Jon',
-			team: 35,
-			sec: 'test'
-		},
-		{
-			id: '2',
-			reg_data: '08/06/2018',
-			rec_date: '11/30/2020',
-			dep: 'Cersei',
-			team: 42,
-			sec: 'test'
-		}
-	];
 
 	return (
 		<>
-			<FilterContainer types={types} departments={departments}></FilterContainer>
+			<FilterContainer
+				types={types}
+				events={{ handleSelectOnChange }}
+				company={{ departments, sections, teams }}></FilterContainer>
 			<div style={{ padding: 5 }}>
 				<div style={{ textAlign: 'right' }}>
 					<Legend

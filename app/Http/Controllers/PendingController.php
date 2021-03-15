@@ -46,18 +46,9 @@ class PendingController extends Controller
         //         'duration' => $item['duration'],
         //     );
         // }
-        // $pendings = array();
+        $pendings = array();
         for ($i = 0; $i < count($request->all()); $i++) {
-            Pending::firstOrCreate(array(
-                'product_key' => $request[$i]['product_key'],
-                'status_id' =>  $request[$i]['id'],
-                'rev_no' =>  $request[$i]['rev_no'],
-                'start_date' =>  $request[$i]['start'],
-                'reason' => $request[$i]['reason'],
-                'resume_date' =>  $request[$i]['resume'],
-                'duration' => $request[$i]['duration']
-            ));
-            // array_push($pendings, array(
+            // Pending::firstOrCreate(array(
             //     'product_key' => $request[$i]['product_key'],
             //     'status_id' =>  $request[$i]['id'],
             //     'rev_no' =>  $request[$i]['rev_no'],
@@ -66,7 +57,24 @@ class PendingController extends Controller
             //     'resume_date' =>  $request[$i]['resume'],
             //     'duration' => $request[$i]['duration']
             // ));
+            array_push($pendings, array(
+                'id' => isset($request[$i]['pending_id']) ? $request[$i]['pending_id'] : null,
+                'product_key' => $request[$i]['product_key'],
+                'status_id' =>  $request[$i]['id'],
+                'rev_no' =>  $request[$i]['rev_no'],
+                'start_date' =>  $request[$i]['start'],
+                'reason' => $request[$i]['reason'],
+                'resume_date' =>  $request[$i]['resume'],
+                'duration' => $request[$i]['duration']
+            ));
         }
+        Pending::upsert(
+            $pendings,
+            ['id', 'status_id'],
+            [
+                'resume_date', 'duration'
+            ]
+        );
         // info($pendings);
         // Pending::firstOrCreate($pendings);
     }

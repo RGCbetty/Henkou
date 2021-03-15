@@ -50,13 +50,32 @@ class AuthController extends Controller
             $credentials = request(['employee_no', 'password']);
             if (Auth::attempt($credentials)) {
                 $user = User::where('employee_no', $request->employee_no)->first();
-
+                $userInfo = DB::connection('sqlsrv')->select(DB::raw("SELECT E.EmployeeCode ,E.EmployeeName,
+                        E.DepartmentCode,D.DepartmentName,
+                        E.SectionCode,S.SectionName,
+                        E.TeamCode,T.TeamName,
+                        E.DesignationCode,DS.DesignationName,
+                        E.ContractStatus,E.Gender,E.DateBirth
+                FROM  hrdsql.CompanyInformation.dbo.Employees E
+                LEFT	JOIN hrdsql.CompanyInformation.dbo.Departments D
+                ON E.DepartmentCode=D.DepartmentCode
+                LEFT JOIN hrdsql.CompanyInformation.dbo.Sections S
+                ON E.SectionCode=S.SectionCode
+                LEFT JOIN hrdsql.CompanyInformation.dbo.Teams T
+                ON E.TeamCode =T.TeamCode
+                LEFT JOIN hrdsql.CompanyInformation.dbo.Designations DS
+                ON E.DesignationCode= DS.DesignationCode
+                WHERE    E.RetiredDate IS NULL
+                        AND D.DeletedDate IS NULL AND S.DeletedDate IS NULL
+                        AND T.Deleteddate IS NULL AND DS.DeletedDate IS NULL
+                 AND E.EmployeeCode= :employee_no"), array('employee_no' => $request->employee_no))[0];
                 if (!Hash::check($request->password, $user->password, [])) {
                     throw new \Exception('Error in Login');
                 }
                 $tokenResult = $user->createToken('authToken')->plainTextToken;
                 return response()->json([
                     'status_code' => 200,
+                    'user' => $userInfo,
                     'access_token' => $tokenResult,
                     'token_type' => 'Bearer',
                 ]);

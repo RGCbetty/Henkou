@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import '../../sass/loginform.scss';
 import Http from '../Http';
-import * as api from '../api/auth';
+import * as auth from '../api/auth';
 import { Form, Input, Button, Checkbox, message, Col, Card, Spin } from 'antd';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
@@ -16,7 +16,6 @@ const Login = (props) => {
 	if (isAuthenticated) {
 		return <Redirect to={from} />;
 	}
-	console.log(props);
 	useEffect(() => {
 		document.title = 'Henkou System';
 	}, [props.title]);
@@ -25,8 +24,7 @@ const Login = (props) => {
 		setLoadingState(true);
 		await Http.get('/sanctum/csrf-cookie');
 		try {
-			const result = await dispatch(api.login(formData));
-			console.log(result);
+			const result = await dispatch(auth.login(formData));
 			window.location.href = `http://${window.location.host}/`;
 			// let res = await Http.get('/api/user');
 			// console.log(res);

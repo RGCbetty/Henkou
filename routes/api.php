@@ -31,11 +31,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{id}', 'AuthController@users');
 
     // Route::get('/masterlist/{id}', 'AuthController@userinfo');
+    /* Company Information */
+    Route::get('/departments', 'CompanyInformationController@departments');
+    Route::get('/teams', 'CompanyInformationController@teams');
+    Route::get('/sections', 'CompanyInformationController@sections');
+    Route::get('/department/{dep_id}/sections', 'CompanyInformationController@sectionsByDepartment');
+    Route::get('/department/{dep_id}/section/{sec_id}/teams', 'CompanyInformationController@teamsByDepartmentAndSections');
+    /* Company Information */
     /* HRD Information Service */
     Route::get('/plans', 'InformationServiceController@table');
+    Route::get('/plan', 'InformationServiceController@filteredplans');
     Route::get('/plandetails/{id}', 'InformationServiceController@specs');
     Route::get('/stop', 'InformationServiceController@stop');
-
     /* Specifications */
     /* Master */
     Route::get('/reasons', 'ReasonController@index');
@@ -72,4 +79,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/th/plan', 'ThPlanController@upsert');
     Route::get('/th/plans', 'ThPlanController@index');
     /* Th Plans */
+    /* Affected Product  */
+    Route::get('/planstatuses', 'PlanStatusController@index');
+    Route::get('/products/planstatus/{id}', 'AffectedProductController@byPlanStatus');
+    Route::get('/products/planstatus/', 'AffectedProductController@index');
+    /* Affected Product */
 });

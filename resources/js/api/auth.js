@@ -6,6 +6,7 @@ export const login = (credentials) => {
 	return async (dispatch) => {
 		try {
 			const result = await Http.post('/api/login', credentials);
+			// console.log(result);
 			const instance = Http.create({
 				baseURL: 'http://adminsql1/api/',
 				withCredentials: false,
@@ -16,7 +17,7 @@ export const login = (credentials) => {
 			const response = await instance.get(`basicinfo/${credentials.employee_no}`);
 			if (result.data.status_code == 500) throw result;
 
-			return dispatch(action.authLogin({ token: result.data, userInfo: response.data[0] }));
+			return dispatch(action.authLogin({ token: result.data, userInfo: result.data.user }));
 		} catch (error) {
 			const { status_code, message } = error.data;
 			const data = {

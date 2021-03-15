@@ -48,10 +48,8 @@ const SignUp = (props) => {
 	const checkEmployeeCode = async (input) => {
 		const fields = form.getFieldsValue();
 		const { user } = fields;
-		console.log(user);
 		if (input.length == 5) {
 			const employee = await Http.get(`/api/employee/${input}`);
-			console.log(employee);
 			if (employee.data.status_code !== 404) {
 				form.setFieldsValue({
 					user: {
@@ -88,7 +86,6 @@ const SignUp = (props) => {
 			form.validateFields();
 		}
 	};
-	console.log(form);
 	useEffect(() => {
 		document.title = props.title || '';
 	}, [props.title]);

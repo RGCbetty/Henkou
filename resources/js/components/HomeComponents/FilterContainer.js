@@ -12,14 +12,15 @@ const { Option } = Select;
 const FilterContainer = (props) => {
 	const [expand, setExpand] = useState(false);
 	const [form] = Form.useForm();
-	const { userInfo, types, departments } = props;
+	const { userInfo, types, company, events } = props;
 	const FilterSelections = () => {
 		const count = !expand ? planDetails.length : 0;
 		const items = [];
 		for (let i = 0; i < count; i++) {
 			items.push(
-				<Col style={{ textAlign: planDetails[i].textAlign }} span={8} key={i}>
+				<Col style={{ float: planDetails[i].textAlign }} span={8} key={i}>
 					<Form.Item
+						shouldUpdate
 						name={planDetails[i].title}
 						label={`${planDetails[i].title}`}
 						style={{ marginBottom: '0px' }}
@@ -32,14 +33,17 @@ const FilterContainer = (props) => {
 						<Select
 							showSearch={planDetails[i].showSearch}
 							// defaultValue={planDetails[i].defaultValue}
+							onChange={(value) =>
+								events.handleSelectOnChange(value, planDetails[i].title, form)
+							}
 							style={{ width: planDetails[i].width }}>
 							{planDetails[i].items.length > 0
-								? planDetails[i].items.map((item) => {
+								? planDetails[i].items.map((item, index) => {
 										return (
 											<Option
-												value={item.DepartmentCode}
-												key={item.DepartmentCode}>
-												{item.DepartmentName}
+												value={item[planDetails[i].code]}
+												key={parseInt(item[planDetails[i].code])}>
+												{item[planDetails[i].name]}
 											</Option>
 										);
 								  })
@@ -61,43 +65,60 @@ const FilterContainer = (props) => {
 		? [
 				{
 					title: 'Department',
-					width: 250,
 					textAlign: 'left',
 					showSearch: true,
-					items: departments,
-					code: 'DepartmentCode'
+					items: company.departments,
+					code: 'DepartmentCode',
+					name: 'DepartmentName'
 				},
 				{
 					title: 'Section',
-					width: 150,
 					textAlign: 'center',
 					showSearch: true,
-					items: []
+					items: company.sections,
+					code: 'SectionCode',
+					name: 'SectionName'
 				},
 				{
 					title: 'Team',
-					width: 200,
 					textAlign: 'right',
 					showSearch: true,
-					items: []
+					items: company.teams,
+					code: 'TeamCode',
+					name: 'TeamName'
 				},
 				{
 					title: 'House Type',
 					width: 200,
 					textAlign: 'left',
-					items: [{}]
+					items: [
+						{ id: '1', house_type: 'All' },
+						{ id: '2', house_type: 'Wakugumi' },
+						{ id: '3', house_type: 'Jikugumi' }
+					],
+					code: 'id',
+					name: 'house_type'
 				},
 				{
 					title: 'Henkou Type',
 					width: 250,
 					textAlign: 'center',
-					items: []
+					items: types,
+					code: 'id',
+					name: 'type_name'
 				},
 				{
 					title: 'Status',
 					width: 200,
 					textAlign: 'right',
-					items: []
+					items: [
+						{ id: '1', status_type: 'All' },
+						{ id: '2', status_type: 'On-going' },
+						{ id: '3', status_type: 'Pending' },
+						{ id: '4', status_type: 'Finished' }
+					],
+					code: 'id',
+					name: 'status_type'
 				}
 		  ]
 		: [];
@@ -107,6 +128,7 @@ const FilterContainer = (props) => {
 
 	return (
 		<Form
+			preserve={false}
 			form={form}
 			name="advanced_search"
 			initialValues={{

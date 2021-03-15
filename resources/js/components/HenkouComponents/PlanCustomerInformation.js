@@ -34,7 +34,8 @@ export const PlanCustomerInformation = (details) => [
 	{
 		title: 'TH number',
 		width: 250,
-		textAlign: 'center'
+		textAlign: 'center',
+		value: !isEmpty(details) ? details.th_no : ''
 	},
 	{
 		title: 'Kiso Start',

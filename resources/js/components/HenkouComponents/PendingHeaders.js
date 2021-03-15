@@ -69,7 +69,6 @@ const PendingHeaders = (handleStatus, handleReasonInput) => [
 				<b>{text}</b>
 			) : (
 				<>
-					{console.log(row)}
 					<Button
 						type="primary"
 						disabled={!row.start}

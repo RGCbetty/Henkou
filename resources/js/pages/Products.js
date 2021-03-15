@@ -2,7 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import Http from '../Http';
 import { useProductsRetriever } from '../api/products';
-import { useMasterCompany, useMasterSuppliers } from '../api/master';
+import {
+	useMasterCompany,
+	useMasterSuppliers,
+	useMasterDepartment,
+	useMasterSection,
+	useMasterTeam
+} from '../api/master';
 import Highlighter from 'react-highlight-words';
 import productHeaders from '../components/ProductsComponents/ManageProductsHeaders';
 import { Table, Input, Button, Space, Form, Modal, Transfer, Tag, Switch } from 'antd';
@@ -12,6 +18,9 @@ import { Popconfirm, Typography } from 'antd';
 const Products = () => {
 	const [form] = Form.useForm();
 	const inputRef = useRef();
+	const [departments, setDepartments] = useMasterDepartment();
+	const [sections, setSections] = useMasterSection();
+	const [teams, setTeams] = useMasterTeam();
 	const [company, setCompany] = useMasterCompany();
 	const [masterProducts, setMasterProducts] = useProductsRetriever();
 	const [allSupplier, setAllSupplier] = useMasterSuppliers();
@@ -85,7 +94,6 @@ const Products = () => {
 						.includes(value.toLowerCase())
 				: '',
 		onFilterDropdownVisibleChange: (visible) => {
-			console.log(inputRef);
 			if (visible) {
 				setTimeout(() => inputRef.current, 100);
 			}
@@ -242,7 +250,6 @@ const Products = () => {
 		// const products = product.data;
 
 		const clonedProducts = [...uniqueProducts];
-		console.log(clonedProducts, 'handleLastTouch');
 		setProduct({ ...product, data: clonedProducts });
 	};
 
@@ -364,13 +371,11 @@ const Products = () => {
 	const uniqueProducts = _.uniqBy(product.data, (obj) => obj.product_key);
 
 	const modalOk = async () => {
-		console.log(product.data);
 		const productsToUpdate = product.data
 			.map((el) => {
 				return { last_touch: false, ...el };
 			})
 			.filter((item) => targetKeys.includes(item.id));
-		console.log(productsToUpdate);
 		const update = await Http.post('/api/productcategories', {
 			product_key: modal.title_key,
 			products: productsToUpdate
@@ -386,7 +391,6 @@ const Products = () => {
 	const modalCancel = async () => {
 		const allProducts = await Http.get('api/products');
 		const reduceByKey = _.uniqBy(allProducts.data, (obj) => obj.product_key);
-		console.log(reduceByKey);
 		setProduct({ ...product, data: reduceByKey });
 		setModal({ modal: false });
 	};
@@ -421,22 +425,36 @@ const Products = () => {
 							return {
 								key: item.id,
 								department:
-									company.length > 0
-										? company.find((attr) => {
+									departments.length > 0
+										? departments.find((attr) => {
 												return attr.DepartmentCode == item.department_id;
-										  }).DepartmentName
+										  })
+											? departments.find((attr) => {
+													return (
+														attr.DepartmentCode == item.department_id
+													);
+											  }).DepartmentName
+											: null
 										: null,
 								section:
-									company.length > 0
-										? company.find((attr) => {
+									sections.length > 0
+										? sections.find((attr) => {
 												return attr.SectionCode == item.section_id;
-										  }).SectionName
+										  })
+											? sections.find((attr) => {
+													return attr.SectionCode == item.section_id;
+											  }).SectionName
+											: null
 										: null,
 								team:
-									company.length > 0
-										? company.find((attr) => {
+									teams.length > 0
+										? teams.find((attr) => {
 												return attr.TeamCode == item.team_id;
-										  }).TeamName
+										  })
+											? teams.find((attr) => {
+													return attr.TeamCode == item.team_id;
+											  }).TeamName
+											: null
 										: null,
 								count:
 									allSupplier.length > 0
@@ -507,10 +525,16 @@ const Products = () => {
 							return {
 								key: item.id,
 								department:
-									company.length > 0
-										? company.find((attr) => {
+									departments.length > 0
+										? departments.find((attr) => {
 												return attr.DepartmentCode == item.department_id;
-										  }).DepartmentName
+										  })
+											? departments.find((attr) => {
+													return (
+														attr.DepartmentCode == item.department_id
+													);
+											  }).DepartmentName
+											: null
 										: null,
 								last_touch:
 									suppliers.length > 0
@@ -530,7 +554,6 @@ const Products = () => {
 						showSearch={showSearch}
 						onChange={onChange}
 						filterOption={(inputValue, item) => {
-							console.log(inputValue);
 							return (
 								item.department.toLowerCase().indexOf(inputValue.toLowerCase()) !==
 									-1 ||

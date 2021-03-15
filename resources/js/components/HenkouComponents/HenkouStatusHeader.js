@@ -1,12 +1,16 @@
 import React from 'react';
-import { Button, Select, Tag } from 'antd';
-import { PlayCircleOutlined, PauseCircleOutlined, FieldTimeOutlined } from '@ant-design/icons';
+import { Button, Select, Tag, Tooltip } from 'antd';
+import {
+	PlayCircleOutlined,
+	PauseCircleOutlined,
+	FieldTimeOutlined,
+	ClockCircleOutlined
+} from '@ant-design/icons';
 const { Option } = Select;
 export const henkouStatusHeader = (
 	assessment,
 	handleStatus,
-	handleAssessment,
-	handlePending,
+	actions,
 	checkIfSupplier,
 	checkIfOwner
 ) => [
@@ -51,20 +55,20 @@ export const henkouStatusHeader = (
 		align: 'center',
 		width: 150
 	},
-	{
-		title: 'Section',
-		dataIndex: 'section',
-		key: '5',
-		align: 'center',
-		width: 170
-	},
-	{
-		title: 'Team',
-		dataIndex: 'team',
-		key: '6',
-		align: 'center',
-		width: 150
-	},
+	// {
+	// 	title: 'Section',
+	// 	dataIndex: 'section',
+	// 	key: '5',
+	// 	align: 'center',
+	// 	width: 170
+	// },
+	// {
+	// 	title: 'Team',
+	// 	dataIndex: 'team',
+	// 	key: '6',
+	// 	align: 'center',
+	// 	width: 150
+	// },
 
 	{
 		title: 'Assessment',
@@ -73,13 +77,12 @@ export const henkouStatusHeader = (
 		width: 80,
 		align: 'center',
 		render: (text, row, index) => {
-			console.log(checkIfSupplier(row));
 			return (
 				<Select
 					defaultValue=""
 					value={text}
 					disabled={(!row.received_date, checkIfSupplier(row))}
-					onChange={(value) => handleAssessment(value, 'assessment_id', row)}
+					onChange={(value) => actions.handleAssessment(value, 'assessment_id', row)}
 					style={{ width: 175 }}>
 					{assessment.map((item, index) => {
 						return (
@@ -92,7 +95,43 @@ export const henkouStatusHeader = (
 			);
 		}
 	},
-	// <PauseCircleOutlined />
+	{
+		title: 'Pending',
+		key: '9',
+		dataIndex: 'pending',
+		align: 'center',
+		width: 70,
+		render: (text, row) => (
+			<Tooltip placement="top" title={'Assess Pending'}>
+				<Button
+					type="primary"
+					disabled={(row.toggleSelect, !row.received_date)}
+					onClick={() => actions.handlePending(row)}
+					shape="circle"
+					icon={<ClockCircleOutlined />}
+				/>
+			</Tooltip>
+		)
+	},
+
+	{
+		title: 'Action',
+		key: '12',
+		align: 'center',
+		width: 100,
+		dataIndex: 'action',
+		render: (text, row) => (
+			<Tooltip placement="top" title={'Start Henkou'}>
+				<Button
+					type="primary"
+					disabled={(row.toggleSelect, !row.received_date)}
+					onClick={() => actions.handleAction(row)}
+					shape="circle"
+					icon={<FieldTimeOutlined />}
+				/>
+			</Tooltip>
+		)
+	},
 	{
 		title: 'Start',
 		key: '8',
@@ -115,22 +154,7 @@ export const henkouStatusHeader = (
 				</>
 			)
 	},
-	{
-		title: 'Pending',
-		key: '9',
-		dataIndex: 'pending',
-		align: 'center',
-		width: 70,
-		render: (text, row) => (
-			<Button
-				type="primary"
-				disabled={(row.toggleSelect, !row.received_date, checkIfSupplier(row))}
-				onClick={() => handlePending(row)}
-				shape="circle"
-				icon={<FieldTimeOutlined />}
-			/>
-		)
-	},
+
 	{
 		title: 'Finish',
 		key: '10',

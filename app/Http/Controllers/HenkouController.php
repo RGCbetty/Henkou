@@ -109,19 +109,35 @@ class HenkouController extends Controller
             $max_revision = Detail::where('customer_code', $request->details['customer_code'])->max('rev_no');
             $status = array();
             for ($i = 0; $i < count($request->product); $i++) {
-                array_push($status, array(
-                    'log' => isset($request->product[$i]['remarks']) ? $request->product[$i]['remarks'] : null,
-                    'updated_by' => $request->details['updated_by'],
-                    'product_key' => $request->product[$i]['product_key'],
-                    'start_date' => isset($request->product[$i]['start_date']) ? $request->product[$i]['start_date'] : null,
-                    'finished_date' => isset($request->product[$i]['finished_date']) ? $request->product[$i]['finished_date'] : null,
-                    'received_date' => isset($request->product[$i]['received_date']) ? $request->product[$i]['received_date'] : null,
-                    'assessment_id' => null,
-                    'detail_id' => Detail::select('id')->where('customer_code', $request->details['customer_code'])->where('rev_no', $max_revision)->first()->id,
-                    'product_id' => $request->product[$i]['id'],
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s')
-                ));
+                if ($i == 0) {
+                    array_push($status, array(
+                        'log' => isset($request->product[$i]['remarks']) ? $request->product[$i]['remarks'] : null,
+                        'updated_by' => $request->details['updated_by'],
+                        // 'product_key' => $request->product[$i]['product_category_id'],
+                        'start_date' => isset($request->product[$i]['start_date']) ? $request->product[$i]['start_date'] : null,
+                        'finished_date' => isset($request->product[$i]['finished_date']) ? $request->product[$i]['finished_date'] : null,
+                        'received_date' => isset($request->product[$i]['received_date']) ? $request->product[$i]['received_date'] : null,
+                        'assessment_id' => isset($request->product[$i]['assessment_id']) ? $request->product[$i]['assessment_id'] : null,
+                        'detail_id' => Detail::select('id')->where('customer_code', $request->details['customer_code'])->where('rev_no', $max_revision)->first()->id,
+                        'affected_id' => $request->product[$i]['id'],
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ));
+                } else {
+                    array_push($status, array(
+                        'log' =>  null,
+                        'updated_by' => $request->details['updated_by'],
+                        // 'product_key' => $request->product[$i]['product_category_id'],
+                        'start_date' => null,
+                        'finished_date' => null,
+                        'received_date' =>  $i == 1 ? (isset($request->product[$i - 1]['finished_date']) ? $request->product[$i - 1]['finished_date'] : null) : null,
+                        'assessment_id' => null,
+                        'detail_id' => Detail::select('id')->where('customer_code', $request->details['customer_code'])->where('rev_no', $max_revision)->first()->id,
+                        'affected_id' => $request->product[$i]['id'],
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ));
+                }
             }
             Status::insert($status);
 

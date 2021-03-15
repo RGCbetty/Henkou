@@ -1,5 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import Http from '../Http';
+export const useMasterPlanStatuses = () => {
+	const [planStatuses, setPlanStatuses] = useState([]);
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				const planstatus = await Http.get('/api/planstatuses');
+				if (mounted) {
+					setPlanStatuses(planstatus.data);
+				}
+			} catch (e) {
+				console.error(e);
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
+	}, []);
+	return [planStatuses, setPlanStatuses];
+};
 
 export const useMasterDetails = () => {
 	const [info, setInfo] = useState({
@@ -70,16 +90,17 @@ export const useMasterDepartment = () => {
 		let mounted = true;
 		(async () => {
 			try {
-				const instance = Http.create({
-					baseURL: 'http://adminsql1/api',
-					withCredentials: false,
-					headers: {
-						'master-api': 'db588403f0a1d3b897442a28724166b4'
-					}
-				});
-				const department = await instance.get('/company/department/hrd');
+				const departments = await Http.get('api/departments');
+				// const instance = Http.create({
+				// 	baseURL: 'http://adminsql1/api',
+				// 	withCredentials: false,
+				// 	headers: {
+				// 		'master-api': 'db588403f0a1d3b897442a28724166b4'
+				// 	}
+				// });
+				// const department = await instance.get('/company/department/hrd');
 				if (mounted) {
-					setDepartments(department.data);
+					setDepartments(departments.data);
 				}
 			} catch (err) {
 				console.error(err);
@@ -90,6 +111,118 @@ export const useMasterDepartment = () => {
 		};
 	}, []);
 	return [departments, setDepartments];
+};
+export const useMasterSection = () => {
+	const [sections, setSections] = useState([]);
+
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				const sections = await Http.get('api/sections');
+				// const instance = Http.create({
+				// 	baseURL: 'http://adminsql1/api',
+				// 	withCredentials: false,
+				// 	headers: {
+				// 		'master-api': 'db588403f0a1d3b897442a28724166b4'
+				// 	}
+				// });
+				// const department = await instance.get('/company/department/hrd');
+				if (mounted) {
+					setSections(sections.data);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
+	}, []);
+	return [sections, setSections];
+};
+export const useMasterTeam = () => {
+	const [teams, setTeams] = useState([]);
+
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				const teams = await Http.get('api/teams');
+				if (mounted) {
+					setTeams(teams.data);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
+	}, []);
+	return [teams, setTeams];
+};
+export const useMasterSectionByDepartment = (department_id) => {
+	const [sections, setSections] = useState([]);
+
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				const sections = await Http.get('api/sections', {
+					params: { department_id }
+				});
+				// const instance = Http.create({
+				// 	baseURL: 'http://adminsql1/api',
+				// 	withCredentials: false,
+				// 	headers: {
+				// 		'master-api': 'db588403f0a1d3b897442a28724166b4'
+				// 	}
+				// });
+				// const department = await instance.get('/company/department/hrd');
+				if (mounted) {
+					setSections(sections.data);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
+	}, []);
+	return [sections, setSections];
+};
+export const useMasterTeamByDepartmentAndSection = (department_id, section_id) => {
+	const [teams, setTeams] = useState([]);
+
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				const teams = await Http.get('api/teams', {
+					params: { department_id, section_id }
+				});
+				// const instance = Http.create({
+				// 	baseURL: 'http://adminsql1/api',
+				// 	withCredentials: false,
+				// 	headers: {
+				// 		'master-api': 'db588403f0a1d3b897442a28724166b4'
+				// 	}
+				// });
+				// const department = await instance.get('/company/department/hrd');
+				if (mounted) {
+					setTeams(teams.data);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
+	}, []);
+	return [teams, setTeams];
 };
 export const useMasterCompany = () => {
 	const [company, setCompany] = useState([]);

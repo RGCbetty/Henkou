@@ -21,7 +21,6 @@ const initialState = {
 
 const authLogin = (state, payload) => {
 	const { access_token } = payload.token;
-	console.log(payload.userInfo);
 	const ciphertext = CryptoJS.AES.encrypt(
 		JSON.stringify(payload.userInfo),
 		access_token

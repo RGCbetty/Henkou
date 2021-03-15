@@ -21,7 +21,9 @@ class DatabaseSeeder extends Seeder
             CustomerSeeder::class,
             SupplierSeeder::class,
             ActionThOptionSeeder::class,
-            AssessmentThOptionSeeder::class
+            AssessmentThOptionSeeder::class,
+            PlanStatusSeeder::class,
+            AffectedProductSeeder::class
         ]);
 
         // \App\Models\User::factory(10)->create();

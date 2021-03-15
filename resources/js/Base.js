@@ -96,8 +96,8 @@ const Base = ({ children, dispatch, ...rest }) => {
 					{drawerItems
 						.filter((item) => {
 							if (
-								rest.userInfo.SectionCode !== '465' &&
-								rest.userInfo.TeamCode !== '0133' &&
+								rest.userInfo.SectionCode !== '00465' &&
+								rest.userInfo.TeamCode !== '00133' &&
 								rest.userInfo.DepartmentCode !== '122'
 							) {
 								if (item.title == 'Registration') {

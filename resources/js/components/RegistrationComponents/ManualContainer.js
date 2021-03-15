@@ -79,7 +79,6 @@ const ManualContainer = ({
 		let planDetails = [];
 		let pending = '';
 		const responseCheckPlans = await instance.get(`get/checkPlan/${details.customer_code}`);
-		console.log(responseCheckPlans);
 		if (responseCheckPlans.data.length > 0) {
 			if (responseCheckPlans.data[0].EmailedDate) {
 				email = responseCheckPlans.data[0].EmailedDate;
@@ -246,7 +245,6 @@ const ManualContainer = ({
 		const responseEmployeeProducts = await instance.get(
 			`get/getID/${rest.userInfo.EmployeeCode}`
 		);
-		console.log(responseEmployeeProducts, '00000001010101');
 		if (responseEmployeeProducts != undefined && responseEmployeeProducts.data.length > 0) {
 			// if (
 			//     responseEmployeeProducts.data[0].filtering == true &&
@@ -273,7 +271,7 @@ const ManualContainer = ({
 			const assignedProductCategoriesPCMS = planDetails.filter((item) => {
 				return userProducts.includes(item.ProductCode);
 			});
-			console.log(assignedProductCategoriesPCMS, '@@@#$%^&*(');
+			// console.log(assignedProductCategoriesPCMS, '@@@#$%^&*(');
 
 			setPlanDetail(assignedProductCategoriesPCMS);
 		}
@@ -318,7 +316,6 @@ const ManualContainer = ({
 					`/api/henkou/attachment/${response.data.id}`,
 					formData
 				);
-				console.log(uploadResponse);
 				setUpload({
 					fileList: [],
 					status: true
