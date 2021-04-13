@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import Http from '../Http';
+import * as action from '../redux/actions/master';
 export const useMasterPlanStatuses = () => {
 	const [planStatuses, setPlanStatuses] = useState([]);
 	useEffect(() => {
@@ -28,6 +29,8 @@ export const useMasterDetails = () => {
 		products: [],
 		thAssessments: [],
 		thActions: [],
+		tempTH: [],
+		affectedProducts: [],
 		fetching: true
 	});
 
@@ -40,14 +43,17 @@ export const useMasterDetails = () => {
 				const products = await Http.get('/api/products');
 				const thActions = await Http.get('/api/actions');
 				const reasons = await Http.get(`/api/reasons`);
-
+				const affectedProducts = await Http.get('/api/products/planstatus');
+				const tempTH = await Http.get(`/api/th/plans`);
 				if (mounted) {
 					setInfo({
 						thAssessments: thAssessments.data,
 						types: types.data,
 						reasons: reasons.data,
-						products: products.data,
 						thActions: thActions.data,
+						affectedProducts: affectedProducts.data,
+						tempTH: tempTH.data,
+						products: products.data,
 						fetching: false
 					});
 				}
@@ -86,7 +92,7 @@ export const useMasterSuppliers = () => {
 export const useMasterDepartment = () => {
 	const [departments, setDepartments] = useState([]);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		let mounted = true;
 		(async () => {
 			try {
@@ -115,7 +121,7 @@ export const useMasterDepartment = () => {
 export const useMasterSection = () => {
 	const [sections, setSections] = useState([]);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		let mounted = true;
 		(async () => {
 			try {
@@ -144,7 +150,7 @@ export const useMasterSection = () => {
 export const useMasterTeam = () => {
 	const [teams, setTeams] = useState([]);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		let mounted = true;
 		(async () => {
 			try {
@@ -251,4 +257,40 @@ export const useMasterCompany = () => {
 		};
 	}, []);
 	return [company, setCompany];
+};
+export const setMaster = () => {
+	return async (dispatch) => {
+		try {
+			const departments = await Http.get('api/departments');
+			const sections = await Http.get('api/sections');
+			const teams = await Http.get('api/teams');
+			// const instance = Http.create({
+			// 	baseURL: 'http://hrdapps71:4900/',
+
+			// 	// baseURL: 'http://10.168.64.223:4900/',
+			// 	withCredentials: false
+			// 	// headers: {
+			// 	// 	'master-api': 'db588403f0a1d3b897442a28724166b4'
+			// 	// }
+			// });
+
+			// const response = await instance.get('get/getProductListActive?from=plugins');
+			// if (response.data.status_code == 500) throw result;
+
+			return dispatch(
+				action.setMaster({
+					departments: departments.data,
+					sections: sections.data,
+					teams: teams.data
+				})
+			);
+		} catch (error) {
+			const { status_code, message } = error.data;
+			const data = {
+				status_code,
+				message
+			};
+			return data;
+		}
+	};
 };

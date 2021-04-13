@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-
+import { Result, Button } from 'antd';
 const NotFound = () => (
-	<div className="container py-5">
-		<div className="text-center">
-			<h1>404</h1>
-			<p>No page found.</p>
-		</div>
-	</div>
+	<Result
+		status="404"
+		title="404"
+		subTitle="Sorry, the page you visited does not exist."
+		extra={
+			<Button type="primary" href="/">
+				Back Home
+			</Button>
+		}
+	/>
 );
 export default NotFound;

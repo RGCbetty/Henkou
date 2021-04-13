@@ -45,6 +45,7 @@ class CompanyInformationController extends Controller
     }
     public function sectionsByDepartment(Request $request)
     {
+        info($request->dep_id);
         try {
             $sections = DB::connection('company_information')->select(DB::raw('SELECT C.SectionCode,C.SectionName FROM DepartmentSectionRelations A
             LEFT JOIN Departments B ON A.DepartmentCode = B.DepartmentCode
@@ -52,7 +53,7 @@ class CompanyInformationController extends Controller
             WHERE A.DeletedDate IS NULL
             AND B.DeletedDate IS NULL
             AND C.DeletedDate IS NULL
-            AND A.DepartmentCode = :department_id'), array('department_id' => $request->department_id));
+            AND A.DepartmentCode = :department_id'), array('department_id' => $request->dep_id));
             return response()->json($sections, 200);
         } catch (Exception $error) {
             return response()->json(['message' => $error->getMessage()], 404);
@@ -71,7 +72,7 @@ class CompanyInformationController extends Controller
             AND D.DeletedDate IS NULL
             AND A.DepartmentCode = :department_id
             AND A.SectionCode = :section_id
-            '), array('department_id' => $request->department_id, 'section_id' => $request->section_id));
+            '), array('department_id' => $request->dep_id, 'section_id' => $request->sec_id));
             return response()->json($teams, 200);
         } catch (Exception $error) {
             return response()->json(['message' => $error->getMessage()], 404);

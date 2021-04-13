@@ -18,7 +18,7 @@ class CreateConstructionSchedulesTable extends Migration
             $table->string('customer_code', 12)->unique();
             $table->timestamp('joutou_date')->nullable();
             $table->integer('days_before_joutou')->nullable();
-            $table->timestamp('kiso_start');
+            $table->timestamp('kiso_start')->nullable();
             $table->integer('days_before_kiso_start')->nullable();
             $table->timestamps();
         });

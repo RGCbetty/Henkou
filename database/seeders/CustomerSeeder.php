@@ -24,7 +24,6 @@ class CustomerSeeder extends Seeder
             //             'product_key' => $data->product_key,
             //             'customer_key' => $data->customer_key,
             //         ]);
-            //         // Log::info();
             //     }
             $customers = array();
             for ($i = 0; $i < count($customer); $i++) {

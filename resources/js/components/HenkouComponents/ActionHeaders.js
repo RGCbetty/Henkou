@@ -1,16 +1,22 @@
 import React from 'react';
-import { Button, Select, Input } from 'antd';
-import { PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons';
+import { Button, Select, Input, Tooltip, AutoComplete } from 'antd';
+import { PlayCircleOutlined, PauseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 const { Option } = Select;
 
 const { TextArea } = Input;
 
-const ActionHeaders = (handleStatus, handleReasonInput) => [
+const ActionHeaders = (
+	handleActionStatus,
+	handleActionDetails,
+	handleActionPending,
+
+	pendingItems
+) => [
 	{
 		title: 'No.',
-		dataIndex: 'id',
+		dataIndex: 'status_index',
 		key: '1',
-		width: 70,
+		width: 30,
 		align: 'center',
 		fixed: 'left'
 	},
@@ -19,7 +25,7 @@ const ActionHeaders = (handleStatus, handleReasonInput) => [
 		dataIndex: 'section',
 		key: '2',
 		align: 'center',
-		width: 120,
+		width: 130,
 		fixed: 'left'
 	},
 	{
@@ -27,24 +33,30 @@ const ActionHeaders = (handleStatus, handleReasonInput) => [
 		key: '3',
 		dataIndex: 'team',
 		align: 'center',
-		width: 150
+		width: 130
 	},
 	{
 		title: 'Start',
 		key: '8',
 		dataIndex: 'start_date',
 		align: 'center',
-		width: 150,
+		width: 120,
 		render: (text, row, index) =>
 			text ? (
 				<b>{text}</b>
 			) : (
 				<>
+					{console.log(row)}
+					{console.log(
+						!row.received_date || row.disableHistory || row.assessment_id !== 1
+					)}
 					<Button
 						type="primary"
-						disabled={(!row.received_date, checkIfSupplier(row))}
+						disabled={
+							!row.received_date || row.disableHistory || row.assessment_id !== 1
+						}
 						// disabled={row.assessment_id !== 1}
-						onClick={() => handleStatus(row, 'start_date')}
+						onClick={() => handleActionStatus(row, 'start_date')}
 						shape="circle"
 						icon={<PlayCircleOutlined />}
 					/>
@@ -53,12 +65,35 @@ const ActionHeaders = (handleStatus, handleReasonInput) => [
 	},
 
 	{
+		title: 'Pending',
+		key: '9',
+		dataIndex: 'pending',
+		align: 'center',
+		width: 70,
+		render: (text, row) => (
+			<Tooltip placement="top" title={'Assess Pending'}>
+				<Button
+					type="primary"
+					disabled={
+						!row.received_date ||
+						!row.start_date ||
+						row.finished_date ||
+						row.disableHistory
+					}
+					onClick={() => handleActionPending(row)}
+					shape="circle"
+					icon={<ClockCircleOutlined />}
+				/>
+			</Tooltip>
+		)
+	},
+	{
 		title: 'Finish',
 		key: '10',
 		dataIndex: 'finished_date',
 		align: 'center',
 
-		width: 150,
+		width: 120,
 		render: (text, row, index) =>
 			text ? (
 				<b>{text}</b>
@@ -66,8 +101,13 @@ const ActionHeaders = (handleStatus, handleReasonInput) => [
 				<>
 					<Button
 						type="primary"
-						disabled={(!row.start_date, !row.received_date, checkIfSupplier(row))}
-						onClick={() => handleStatus(row, 'finished_date')}
+						disabled={
+							!row.start_date ||
+							!row.received_date ||
+							pendingItems.some((item) => !item.start || !item.resume) ||
+							row.disableHistory
+						}
+						onClick={() => handleActionStatus(row, 'finished_date')}
 						shape="circle"
 						icon={<PauseCircleOutlined />}
 					/>
@@ -85,9 +125,18 @@ const ActionHeaders = (handleStatus, handleReasonInput) => [
 	{
 		title: 'Henkou Details',
 		key: '7',
-		dataIndex: 'duration',
+		dataIndex: 'log',
 		align: 'center',
-		width: 70
+		width: 150,
+		render: (text, row) => (
+			<TextArea
+				value={text}
+				disabled={row.resume && row.start ? true : false || row.disableHistory}
+				bordered={false}
+				onChange={(value) => handleActionDetails(row, value)}
+				autoSize={{ minRows: 1, maxRows: 4 }}
+			/>
+		)
 	}
 ];
 export default ActionHeaders;

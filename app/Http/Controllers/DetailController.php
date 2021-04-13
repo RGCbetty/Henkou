@@ -30,7 +30,6 @@ class DetailController extends Controller
     public function latest($customer_code)
     {
         try {
-            // Log::info($customer_code);
             $latest_revision = Detail::where('customer_code', $customer_code)->max('rev_no');
             $result = Detail::with(['invoice', 'construction_schedule'])->where('customer_code', $customer_code)->where('rev_no', $latest_revision)->first();
             // DB::connection('mysql')->select(DB::raw("SELECT A.*,B.*, C.* FROM henkou.details as A
@@ -42,7 +41,6 @@ class DetailController extends Controller
             //             AND A.customer_code = '{$customer_code}';"));
             // $max = Detail::where('customer_code', $customer_code)->max('rev_no');
             // $found = (empty($max)) ? null :  Detail::where('customer_code', $customer_code)->where('rev_no', $max)->first()->invoice()->where('customer_code', $customer_code)->first();
-            // info($result);
             return $result;
         } catch (Exception $e) {
             Log::error($e);
@@ -119,7 +117,7 @@ class DetailController extends Controller
 
             $detail->save();
         } catch (Exception $error) {
-            Log::info($error);
+            Log::error($error);
         }
     }
 

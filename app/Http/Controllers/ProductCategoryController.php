@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PlanStatus;
 use App\Models\ProductCategory;
 use App\Models\Supplier;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ProductCategoryController extends Controller
@@ -18,14 +20,19 @@ class ProductCategoryController extends Controller
      */
     public function all()
     {
+        // $value = Cache::remember('products', 15, function () {
+        //     return ProductCategory::all();
+        // });
+        // $planStat = PlanStatus::whereIn('id', [1, 2, 3, 4]);
+        // return PlanStatus::with('products')->orderBy('id')->get();
         return ProductCategory::all();
     }
     public function index(Request $request)
     {
-        //
+
         // $per_page = $request->input('per_page');
         // return ProductCategory::paginate($per_page);
-        return ProductCategory::all();
+        return PlanStatus::all()->with('products')->orderBy('id')->get();
     }
 
     /**
@@ -51,7 +58,6 @@ class ProductCategoryController extends Controller
                     "updated_by" => null,
                     "details_id" => null
                 ]);
-                // Log::info();
             }
         } catch (Exception $e) {
             error_log($e);
@@ -75,9 +81,10 @@ class ProductCategoryController extends Controller
      * @param  \App\Models\ProductCategory  $productCategory
      * @return \Illuminate\Http\Response
      */
-    public function show(ProductCategory $productCategory)
+    public function show($planstatus_id)
     {
         //
+        $planStat = PlanStatus::all()->find(1);
     }
 
     /**
@@ -124,7 +131,6 @@ class ProductCategoryController extends Controller
 
         $toUpdate = array();
         foreach ($products as $key => $value) {
-            // info($value);
             $value['created_at'] = Carbon::now()->toDateTimeString();
             $value['updated_at'] = Carbon::now()->toDateTimeString();
             array_push($toUpdate, $value);
@@ -186,15 +192,9 @@ class ProductCategoryController extends Controller
         //     }
         // });
 
-        // info($uniqueSuppliersToBeCreated);
         // $result  = array_merge($suppliersToBeCreated, $suppliersToBeUpdated);
         // $uniqueResult = unique_multidim_array($result, 'supplier_key');
-        // info('to be createeeeeeeeeeeeeeeeeeeeeeeeeeeeed');
-        // info($suppliersToBeCreated);
-        // info('to be updated');
-        // info($suppliersToBeUpdated);
         // if (count($last_touch) > 0) {
-        // info($last_touch);
         // LaravelBatch
         // Batch::update(Supplier::class, $suppliersToBeUpdated, $product_key);
         foreach ($suppliersToBeUpdated as $val) {

@@ -16,7 +16,6 @@ class ThPlanController extends Controller
     public function index()
     {
         //
-        // info(ThPlanTemporary::select()->whereDate('received_date', '=', Carbon::today()->subDay())->whereDate('received_date', '=', Carbon::today())->get());
         return ThPlanTemporary::select()->whereDate('received_date', '=', Carbon::today()->subDay())->orWhere('received_date', '=', Carbon::today())->get();
     }
 
@@ -73,7 +72,6 @@ class ThPlanController extends Controller
 
     public function upsert(Request $request)
     {
-        // info(property_exists($request, 'start_date'));
         $thplan = array();
         $req = (object) $request;
         array_push($thplan, array(
@@ -93,7 +91,6 @@ class ThPlanController extends Controller
             'received_date' => $request->RequestAcceptedDate,
             'updated_by' => $request->employee_code
         ));
-        // info($thplan);
         ThPlanTemporary::upsert(
             $thplan,
             ['customer_code', 'plan_no', 'th_no'],

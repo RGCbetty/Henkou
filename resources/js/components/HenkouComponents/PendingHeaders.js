@@ -1,14 +1,14 @@
 import React from 'react';
-import { Button, Select, Input } from 'antd';
+import { Button, Select, Input, AutoComplete } from 'antd';
 import { PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons';
 const { Option } = Select;
 
 const { TextArea } = Input;
 
-const PendingHeaders = (handleStatus, handleReasonInput) => [
+const PendingHeaders = (handleStatus, handleReasonInput, options) => [
 	{
 		title: 'No.',
-		dataIndex: 'index',
+		dataIndex: 'pending_index',
 		key: '1',
 		width: 70,
 		align: 'center',
@@ -48,13 +48,23 @@ const PendingHeaders = (handleStatus, handleReasonInput) => [
 		dataIndex: 'reason',
 		align: 'center',
 		render: (text, row) => (
-			<TextArea
+			<AutoComplete
 				value={text}
-				bordered={false}
-				disabled={row.resume && row.start ? true : false}
-				onChange={(value) => handleReasonInput(row, value)}
-				autoSize={{ minRows: 1, maxRows: 4 }}
-			/>
+				disabled={row.resume || !row.start}
+				options={options.data}
+				style={{
+					width: 200
+				}}
+				onFocus={(value) => options.onFocus(value, 'reason', row)}
+				onSelect={(value) => options.onSelect(value, 'reason', row)}>
+				<TextArea
+					value={text}
+					bordered={false}
+					disabled={row.resume || !row.start}
+					onChange={(value) => handleReasonInput(row, value)}
+					autoSize={{ minRows: 1, maxRows: 4 }}
+				/>
+			</AutoComplete>
 		),
 		width: 150
 	},

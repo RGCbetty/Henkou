@@ -20,7 +20,6 @@ class AffectedProductController extends Controller
     {
         try {
             $affectedProducts = AffectedProduct::select()->where('plan_status_id', $id)->get();
-            info($affectedProducts);
             return response()->json($affectedProducts);
         } catch (Exception $error) {
             return response()->json(['message' => $error->getMessage()], 401);

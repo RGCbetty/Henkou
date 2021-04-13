@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Http from '../Http';
 import moment from 'moment';
+
 export const useAffectedProductsRetriever = () => {
 	const [affectedProducts, setAffectedProducts] = useState({ loading: false, data: [] });
 	useEffect(() => {
@@ -27,6 +28,36 @@ export const useAffectedProductsRetriever = () => {
 	return [affectedProducts, setAffectedProducts];
 };
 export const useProductsRetriever = () => {
+	const [products, setProducts] = useState({ loading: true, data: [] });
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				const products = await Http.get(`api/products`);
+
+				if (mounted) {
+					setProducts({
+						loading: false,
+						data: products.data
+					});
+				}
+			} catch (error) {
+				if (Http.isCancel(error)) {
+					console.error(error);
+				} else {
+					console.error(error);
+				}
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
+	}, []);
+	return [products, setProducts];
+};
+
+/* BACK UPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP */
+/* export const useProductsRetriever = () => {
 	const [products, setProducts] = useState({ loading: false, data: [] });
 	useEffect(() => {
 		let mounted = true;
@@ -62,4 +93,4 @@ export const fetchProducts = async (setProducts = null, products = null) => {
 	// console.log(response);
 
 	return response.data;
-};
+}; */

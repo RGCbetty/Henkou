@@ -20,7 +20,7 @@ class CreateDetailsTable extends Migration
             $table->string('customer_code', 12);
             $table->string('plan_no', 8);
             $table->string('rev_no', 8);
-            $table->string('plan_specification', 50);
+            $table->string('plan_specification', 50)->nullable();
             $table->string('house_code', 15);
             $table->string('house_type', 30);
             $table->integer('method');
@@ -29,12 +29,14 @@ class CreateDetailsTable extends Migration
             $table->tinyInteger("floors");
             $table->timestamps();
             $table->string('updated_by', 15);
+            $table->integer('department_id')->nullable();
             $table->unique(['customer_code', 'plan_no', 'rev_no']);
         });
         Schema::table('details', function (Blueprint $table) {
             $table->foreignId('reason_id')->nullable()->constrained('reasons');
             $table->foreignId('type_id')->nullable()->constrained('types');
             $table->foreignId('invoice_id')->nullable()->constrained('invoices');
+            $table->foreignId('plan_status_id')->constrained('plan_statuses');
             $table->foreignId('construction_schedule_id')->nullable()->constrained('construction_schedules');
         });
     }

@@ -14,4 +14,8 @@ class ProductCategory extends Model
     {
         return $this->hasMany(Customer::class, 'product_key', 'product_key');
     }
+    public function planstatus()
+    {
+        return $this->belongsToMany(PlanStatus::class, 'affected_products', 'product_category_id', 'plan_status_id')->withPivot('sequence_no', 'updated_by');
+    }
 }

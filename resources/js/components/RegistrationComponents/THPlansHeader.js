@@ -173,6 +173,36 @@ export const headers = (
 			)
 	},
 	{
+		title: 'Pending Reason',
+		width: 200,
+		dataIndex: 'th_action_id',
+		align: 'center',
+		key: '11',
+		render: (text, record) => {
+			return (
+				<Select
+					defaultValue=""
+					// disabled={
+					// 	!record.finished_date ||
+					// 	!record.th_assessment_id ||
+					// 	!record.reason_id ||
+					// 	!record.remarks
+					// }
+					value={text}
+					onChange={(value) => handleSelectOption(value, 'th_action_id', record)}
+					style={{ width: 170 }}>
+					{thActions.map((item) => {
+						return (
+							<Option key={item.id} value={item.id}>
+								{item.action_name}
+							</Option>
+						);
+					})}
+				</Select>
+			);
+		}
+	},
+	{
 		title: 'Pending Resume',
 		width: 150,
 		dataIndex: 'pending_resume_date',
@@ -197,40 +227,45 @@ export const headers = (
 		title: 'Plan Status',
 		width: 200,
 		dataIndex: 'plan_status',
+		filters: [
+			{
+				text: 'E-PLAN PROCESS',
+				value: 1
+			},
+			{
+				text: 'KOUZOU FINISHED-WAKU',
+				value: 2
+			},
+			{
+				text: 'ONE TIME HENKOU',
+				value: 3
+			},
+			{
+				text: 'KOUZOU FINISHED-JIKU',
+				value: 4
+			}
+		],
+		onFilter: (value, record) => (record.plan_status ? record.plan_status.id == value : null),
 		render: (text, record) => (text ? text.plan_status_name : null),
 		align: 'center',
-		key: '14'
+		key: '13'
 	},
 	{
-		title: 'Action',
+		title: 'Details',
 		width: 115,
-		dataIndex: 'th_action_id',
+		dataIndex: 'remarks',
+		render: (text, record) => (
+			<TextArea
+				value={text}
+				bordered={false}
+				onChange={(value) => handleInputText(value, 'remarks', record)}
+				autoSize={{ minRows: 1, maxRows: 4 }}
+			/>
+		),
 		align: 'center',
-		key: '13',
-		render: (text, record) => {
-			return (
-				<Select
-					defaultValue=""
-					// disabled={
-					// 	!record.finished_date ||
-					// 	!record.th_assessment_id ||
-					// 	!record.reason_id ||
-					// 	!record.remarks
-					// }
-					value={text}
-					onChange={(value) => handleSelectOption(value, 'th_action_id', record)}
-					style={{ width: 125 }}>
-					{thActions.map((item) => {
-						return (
-							<Option key={item.id} value={item.id}>
-								{item.action_name}
-							</Option>
-						);
-					})}
-				</Select>
-			);
-		}
+		key: '17'
 	},
+
 	{
 		title: 'Finish',
 		width: 150,
@@ -265,19 +300,5 @@ export const headers = (
 		dataIndex: 'ResumedProcessingDate',
 		align: 'center',
 		key: '16'
-	},
-	{
-		title: 'Remarks',
-		width: 115,
-		dataIndex: 'remarks',
-		render: (text, record) => (
-			<TextArea
-				bordered={false}
-				onChange={(value) => handleInputText(value, 'remarks', record)}
-				autoSize={{ minRows: 1, maxRows: 4 }}
-			/>
-		),
-		align: 'center',
-		key: '17'
 	}
 ];

@@ -12,289 +12,134 @@ import {
 	Modal,
 	Upload,
 	notification,
-	Table
+	Table,
+	Spin
 } from 'antd';
 import { DownOutlined, UpOutlined, UploadOutlined, SnippetsOutlined } from '@ant-design/icons';
 
 import { planStatusHeaders } from '../RegistrationComponents/PlanStatus(PCMS)Header';
+import PendingHeaders from '../HenkouComponents/PendingHeaders';
 import headers from '../RegistrationComponents/HenkouStatusHeader';
 import PlanDetails from '../RegistrationComponents/PlanDetails';
 
 import moment from 'moment';
 import Http from '../../Http';
 import { useActivePlanStatus } from '../../api/planstatus';
+import planDetails from '../RegistrationComponents/PlanDetails';
 
 const { Search, TextArea } = Input;
 const dateFormat = 'YYYY/MM/DD';
 const { Option } = Select;
 const { Title } = Typography;
 const ManualContainer = ({
-	product,
 	handleSpecs,
 	details,
-	henkouInfo,
 	handleOnChange,
 	handleRegister,
+	handleClearDetails,
 	status,
+	pending,
+	logs,
 	...rest
 }) => {
-	const { types, reasons, products } = henkouInfo;
+	const { master } = rest;
 	/* PCMS */
-	const [assignedProductCategoriesPCMS, setPlanDetail] = useState([]);
-	const [productCategoriesPCMS, setProductCategoriesPCMS] = useActivePlanStatus();
-	const [userProductCategoriesPCMS, setUserProducts] = useState([]);
-	const [subProductPCMS, setSubProduct] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const [visible, setVisible] = useState(false);
+	console.log(pending, 'pepepepeending');
+	// const [assignedProductCategoriesPCMS, setPlanDetail] = useState([]);
+	// const [productCategoriesPCMS, setProductCategoriesPCMS] = useActivePlanStatus();
+	// const [userProductCategoriesPCMS, setUserProducts] = useState([]);
+	// const [subProductPCMS, setSubProduct] = useState(false);
+	// const [loading, setLoading] = useState(false);
+	// const [visible, setVisible] = useState(false);
 	/* PCMS */
 	const [henkouLoading, setHenkouLoading] = useState(false);
 	const [expand, setExpand] = useState(false);
-	const [showCollapse, setShowCollapse] = useState(false);
+	const [showDetails, setDetails] = useState(false);
 	const [upload, setUpload] = useState({
 		fileList: [],
 		status: false
 	});
-	const [checkPlanStatus, setCheckPlanStatus] = useState(false);
+	const [existState, setExistState] = useState({
+		showDetails: false,
+		showDepartments: false,
+		span: 12
+	});
 	const [form] = Form.useForm();
 	const onFinish = (values) => {
 		console.log('Received values of form: ', values);
 	};
-	const onClickPlanStatusBtn = async () => {
-		setVisible(true);
-		setCheckPlanStatus(true);
-		setLoading(true);
-		const instance = Http.create({
-			baseURL: 'http://hrdapps71:4900/',
-			withCredentials: false,
-			headers: {
-				'master-api': 'db588403f0a1d3b897442a28724166b4'
-			}
-		});
-		/* PCMS */
-		let checkedPlanDetails = {};
-		let email = null;
-		let tempStat = '';
-		let arr = [];
-		let temp = {};
-		let planDetails = [];
-		let pending = '';
-		const responseCheckPlans = await instance.get(`get/checkPlan/${details.customer_code}`);
-		if (responseCheckPlans.data.length > 0) {
-			if (responseCheckPlans.data[0].EmailedDate) {
-				email = responseCheckPlans.data[0].EmailedDate;
-			}
-			checkedPlanDetails = {
-				KakouIraiRequest: responseCheckPlans.data[0].KakouIraiRequest,
-				HouseTypeCode: responseCheckPlans.data[0].HouseTypeCode,
-				HouseClass: responseCheckPlans.data[0].HouseClass,
-				EmailedDate: email,
-				JoutouDate: responseCheckPlans.data[0].JoutouDate,
-				ShiageDelivery: responseCheckPlans.data[0].ShiageDelivery,
-				KisoStart: responseCheckPlans.data[0].KisoStart
-			};
-		} else {
-			checkedPlanDetails = {
-				HouseClass: details.method == 1 ? 'Jikugumi' : 'Wakugumi'
-			};
-		}
-		const responsePlanStatus = await instance.get(
-			`get/viewPlanStatus/${details.customer_code}`
-		);
-		for (let i = 0; i < productCategoriesPCMS.length; i++) {
-			if (
-				checkedPlanDetails.HouseClass == productCategoriesPCMS[i].HouseType ||
-				productCategoriesPCMS[i].HouseType == 'Both'
-			) {
-				let rems = false;
-				if (
-					_.includes(
-						_.map(responsePlanStatus.data, 'Product'),
-						productCategoriesPCMS[i]._id
-					)
-				) {
-					let a = _.find(responsePlanStatus.data, [
-						'Product',
-						productCategoriesPCMS[i]._id
-					]);
-					if (a.Status == 'Received') {
-						tempStat = 'Not Yet Started';
-					} else {
-						tempStat = a.Status;
-						if (tempStat == 'Pending') {
-							rems = true;
-						}
-						if (a.Process != undefined) {
-							a.Process.forEach((val) => {
-								if (val.Remarks != undefined) {
-									if (val.Remarks) {
-										rems = true;
-									}
-								}
-								if (val.Pending != undefined && val.Pending.length > 0) {
-									pending = val.Pending.map((arr) => {
-										if (arr.PendingResume == null) {
-											return arr;
-										}
-									});
-								}
-							});
-						} else {
-							if (a.Remarks != undefined) {
-								if (a.Remarks) {
-									rems = true;
-								}
-							}
-							if (a.Pending != undefined) {
-								pending = a.Pending;
-							}
-						}
-						if (a.LeadersRemarks != undefined) {
-							if (a.LeadersRemarks) {
-								rems = true;
-							}
-						} else {
-							if (a.LeadersRemarksHistory && a.LeadersRemarksHistory.length > 0) {
-								rems = true;
-							}
-						}
-						if (productCategoriesPCMS[i]._id != 'aPi@wUk3D') {
-							arr.push({
-								ProductCode: productCategoriesPCMS[i]._id,
-								ProductCategory: productCategoriesPCMS[i].ProductCategory,
-								ProductType: productCategoriesPCMS[i].ProductType,
-								Department: productCategoriesPCMS[i].Department,
-								Section:
-									productCategoriesPCMS[i].Res.length > 0
-										? productCategoriesPCMS[i].Res[0].Section
-										: null,
-								Team:
-									productCategoriesPCMS[i].Res.length > 0
-										? productCategoriesPCMS[i].Res[0].Team
-										: null,
-								Sequence: parseInt(
-									productCategoriesPCMS[i].ProductSequence[
-										checkedPlanDetails.HouseClass
-									]
-								),
-								Status: tempStat,
-								FinishDate: a.FinishDate,
-								ReceiveDate: a.ReceiveDate,
-								Remarks: rems,
-								Pending: pending
-							});
-						} else {
-							if (a.ReKakouIrai != undefined && a.Status == 'Received') {
-								tempStat = 'Finished';
-							}
-							temp = {
-								ProductCode: productCategoriesPCMS[i]._id,
-								ProductCategory: productCategoriesPCMS[i].ProductCategory,
-								ProductType: productCategoriesPCMS[i].ProductType,
-								Department: productCategoriesPCMS[i].Department,
-								Section:
-									productCategoriesPCMS[i].Res.length > 0
-										? productCategoriesPCMS[i].Res[0].Section
-										: null,
-								Team:
-									productCategoriesPCMS[i].Res.length > 0
-										? productCategoriesPCMS[i].Res[0].Team
-										: null,
-								Sequence: parseInt(
-									productCategoriesPCMS[i].ProductSequence[
-										checkedPlanDetails.HouseClass
-									]
-								),
-								Status: tempStat,
-								FinishDate: a.FinishDate,
-								ReceiveDate: a.ReceiveDate,
-								Remarks: rems,
-								Pending: pending
-							};
-						}
-					}
-				} else {
-					arr.push({
-						ProductCode: productCategoriesPCMS[i]._id,
-						ProductCategory: productCategoriesPCMS[i].ProductCategory,
-						ProductType: productCategoriesPCMS[i].ProductType,
-						Department: productCategoriesPCMS[i].Department,
-						Section:
-							productCategoriesPCMS[i].Res.length > 0
-								? productCategoriesPCMS[i].Res[0].Section
-								: null,
-						Team:
-							productCategoriesPCMS[i].Res.length > 0
-								? productCategoriesPCMS[i].Res[0].Team
-								: null,
-						Sequence: parseInt(
-							productCategoriesPCMS[i].ProductSequence[checkedPlanDetails.HouseClass]
-						),
-						Status: 'Not Yet Receive',
-						FinishDate: null,
-						ReceiveDate: null,
-						Remarks: rems,
-						Pending: pending
-					});
-				}
-			}
-		}
-		planDetails = _.sortBy(arr, ['Sequence', 'ProductCategory']);
-		planDetails.unshift(temp);
-		let userProducts = [];
-		// setPlanStatus(planDetails);
-		const responseEmployeeProducts = await instance.get(
-			`get/getID/${rest.userInfo.EmployeeCode}`
-		);
-		if (responseEmployeeProducts != undefined && responseEmployeeProducts.data.length > 0) {
-			// if (
-			//     responseEmployeeProducts.data[0].filtering == true &&
-			//     responseEmployeeProducts.data[0].filtering != undefined
-			// ) {
-			userProducts = responseEmployeeProducts.data[0][checkedPlanDetails.HouseClass]
-				? responseEmployeeProducts.data[0][checkedPlanDetails.HouseClass]
-				: responseEmployeeProducts.data[0].myProducts;
-			setUserProducts(userProducts);
-			// }
-			if (
-				responseEmployeeProducts.data[0].showSubProduct == true &&
-				responseEmployeeProducts.data[0].showSubProduct != undefined
-			) {
-				const showSubProducts = responseEmployeeProducts.data[0].showSubProduct
-					? responseEmployeeProducts.data[0].showSubProduct
-					: false;
-				setSubProduct(showSubProducts);
-			}
-		}
 
-		/* PCMS */
-		if (userProducts.length > 0) {
-			const assignedProductCategoriesPCMS = planDetails.filter((item) => {
-				return userProducts.includes(item.ProductCode);
+	const openNotificationWithIcon = (type, result) => {
+		if (result.status == 'found') {
+			notification[type]({
+				description: result.msg
 			});
-			// console.log(assignedProductCategoriesPCMS, '@@@#$%^&*(');
-
-			setPlanDetail(assignedProductCategoriesPCMS);
+		} else if (result.status == 'ongoing') {
+			notification[type]({
+				message: 'On-going!',
+				description: result.msg
+			});
+		} else if (result.status == 'notyetstarted') {
+			notification[type]({
+				message: 'Not yet started!',
+				description: result.msg
+			});
+		} else {
+			notification[type]({
+				message: 'Plan not registered!'
+			});
 		}
-		setLoading(false);
-	};
-	const openNotificationWithIcon = (type) => {
-		notification[type]({
-			message: 'Plan not yet registered!'
-		});
 	};
 	const handleEvent = async (value, keys = null) => {
 		setHenkouLoading(true);
-		if (!keys) {
-			const e = value;
-			const result = await handleSpecs(e.target.value);
-			result == 'found'
-				? (setExpand(true), setShowCollapse(true))
-				: (setExpand(false), openNotificationWithIcon('info'));
-			// setExpand(true);
-		} else {
-			handleOnChange(value, keys);
+		if (!henkouLoading) {
+			if (!keys) {
+				const e = value;
+				e.preventDefault();
+				const result = await handleSpecs(e.target.value);
+				result.status == 'found'
+					? (setExpand(true),
+					  setDetails(true),
+					  setExistState({
+							...existState,
+							showDetails: true
+					  }),
+					  openNotificationWithIcon('info', result))
+					: result.status == 'ongoing'
+					? (setExpand(true),
+					  setDetails(true),
+					  setExistState({ ...existState, showDetails: false }),
+					  openNotificationWithIcon('info', result))
+					: result.status == 'notyetstarted'
+					? (setExpand(true),
+					  setDetails(true),
+					  setExistState({ ...existState, showDetails: false }),
+					  openNotificationWithIcon('info', result))
+					: (setExpand(false),
+					  setDetails(false),
+					  openNotificationWithIcon('info', result));
+				// setExpand(true);
+			} else {
+				if (keys == 'reason_id') {
+					if (value == 0) {
+						setExistState({
+							...existState,
+							showDepartments: true,
+							span: 8
+						});
+					} else {
+						setExistState({
+							...existState,
+							showDepartments: false,
+							span: 8
+						});
+					}
+				}
+
+				handleOnChange(value, keys);
+			}
+			setHenkouLoading(false);
 		}
-		setHenkouLoading(false);
 	};
 	const handleRegisterAndUpload = async (details) => {
 		/* Coming from Registration.js */
@@ -370,76 +215,219 @@ const ManualContainer = ({
 		fileList: upload.fileList,
 		multiple: true
 	};
-
+	const resetData = () => {
+		form.resetFields();
+		handleClearDetails();
+		setDetails(false);
+		setExpand(false);
+	};
 	return (
 		<>
-			<Form
-				form={form}
-				name="advanced_search"
-				className="ant-advanced-search-form"
-				onFinish={onFinish}>
-				<Row gutter={[10, 10]}>
-					<Col span={8}>
-						<Search
-							placeholder="Enter Code"
-							allowClear
-							onPressEnter={handleEvent}
-							addonBefore="Customer Code"
-							style={{ width: 300, margin: '0 0' }}></Search>
-					</Col>
-					<Col span={8} style={{ textAlign: 'center', padding: '10 0 0 0' }}>
-						Registration Page
-					</Col>
-					<Col span={8} style={{ textAlign: 'right' }}>
-						<DatePicker
-							defaultValue={moment(moment().format('YYYY-MM-DD'), dateFormat)}
-							disabled
-							format={dateFormat}
-						/>
-					</Col>
+			<Spin tip="Loading..." spinning={henkouLoading}>
+				<Form
+					form={form}
+					name="advanced_search"
+					className="ant-advanced-search-form"
+					onFinish={onFinish}>
+					<Row gutter={[10, 10]}>
+						<Col span={8}>
+							<Form.Item
+								name={`CustomerCode`}
+								style={{ marginBottom: '0px' }}
+								rules={[
+									{
+										required: true,
+										message: 'Input something!'
+									}
+								]}>
+								<Search
+									placeholder="Enter Code"
+									allowClear
+									onPressEnter={handleEvent}
+									addonBefore="Customer Code"
+									style={{ width: 300, margin: '0 0' }}></Search>
+							</Form.Item>
+						</Col>
 
-					{expand
-						? PlanDetails(details).map((item, index) => (
-								<Col style={{ textAlign: item.textAlign }} span={8} key={index}>
-									<Form.Item
-										style={{ marginBottom: '0px' }}
-										rules={[
-											{
-												required: true,
-												message: 'Input something!'
-											}
-										]}>
+						<Col offset={8} span={8} style={{ textAlign: 'right' }}>
+							<DatePicker
+								defaultValue={moment(moment().format('YYYY-MM-DD'), dateFormat)}
+								disabled
+								format={dateFormat}
+							/>
+						</Col>
+
+						{showDetails
+							? PlanDetails(details).map((item, index) => (
+									<Col style={{ textAlign: item.textAlign }} span={8} key={index}>
+										{/* <Form.Item
+											name={item.name}
+											initialValue={item.value}
+											style={{ marginBottom: '0px' }}
+											rules={[
+												{
+													required: true,
+													message: 'Input something!'
+												}
+											]}> */}
 										<Input
+											readOnly
 											value={item.value}
 											addonBefore={item.title}
 											style={{ width: item.width }}
 										/>
-									</Form.Item>
-								</Col>
-						  ))
-						: null}
-				</Row>
-				{expand ? (
-					<Row gutter={[10, 10]}>
-						<Col span={12}>
-							<Button
-								type="primary"
+										{/* </Form.Item> */}
+									</Col>
+							  ))
+							: null}
+					</Row>
+					{expand ? (
+						<>
+							<a
+								style={{ fontSize: 12, textAlign: 'right' }}
 								onClick={() => {
-									window.open('http://localhost:3000/storage/HenkouForm.xls');
-								}}
-								style={{ margin: '0 8px' }}
-								icon={<SnippetsOutlined />}
-								htmlType="button">
-								Henkou Form
-							</Button>
-							<Upload {...uploadProps}>
-								<Button type="primary" icon={<UploadOutlined />} htmlType="button">
-									Upload
-								</Button>
-							</Upload>
-						</Col>
-						<Col span={12} style={{ textAlign: 'right' }}>
-							<Button
+									setDetails(!showDetails);
+								}}>
+								{showDetails ? <UpOutlined /> : <DownOutlined />} Collapse
+							</a>
+							{existState.showDetails ? (
+								<>
+									<Row gutter={[16, 16]}>
+										<Col span={24} style={{ textAlign: 'center' }}>
+											<Form.Item
+												name={`Henkou Details`}
+												label={`Henkou Details`}
+												style={{ marginBottom: '0px' }}>
+												<TextArea
+													autoSize
+													value={details.logs}
+													onChange={(value, event) =>
+														handleEvent(value, 'logs')
+													}></TextArea>
+											</Form.Item>
+										</Col>
+									</Row>
+									<Row gutter={[16, 16]} justify="center">
+										<Col span={8}>
+											<Form.Item
+												name={`Henkou Type`}
+												label={`Henkou Type`}
+												style={{ marginBottom: '0px' }}>
+												<Select
+													style={{ width: 150 }}
+													onChange={(value, event) =>
+														handleEvent(value, 'type_id')
+													}>
+													{master.types.map((item, index) => {
+														return (
+															<Option
+																value={item.type_id}
+																key={index}>
+																{item.type_name}
+															</Option>
+														);
+													})}
+												</Select>
+											</Form.Item>
+										</Col>
+										<Col span={8}>
+											<Form.Item
+												name={`Henkou Reason`}
+												label={`Henkou Reason`}
+												style={{
+													marginBottom: '0px'
+												}}>
+												<Select
+													style={{ width: 160 }}
+													onChange={(value, event) =>
+														handleEvent(value, 'reason_id')
+													}>
+													{master.reasons.map((item, index) => {
+														return (
+															<Option
+																value={item.reason_id}
+																key={index}>
+																{item.reason_name}
+															</Option>
+														);
+													})}
+												</Select>
+											</Form.Item>
+										</Col>
+										{existState.showDepartments && (
+											<Col span={existState.span}>
+												<Form.Item
+													name={`Departments`}
+													label={`Departments`}
+													style={{
+														marginBottom: '0px'
+													}}>
+													<Select
+														style={{ width: 200 }}
+														onChange={(value, event) =>
+															handleEvent(value, 'department_id')
+														}>
+														{master.departments.map((item, index) => {
+															return (
+																<Option
+																	value={item.DepartmentCode}
+																	key={index}>
+																	{item.DepartmentName}
+																</Option>
+															);
+														})}
+													</Select>
+												</Form.Item>
+											</Col>
+										)}
+									</Row>
+									<Row>
+										<Col span={12}>
+											<Button
+												type="primary"
+												onClick={() => {
+													window.open(
+														'http://localhost:3000/storage/HenkouForm.xls'
+													);
+												}}
+												style={{ margin: '0 8px' }}
+												icon={<SnippetsOutlined />}
+												htmlType="button">
+												Henkou Form
+											</Button>
+											<Upload {...uploadProps}>
+												<Button
+													type="primary"
+													icon={<UploadOutlined />}
+													htmlType="button">
+													Upload
+												</Button>
+											</Upload>
+										</Col>
+
+										<Col span={12} style={{ textAlign: 'right' }}>
+											<Button
+												style={{ margin: '0 8px' }}
+												onClick={() => {
+													resetData();
+													// setShowCollapse(false);
+													// setExpand(false);
+												}}>
+												Clear
+											</Button>
+											{/* <Button
+								type="primary"
+								htmlType="submit"
+								onClick={() => setVisible(true)}>
+								Close
+							</Button> */}
+											<Button
+												type="primary"
+												// htmlType="submit"
+												onClick={() => handleRegisterAndUpload(details)}>
+												Save
+											</Button>
+											{/* <Button
 								type="primary"
 								htmlType="button"
 								onClick={() => onClickPlanStatusBtn()}>
@@ -476,98 +464,115 @@ const ManualContainer = ({
 									})}
 									scroll={{ x: 'max-content', y: 'calc(100vh - 23em)' }}
 								/>
-							</Modal>
-							<Button
-								style={{ margin: '0 8px' }}
-								onClick={() => {
-									form.resetFields();
-								}}>
-								Clear
-							</Button>
-						</Col>
-					</Row>
-				) : null}
-				{showCollapse ? (
-					<a
-						style={{ fontSize: 12, textAlign: 'right' }}
-						onClick={() => {
-							setExpand(!expand);
-						}}>
-						{expand ? <UpOutlined /> : <DownOutlined />} Collapse
-					</a>
-				) : null}
-				<Row>
-					{expand ? (
-						<Col span={24} style={{ textAlign: 'center' }}>
-							<Form.Item
-								name={`Henkou Details`}
-								label={`Henkou Details`}
-								style={{ marginBottom: '0px' }}>
-								<TextArea
-									rows={5}
-									value={details.logs}
-									onChange={(value, event) =>
-										handleEvent(value, 'logs')
-									}></TextArea>
-							</Form.Item>
-						</Col>
-					) : (
-						<></>
-					)}
-					{expand ? (
-						<>
-							<Col span={11} style={{ textAlign: 'right', marginTop: 10 }}>
-								<Input
-									addonBefore="Existing Rev No."
-									value={details.existing_rev_no}
-									style={{ width: 200 }}></Input>
-								<br />
-								<Input
-									addonBefore="Revision Number"
-									value={details.rev_no}
-									style={{ width: 200, marginTop: 10 }}></Input>
-							</Col>
-							<Col span={12} offset={1} style={{ textAlign: 'left', marginTop: 10 }}>
-								<Form.Item
-									name={`Henkou Type`}
-									label={`Henkou Type`}
-									style={{ marginBottom: '0px' }}>
-									<Select
-										style={{ width: 150 }}
-										onChange={(value, event) => handleEvent(value, 'type_id')}>
-										{types.map((item, index) => {
-											return (
-												<Option value={item.type_id} key={index}>
-													{item.type_name}
-												</Option>
-											);
-										})}
-									</Select>
-								</Form.Item>
-								<Form.Item
-									name={`Henkou Reason`}
-									label={`Henkou Reason`}
-									style={{ marginBottom: '0px', marginTop: 10 }}>
-									<Select
-										style={{ width: 160 }}
-										onChange={(value, event) =>
-											handleEvent(value, 'reason_id')
-										}>
-										{reasons.map((item, index) => {
-											return (
-												<Option value={item.reason_id} key={index}>
-													{item.reason_name}
-												</Option>
-											);
-										})}
-									</Select>
-								</Form.Item>
-							</Col>
+							</Modal> */}
+										</Col>
+									</Row>
+								</>
+							) : (
+								<>
+									<Row>
+										<span>Summary(Henkou Details)</span>
+										<TextArea
+											placeholder="Summary(Henkou Details)"
+											autoSize
+											value={
+												logs.length > 0
+													? logs
+															.filter((item) => item.log)
+															.map((stat, index) => {
+																if (stat.log) {
+																	if (index == 0) {
+																		return `${moment
+																			.utc(stat.updated_at)
+																			.format(
+																				'YYYY-MM-DD, h:mm:ss a'
+																			) +
+																			':  ' +
+																			stat.log}`;
+																	} else {
+																		return (
+																			'\n' +
+																			moment
+																				.utc(
+																					stat.updated_at
+																				)
+																				.format(
+																					'YYYY-MM-DD, h:mm:ss a'
+																				) +
+																			':  ' +
+																			stat.log
+																		);
+																	}
+																}
+															})
+															.join('')
+													: ''
+											}
+											rows={5}></TextArea>
+									</Row>
+									<Row>
+										<Col
+											span={24}
+											style={{ textAlign: 'right', marginTop: '10px' }}>
+											<Button
+												style={{ margin: '0 8px' }}
+												onClick={() => {
+													resetData();
+												}}>
+												Clear
+											</Button>
+
+											<Button
+												type="primary"
+												// htmlType="submit"
+												onClick={() =>
+													pending.actions.handlePendingModal(details)
+												}>
+												Borrow
+											</Button>
+										</Col>
+									</Row>
+								</>
+							)}
 						</>
 					) : null}
-				</Row>
-			</Form>
-			{(details.existing_rev_no || checkPlanStatus) && status.length > 0 ? (
+				</Form>
+				<Modal
+					title={`Pending ${pending.state.product_name}`}
+					onOk={pending.actions.handlePendingOk}
+					okText="Save"
+					onCancel={pending.actions.handlePendingCancel}
+					bodyStyle={{ padding: 10 }}
+					width={650}
+					visible={pending.state.isPendingModalVisible}>
+					<Table
+						rowKey={(record) => record.pending_index}
+						columns={PendingHeaders(
+							pending.actions.handlePendingStatus,
+							pending.actions.handleReasonInput,
+							{
+								data: pending.state.options,
+								onFocus: pending.actions.onFocus,
+								onSelect: pending.actions.onSelect
+							}
+						)}
+						dataSource={pending.state.items}
+						pagination={false}
+						bordered
+					/>
+					<div style={{ textAlign: 'right' }}>
+						<Button
+							style={{ margin: 10 }}
+							type="primary"
+							disabled={pending.state.items.some((item) => {
+								return !item.resume;
+							})}
+							onClick={() => addPendingItems(row, 'finished_date')}>
+							Add
+						</Button>
+					</div>
+				</Modal>
+				{/* {details.existing_rev_no && status.length > 0 ? (
 				<div style={{ padding: 5 }}>
 					<Title level={4} style={{ margin: 0 }}>
 						Henkou Status
@@ -598,33 +603,13 @@ const ManualContainer = ({
 				</div>
 			) : (
 				''
-			)}
-			{(details.existing_rev_no && checkPlanStatus) || checkPlanStatus ? (
-				<Row>
-					<Col span={24} style={{ textAlign: 'right' }}>
-						<Button
-							style={{ textAlign: 'right', margin: 5 }}
-							type="primary"
-							htmlType="submit"
-							onClick={() => setVisible(true)}>
-							Close
-						</Button>
-						<Button
-							style={{ textAlign: 'right' }}
-							type="primary"
-							htmlType="submit"
-							onClick={() => handleRegisterAndUpload(details)}>
-							Save
-						</Button>
-					</Col>
-				</Row>
-			) : (
-				''
-			)}
+			)} */}
+			</Spin>
 		</>
 	);
 };
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo
+	userInfo: state.auth.userInfo,
+	master: state.auth.master
 });
 export default connect(mapStateToProps)(ManualContainer);

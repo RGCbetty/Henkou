@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PlanStatus;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Cache;
 
 class InformationServiceController extends Controller
 {
     public function filteredplans(Request $request, $sort_by = null, $order = 'asc')
     {
         try {
-            info($request->query());
             $requestToArray = json_decode(json_encode($request), true);
             $paramsKey = array_key_first($request->query());
             $currentPage = $request->input("current");
@@ -42,7 +44,6 @@ class InformationServiceController extends Controller
             ON A.ConstructionCode =E.ConstructionCode
             WHERE E.StoppedProcessingDate IS NULL OR E.ResumedProcessingDate IS NOT NULL
             ORDER BY A.RequestAcceptedDate ASC"));
-            info($filteredTHplans);
 
 
             $collection = collect($filteredTHplans);
@@ -82,9 +83,34 @@ class InformationServiceController extends Controller
     public function table(Request $request, $sort_by = null, $order = 'asc')
     {
         try {
+            $planStat = PlanStatus::find(1);
             $currentPage = $request->input("current");
             $pageSize = $request->input("pageSize");
-            $registration_table = DB::connection('information_service')->select(DB::raw("SELECT A.*,B.NameCode,B.PlanNo,D.ConstructionTypeName,D.Method,E.StoppedProcessingDate,E.ResumedProcessingDate FROM
+            $expiresAt = Carbon::now()->endOfDay()->addSecond();
+            // $value = Cache::remember('THplans', $expiresAt, function () {
+            //     return DB::connection('information_service')->select(DB::raw("SELECT A.*,B.NameCode,B.PlanNo,D.ConstructionTypeName,D.Method,E.StoppedProcessingDate,E.ResumedProcessingDate FROM
+            //     (
+            //     SELECT ConstructionCode,CONVERT(VARCHAR(10),RequestAcceptedDate,120) as RequestAcceptedDate, RequestNo FROM SpecificationChangingDetails
+            //     WHERE  RequestAcceptedDate BETWEEN CONVERT(VARCHAR(15),dateadd(day,-1,GETDATE()),111) AND CONVERT(VARCHAR(15),GETDATE(),111)
+            //     GROUP BY ConstructionCode,RequestAcceptedDate,RequestNo
+            //     HAVING max(SequentialNo)>0
+            //     ) A
+
+            //     LEFT JOIN Constructions B
+            //     ON A.ConstructionCode = B.ConstructionCode
+
+            //     LEFT JOIN Houses C
+            //     ON A.ConstructionCode = C.ConstructionCode
+
+            //     LEFT JOIN ConstructionTypes D
+            //     ON C.ConstructionTypeCode =D.ConstructionTypeCode
+
+            //     LEFT JOIN ConstructionSchedule E
+            //     ON A.ConstructionCode =E.ConstructionCode
+            //     WHERE E.StoppedProcessingDate IS NULL OR E.ResumedProcessingDate IS NOT NULL
+            //     ORDER BY A.RequestAcceptedDate ASC"));
+            // });
+            $pagination = DB::connection('information_service')->select(DB::raw("SELECT A.*,B.NameCode,B.PlanNo,D.ConstructionTypeName,D.Method,E.StoppedProcessingDate,E.ResumedProcessingDate FROM
             (
             SELECT ConstructionCode,CONVERT(VARCHAR(10),RequestAcceptedDate,120) as RequestAcceptedDate, RequestNo FROM SpecificationChangingDetails
             WHERE  RequestAcceptedDate BETWEEN CONVERT(VARCHAR(15),dateadd(day,-1,GETDATE()),111) AND CONVERT(VARCHAR(15),GETDATE(),111)
@@ -104,9 +130,8 @@ class InformationServiceController extends Controller
             LEFT JOIN ConstructionSchedule E
             ON A.ConstructionCode =E.ConstructionCode
             WHERE E.StoppedProcessingDate IS NULL OR E.ResumedProcessingDate IS NOT NULL
-            ORDER BY A.RequestAcceptedDate ASC"));;
-
-            $collection = collect($registration_table);
+            ORDER BY A.RequestAcceptedDate ASC"));
+            $collection = collect($pagination);
             if ($sort_by) {
 
                 if ($order == 'desc') {
@@ -129,8 +154,8 @@ class InformationServiceController extends Controller
 
             $offset = ($currentPage - 1) * $pageSize;
             $sorted = $sorted->splice($offset, $pageSize);
-            $paginator = new \Illuminate\Pagination\LengthAwarePaginator($sorted, count($registration_table), $num_per_page, $currentPage);
-            return response()->json($paginator);
+            $paginator = new \Illuminate\Pagination\LengthAwarePaginator($sorted, count($pagination), $num_per_page, $currentPage);
+            return json_encode($paginator);
 
             // return $registration_table;
         } catch (Exception $error) {
@@ -152,13 +177,13 @@ class InformationServiceController extends Controller
                 ON A.ConstructionCode = C.ConstructionCode
                 WHERE A.ConstructionCode = :constructioncode"), array('constructioncode' => $id));
 
-            $menshin = DB::connection('information_service')->select(DB::raw("SELECT
-            (SELECT Count(*)
-            FROM             hrdsql.hrdinformationservice.dbo.BasicSpecificationDetails
-            WHERE           (BasicSpecificationDetails.BasicSpecificationCode = '0104')
-            AND              (BasicSpecificationDetails.SpecificationDetailCode = '0020')
-            AND ConstructionCode= :constructioncode
-            ) AS Menshin "), array('constructioncode' => $id));
+            // $menshin = DB::connection('information_service')->select(DB::raw("SELECT
+            // (SELECT Count(*)
+            // FROM             hrdsql.hrdinformationservice.dbo.BasicSpecificationDetails
+            // WHERE           (BasicSpecificationDetails.BasicSpecificationCode = '0104')
+            // AND              (BasicSpecificationDetails.SpecificationDetailCode = '0020')
+            // AND ConstructionCode= :constructioncode
+            // ) AS Menshin "), array('constructioncode' => $id));
             $invoice = DB::connection('sqlsrv')->select(DB::raw("SELECT * FROM getInvoice ('$id')"));
             $plan_specs = DB::connection('sqlsrv')->select(DB::raw("SELECT * FROM getPlanSpecs ('$id')"));
             return response()->json([

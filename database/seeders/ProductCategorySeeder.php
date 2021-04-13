@@ -30,13 +30,12 @@ class ProductCategorySeeder extends Seeder
             //         "jiku_sequence" => $data->SeqJiku,
             //         "house_type" => $data->HouseType,
             //     ]);
-            //     // Log::info();
             // }
             $products = array();
             for ($i = 0; $i < count($product_category); $i++) {
                 array_push($products, array(
                     'product_key' => $product_category[$i]->ProductID,
-                    'product_name' => $product_category[$i]->ProductName,
+                    'product_name' => $product_category[$i]->ProductName == 'KAKOU IRAI' ? 'TH RELEASING' : $product_category[$i]->ProductName,
                     "department_id" => $product_category[$i]->DepartmentCode,
                     "section_id" => $product_category[$i]->SectionCode,
                     "team_id" => $product_category[$i]->TeamCode,

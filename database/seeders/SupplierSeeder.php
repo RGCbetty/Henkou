@@ -23,7 +23,6 @@ class SupplierSeeder extends Seeder
             //         'product_key' => $data->product_key,
             //         'supplier_key' => $data->supplier_key,
             //     ]);
-            //     // Log::info();
             // }
             // $suppliers = array();
             // for ($i = 0; $i < count($supplier); $i++) {

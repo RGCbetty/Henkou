@@ -5,6 +5,7 @@ import HomeTable from '../components/HomeComponents/HomeTable';
 import Legend from '../components/Legend';
 import FilterContainer from '../components/HomeComponents/FilterContainer';
 import Http from '../Http';
+import { Spin, Typography } from 'antd';
 import {
 	useMasterDetails,
 	useMasterDepartment,
@@ -13,14 +14,15 @@ import {
 } from '../api/master';
 
 const Home = ({ title, ...rest }) => {
-	const [departments, setDepartments] = useMasterDepartment();
-	const [sections, setSections] = useMasterSectionByDepartment(rest.userInfo.DepartmentCode);
-	const [teams, setTeams] = useMasterTeamByDepartmentAndSection(
-		rest.userInfo.DepartmentCode,
-		rest.userInfo.SectionCode
-	);
-	const [info, setInfo] = useMasterDetails();
-	const { types } = info;
+	// const [departments, setDepartments] = useMasterDepartment();
+	// const [sections, setSections] = useMasterSectionByDepartment(rest.userInfo.DepartmentCode);
+	// const [teams, setTeams] = useMasterTeamByDepartmentAndSection(
+	// 	rest.userInfo.DepartmentCode,
+	// 	rest.userInfo.SectionCode
+	// );
+	console.log('homeeeeee');
+	// const [info, setInfo] = useMasterDetails();
+	// const { types } = info;
 	const [state, setState] = useState({
 		department: '',
 		section: '',
@@ -31,20 +33,24 @@ const Home = ({ title, ...rest }) => {
 		// setState({ ...state, [e.target.name]: e.target.value });
 		switch (title) {
 			case 'Department':
-				const sections = await Http.get('api/sections', {
-					params: { department_id: value }
+				const sections = await Http.get('api/department/{dep_id}/sections', {
+					params: { dep_id: value }
 				});
 				form.setFieldsValue({
-					Section: ''
+					SectionName: '',
+					TeamName: ''
 				});
 				setSections(sections.data);
 				break;
 			case 'Section':
-				const teams = await Http.get('api/teams', {
-					params: { department_id: value }
+				const teams = await Http.get('api/department/{dep_id}/section/{sec_id}/teams', {
+					params: {
+						dep_id: form.getFieldValue('DepartmentName'),
+						sec_id: value
+					}
 				});
 				form.setFieldsValue({
-					Team: ''
+					TeamName: ''
 				});
 				setTeams(teams.data);
 				break;
@@ -54,7 +60,9 @@ const Home = ({ title, ...rest }) => {
 				break;
 			case 'Henkou Type':
 				break;
-			case 'Status':
+			case 'Henkou Status':
+				break;
+			case 'Plan Status':
 				break;
 		}
 		// console.log(value);
@@ -65,18 +73,27 @@ const Home = ({ title, ...rest }) => {
 
 	return (
 		<>
-			<FilterContainer
-				types={types}
-				events={{ handleSelectOnChange }}
-				company={{ departments, sections, teams }}></FilterContainer>
+			<FilterContainer events={{ handleSelectOnChange }}></FilterContainer>
 			<div style={{ padding: 5 }}>
-				<div style={{ textAlign: 'right' }}>
-					<Legend
-						hideSomeLegends={false}
-						title1={'Not yet started'}
-						title2={'On Going'}
-						title3={'Finished'}
-						title4={'Pending'}></Legend>
+				<div style={{ display: 'flex', justifyContent: 'space-between' }}>
+					<Typography.Title
+						level={4}
+						style={{ margin: 0, display: 'inline-block', verticalAlign: 'top' }}>
+						Plans
+					</Typography.Title>
+					<div
+						style={{
+							display: 'inline-block',
+							verticalAlign: 'right'
+							// textAlign: 'right'
+						}}>
+						<Legend
+							hideSomeLegends={false}
+							title1={'Not yet started'}
+							title2={'On Going'}
+							title3={'Finished'}
+							title4={'Pending'}></Legend>
+					</div>
 				</div>
 				<HomeTable
 					products={[

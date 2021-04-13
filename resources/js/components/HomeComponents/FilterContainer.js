@@ -12,7 +12,7 @@ const { Option } = Select;
 const FilterContainer = (props) => {
 	const [expand, setExpand] = useState(false);
 	const [form] = Form.useForm();
-	const { userInfo, types, company, events } = props;
+	const { userInfo, events, master } = props;
 	const FilterSelections = () => {
 		const count = !expand ? planDetails.length : 0;
 		const items = [];
@@ -21,7 +21,7 @@ const FilterContainer = (props) => {
 				<Col style={{ float: planDetails[i].textAlign }} span={8} key={i}>
 					<Form.Item
 						shouldUpdate
-						name={planDetails[i].title}
+						name={planDetails[i].name}
 						label={`${planDetails[i].title}`}
 						style={{ marginBottom: '0px' }}
 						rules={[
@@ -67,7 +67,7 @@ const FilterContainer = (props) => {
 					title: 'Department',
 					textAlign: 'left',
 					showSearch: true,
-					items: company.departments,
+					items: master.departments,
 					code: 'DepartmentCode',
 					name: 'DepartmentName'
 				},
@@ -75,7 +75,7 @@ const FilterContainer = (props) => {
 					title: 'Section',
 					textAlign: 'center',
 					showSearch: true,
-					items: company.sections,
+					items: master.sections.length == 0 ? master.sections : master.sections,
 					code: 'SectionCode',
 					name: 'SectionName'
 				},
@@ -83,7 +83,7 @@ const FilterContainer = (props) => {
 					title: 'Team',
 					textAlign: 'right',
 					showSearch: true,
-					items: company.teams,
+					items: master.teams.length == 0 ? master.teams : master.teams,
 					code: 'TeamCode',
 					name: 'TeamName'
 				},
@@ -92,33 +92,45 @@ const FilterContainer = (props) => {
 					width: 200,
 					textAlign: 'left',
 					items: [
-						{ id: '1', house_type: 'All' },
-						{ id: '2', house_type: 'Wakugumi' },
-						{ id: '3', house_type: 'Jikugumi' }
+						{ id: 1, house_type: 'All' },
+						{ id: 2, house_type: 'Wakugumi' },
+						{ id: 3, house_type: 'Jikugumi' }
 					],
 					code: 'id',
 					name: 'house_type'
 				},
 				{
 					title: 'Henkou Type',
-					width: 250,
+					width: 200,
 					textAlign: 'center',
-					items: types,
+					items:
+						master.types.length == 0
+							? [{ id: 0, type_name: 'All' }]
+							: [{ id: 0, type_name: 'All' }, ...master.types],
 					code: 'id',
 					name: 'type_name'
 				},
 				{
-					title: 'Status',
+					title: 'Henkou Status',
 					width: 200,
 					textAlign: 'right',
 					items: [
-						{ id: '1', status_type: 'All' },
-						{ id: '2', status_type: 'On-going' },
-						{ id: '3', status_type: 'Pending' },
-						{ id: '4', status_type: 'Finished' }
+						{ id: 1, status_type: 'All' },
+						{ id: 2, status_type: 'On-going' },
+						{ id: 3, status_type: 'Pending' },
+						{ id: 4, status_type: 'Finished' }
 					],
 					code: 'id',
 					name: 'status_type'
+				},
+
+				{
+					title: 'Plan Status',
+					width: 250,
+					textAlign: 'right',
+					items: [{ id: 0, plan_status_name: 'All' }, ...master.planstatus],
+					code: 'id',
+					name: 'plan_status_name'
 				}
 		  ]
 		: [];
@@ -132,9 +144,13 @@ const FilterContainer = (props) => {
 			form={form}
 			name="advanced_search"
 			initialValues={{
-				Department: userInfo.DepartmentCode,
-				Section: userInfo.SectionCode,
-				Team: userInfo.TeamCode
+				DepartmentName: userInfo.DepartmentCode,
+				SectionName: userInfo.SectionCode,
+				TeamName: userInfo.TeamCode,
+				house_type: 1,
+				type_name: 0,
+				status_type: 2,
+				plan_status_name: 0
 			}}
 			className="ant-advanced-search-form"
 			onFinish={onFinish}>
@@ -146,10 +162,8 @@ const FilterContainer = (props) => {
 						addonBefore="Customer Code"
 						style={{ width: 300, margin: '0 0' }}></Search>
 				</Col>
-				<Col span={8} style={{ textAlign: 'center', padding: '10 0 0 0' }}>
-					Home Page
-				</Col>
-				<Col span={8} style={{ textAlign: 'right' }}>
+
+				<Col offset={8} span={8} style={{ textAlign: 'right' }}>
 					<RangePicker
 						defaultValue={[
 							moment(moment().format(dateFormat), dateFormat),
@@ -185,7 +199,8 @@ const FilterContainer = (props) => {
 	);
 };
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo
+	userInfo: state.auth.userInfo,
+	master: state.auth.master
 });
 
 export default connect(mapStateToProps)(FilterContainer);

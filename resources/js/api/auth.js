@@ -6,18 +6,44 @@ export const login = (credentials) => {
 	return async (dispatch) => {
 		try {
 			const result = await Http.post('/api/login', credentials);
-			// console.log(result);
-			const instance = Http.create({
-				baseURL: 'http://adminsql1/api/',
-				withCredentials: false,
-				headers: {
-					'master-api': 'db588403f0a1d3b897442a28724166b4'
-				}
-			});
-			const response = await instance.get(`basicinfo/${credentials.employee_no}`);
 			if (result.data.status_code == 500) throw result;
+			const departments = await Http.get('api/departments');
+			const sections = await Http.get('api/sections');
+			const teams = await Http.get('api/teams');
+			const planstatus = await Http.get('/api/planstatuses');
+			const affectedProducts = await Http.get('/api/products/planstatus');
+			const thAssessments = await Http.get('/api/THassessments');
+			const types = await Http.get(`/api/types`);
+			const thActions = await Http.get('/api/actions');
+			const reasons = await Http.get(`/api/reasons`);
+			const products = await Http.get(`api/products`);
 
-			return dispatch(action.authLogin({ token: result.data, userInfo: result.data.user }));
+			// console.log(result);
+			// const instance = Http.create({
+			// 	baseURL: 'http://adminsql1/api/',
+			// 	withCredentials: false,
+			// 	headers: {
+			// 		'master-api': 'db588403f0a1d3b897442a28724166b4'
+			// 	}
+			// });
+			// const response = await instance.get(`basicinfo/${credentials.employee_no}`);
+
+			return dispatch(
+				action.authLogin({
+					token: result.data,
+					userInfo: result.data.user,
+					departments: departments.data,
+					sections: sections.data,
+					teams: teams.data,
+					planstatus: planstatus.data,
+					products: products.data,
+					affectedProducts: affectedProducts.data,
+					thAssessments: thAssessments.data,
+					types: types.data,
+					thActions: thActions.data,
+					reasons: reasons.data
+				})
+			);
 		} catch (error) {
 			const { status_code, message } = error.data;
 			const data = {

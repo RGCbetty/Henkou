@@ -24,7 +24,8 @@ class CreatePendingsTable extends Migration
             $table->timestamps();
         });
         Schema::table('pendings', function (Blueprint $table) {
-            $table->foreignId('status_id')->constrained('statuses');
+            $table->foreignId('affected_id')->constrained('affected_products');
+            $table->foreignId('detail_id')->constrained('details');
         });
     }
 

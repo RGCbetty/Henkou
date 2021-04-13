@@ -18,12 +18,10 @@ class ExcelController extends Controller
         try {
             // $contents = Storage::disk('local')->get('KouzoHenkouForm.xls');
             $path = storage_path('app\public\6230257-2019\AREA CALCULATION.xls');
-            info($path);
             $reader = IOFactory::createReader('Xls');
             $spreadsheet = $reader->load($path);
             $spreadsheet->getActiveSheet()->setCellValue('C3', 12345.6789);
             // $worksheet = $spreadsheet->getActiveSheet();
-            // info($worksheet->toArray());
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             header('Content-Disposition: attachment;filename="result.xls"');
             /////////////
@@ -35,7 +33,6 @@ class ExcelController extends Controller
             return base64_encode(ob_get_contents());;
 
             // $spreadsheet = json_decode(json_encode($spreadsheet), true);
-            // info($worksheet);
         } catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
             Log::error('Error loading file: ' . $e->getMessage());
         }

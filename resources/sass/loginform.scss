@@ -209,7 +209,7 @@
 
 @media only screen and (max-width: 600px), screen and (max-height: 300px) {
     .form {
-        position: fixed;
+        position: relative;
         width: 100%;
         height: 100%;
         left: 0;

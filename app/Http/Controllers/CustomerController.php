@@ -16,16 +16,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        // info(ProductCategory::with('customers')->get());
-        // info(Customer::with('product:id,product_key')->get());
-        // info(Supplier::with('products')->get());
-        // info(Customer::with('product')->get());
-        // $products = ProductCategory::select('id', 'product_key')->with('customers:id,product_key')->get();
-        // info($products);
-        // info(Customer::with('pro'))
-        // foreach ($products->flatMap->customers as $customer) {
-        //     info($customer);
-        // }
+
         return json_encode(Customer::with('product:id,product_key')->get());
     }
 
@@ -61,11 +52,9 @@ class CustomerController extends Controller
         // $request_arr = (array) $request;
         // $request_array =  json_decode(json_encode($request), true);
         $product_keys = array_values($request->all());
-        // info($product_keys);
 
         $customer_keys = Customer::select('product_key', 'customer_key')->whereIn('product_key', $product_keys)->get();
         // $supplier_keys = Supplier::whereIn('product_key', $product_keys)->pluck('supplier_key')->toArray();
-        // info($customer_keys);
         return json_encode($customer_keys);
     }
 

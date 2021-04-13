@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import '../../sass/signupform.scss';
+// import '../../sass/signupform.scss';
 import { Link, useHistory, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { Form, Input, message, Select, Row, Col, Checkbox, Button, AutoComplete } from 'antd';

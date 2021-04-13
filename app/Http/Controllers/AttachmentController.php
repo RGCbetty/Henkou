@@ -39,8 +39,7 @@ class AttachmentController extends Controller
      */
     public function store(Request $request, $id)
     {
-        // info($request->all());
-        // info($request);
+
         $this->validate($request, [
             'files' => 'required',
             'files.*' => 'mimes:csv,ods,xls,xlsx,pdf,txt'
@@ -64,7 +63,6 @@ class AttachmentController extends Controller
                 // foreach ($request->file('file') as $file) {
                 //     $name = time() . rand(1, 100) . '.' . $file->extension();
                 //     // $file->move(public_path('files'), $name);
-                //     info($name);
 
                 //     $file->storeAs('files', $name);
                 //     $files[] = $name;

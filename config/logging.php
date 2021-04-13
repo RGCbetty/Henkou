@@ -37,6 +37,8 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
+            // 'handler' => Monolog\Handler\LogglyHandler::class,
+            // 'formatter' => Monolog\Formatter\JsonFormatter::class,
             'channels' => ['single'],
             'ignore_exceptions' => false,
         ],

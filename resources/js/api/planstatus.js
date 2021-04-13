@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import Http from '../Http';
-import * as action from '../redux/actions/productCategories';
 
 export const useActivePlanStatus = () => {
 	const [productCategoriesPCMS, setProductCategoriesPCMS] = useState([]);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		let mounted = true;
 		try {
 			(async () => {
+				console.log('planstatus');
 				const instance = Http.create({
 					baseURL: 'http://hrdapps71:4900/',
-					withCredentials: false,
-					headers: {
-						'master-api': 'db588403f0a1d3b897442a28724166b4'
-					}
+
+					// baseURL: 'http://10.168.64.223:4900/',
+					withCredentials: false
+					// headers: {
+					// 	'master-api': 'db588403f0a1d3b897442a28724166b4'
+					// }
 				});
 				const response = await instance.get('get/getProductListActive?from=plugins');
 				if (mounted) {
@@ -30,50 +32,47 @@ export const useActivePlanStatus = () => {
 	return [productCategoriesPCMS, setProductCategoriesPCMS];
 };
 
-export const getPlanStatusByCustomerCode = async (details, products, rest) => {
+export const getPlanStatusByCustomerCode = async (details, productCategoriesPCMS, rest) => {
 	try {
 		const instance = Http.create({
-			baseURL: 'http://hrdapps71:4900/',
-			withCredentials: false,
-			headers: {
-				'master-api': 'db588403f0a1d3b897442a28724166b4'
-			}
+			baseURL: 'http://hrdapps68:8070/api',
+			// baseURL: 'http://10.168.64.223:4900/',
+			withCredentials: false
 		});
-		const response = await instance.get('get/getProductListActive?from=plugins');
-		const productCategoriesPCMS = response.data;
+		// const response = await instance.get('/pcms/active/products');
+		// const productCategoriesPCMS = response.data;
 		/* PCMS */
-		let checkedPlanDetails = {};
+		let houseType = details.Method == 1 ? 'Jikugumi' : 'Wakugumi';
 		let email = null;
 		let tempStat = '';
 		let arr = [];
 		let temp = {};
 		let planDetails = [];
 		let pending = '';
-		const responseCheckPlans = await instance.get(`get/checkPlan/${details.ConstructionCode}`);
-		if (responseCheckPlans.data.length > 0) {
-			if (responseCheckPlans.data[0].EmailedDate) {
-				email = responseCheckPlans.data[0].EmailedDate;
-			}
-			checkedPlanDetails = {
-				KakouIraiRequest: responseCheckPlans.data[0].KakouIraiRequest,
-				HouseTypeCode: responseCheckPlans.data[0].HouseTypeCode,
-				HouseClass: responseCheckPlans.data[0].HouseClass,
-				EmailedDate: email,
-				JoutouDate: responseCheckPlans.data[0].JoutouDate,
-				ShiageDelivery: responseCheckPlans.data[0].ShiageDelivery,
-				KisoStart: responseCheckPlans.data[0].KisoStart
-			};
-		} else {
-			checkedPlanDetails = {
-				HouseClass: details.Method == 1 ? 'Jikugumi' : 'Wakugumi'
-			};
-		}
+		// const responseCheckPlans = await instance.get(`/pcms/plan/${details.ConstructionCode}`);
+		// if (responseCheckPlans.data.length > 0) {
+		// 	if (responseCheckPlans.data[0].EmailedDate) {
+		// 		email = responseCheckPlans.data[0].EmailedDate;
+		// 	}
+		// 	checkedPlanDetails = {
+		// 		KakouIraiRequest: responseCheckPlans.data[0].KakouIraiRequest,
+		// 		HouseTypeCode: responseCheckPlans.data[0].HouseTypeCode,
+		// 		HouseClass: responseCheckPlans.data[0].HouseClass,
+		// 		EmailedDate: email,
+		// 		JoutouDate: responseCheckPlans.data[0].JoutouDate,
+		// 		ShiageDelivery: responseCheckPlans.data[0].ShiageDelivery,
+		// 		KisoStart: responseCheckPlans.data[0].KisoStart
+		// 	};
+		// } else {
+		// 	checkedPlanDetails = {
+		// };
+		// }
 		const responsePlanStatus = await instance.get(
-			`get/viewPlanStatus/${details.ConstructionCode}`
+			`/pcms/planstatus/${details.ConstructionCode}`
 		);
 		for (let i = 0; i < productCategoriesPCMS.length; i++) {
 			if (
-				checkedPlanDetails.HouseClass == productCategoriesPCMS[i].HouseType ||
+				houseType == productCategoriesPCMS[i].HouseType ||
 				productCategoriesPCMS[i].HouseType == 'Both'
 			) {
 				let rems = false;
@@ -143,9 +142,7 @@ export const getPlanStatusByCustomerCode = async (details, products, rest) => {
 										? productCategoriesPCMS[i].Res[0].Team
 										: null,
 								Sequence: parseInt(
-									productCategoriesPCMS[i].ProductSequence[
-										checkedPlanDetails.HouseClass
-									]
+									productCategoriesPCMS[i].ProductSequence[houseType]
 								),
 								Status: tempStat,
 								FinishDate: a.FinishDate,
@@ -171,9 +168,7 @@ export const getPlanStatusByCustomerCode = async (details, products, rest) => {
 										? productCategoriesPCMS[i].Res[0].Team
 										: null,
 								Sequence: parseInt(
-									productCategoriesPCMS[i].ProductSequence[
-										checkedPlanDetails.HouseClass
-									]
+									productCategoriesPCMS[i].ProductSequence[houseType]
 								),
 								Status: tempStat,
 								FinishDate: a.FinishDate,
@@ -197,9 +192,7 @@ export const getPlanStatusByCustomerCode = async (details, products, rest) => {
 							productCategoriesPCMS[i].Res.length > 0
 								? productCategoriesPCMS[i].Res[0].Team
 								: null,
-						Sequence: parseInt(
-							productCategoriesPCMS[i].ProductSequence[checkedPlanDetails.HouseClass]
-						),
+						Sequence: parseInt(productCategoriesPCMS[i].ProductSequence[houseType]),
 						Status: 'Not Yet Receive',
 						FinishDate: null,
 						ReceiveDate: null,
@@ -211,39 +204,39 @@ export const getPlanStatusByCustomerCode = async (details, products, rest) => {
 		}
 		planDetails = _.sortBy(arr, ['Sequence', 'ProductCategory']);
 		planDetails.unshift(temp);
-		let userProducts = [];
-		// setPlanStatus(planDetails);
-		const responseEmployeeProducts = await instance.get(
-			`get/getID/${rest.userInfo.EmployeeCode}`
-		);
-		if (responseEmployeeProducts != undefined && responseEmployeeProducts.data.length > 0) {
-			// if (
-			//     responseEmployeeProducts.data[0].filtering == true &&
-			//     responseEmployeeProducts.data[0].filtering != undefined
-			// ) {
-			userProducts = responseEmployeeProducts.data[0][checkedPlanDetails.HouseClass]
-				? responseEmployeeProducts.data[0][checkedPlanDetails.HouseClass]
-				: responseEmployeeProducts.data[0].myProducts;
-			// }
-			if (
-				responseEmployeeProducts.data[0].showSubProduct == true &&
-				responseEmployeeProducts.data[0].showSubProduct != undefined
-			) {
-				const showSubProducts = responseEmployeeProducts.data[0].showSubProduct
-					? responseEmployeeProducts.data[0].showSubProduct
-					: false;
-			}
-		}
+		// let userProducts = [];
+		// // setPlanStatus(planDetails);
+		// const responseEmployeeProducts = await instance.get(
+		// 	`get/getID/${rest.userInfo.EmployeeCode}`
+		// );
+		// if (responseEmployeeProducts != undefined && responseEmployeeProducts.data.length > 0) {
+		// 	// if (
+		// 	//     responseEmployeeProducts.data[0].filtering == true &&
+		// 	//     responseEmployeeProducts.data[0].filtering != undefined
+		// 	// ) {
+		// 	userProducts = responseEmployeeProducts.data[0][checkedPlanDetails.HouseClass]
+		// 		? responseEmployeeProducts.data[0][checkedPlanDetails.HouseClass]
+		// 		: responseEmployeeProducts.data[0].myProducts;
+		// 	// }
+		// 	if (
+		// 		responseEmployeeProducts.data[0].showSubProduct == true &&
+		// 		responseEmployeeProducts.data[0].showSubProduct != undefined
+		// 	) {
+		// 		const showSubProducts = responseEmployeeProducts.data[0].showSubProduct
+		// 			? responseEmployeeProducts.data[0].showSubProduct
+		// 			: false;
+		// 	}
+		// }
 
 		/* PCMS */
-		if (userProducts.length > 0) {
-			const assignedProductCategoriesPCMS = planDetails.filter((item) => {
-				return userProducts.includes(item.ProductCode);
-			});
-			// console.log(assignedProductCategoriesPCMS);
-			return Promise.resolve(assignedProductCategoriesPCMS);
-			// console.log(assignedProductCategoriesPCMS, '@@@#$%^&*(');
-		}
+		// if (userProducts.length > 0) {
+		// const assignedProductCategoriesPCMS = planDetails.filter((item) => {
+		// 	return userProducts.includes(item.ProductCode);
+		// });
+		// console.log(assignedProductCategoriesPCMS);
+		return Promise.resolve(planDetails);
+		// console.log(assignedProductCategoriesPCMS, '@@@#$%^&*(');
+		// }
 		// if (responseCheckPlans.data.status_code == 500) throw result;
 	} catch (error) {
 		console.error(error);

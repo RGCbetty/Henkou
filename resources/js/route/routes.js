@@ -1,7 +1,7 @@
 import Henkou from '../pages/Henkou';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
-import Products from '../pages/Products';
+import Productsv2 from '../pages/Productsv2';
 import Users from '../pages/Users';
 import Registration from '../pages/Registration';
 import Search from '../pages/Search';
@@ -66,7 +66,7 @@ const routes = [
 		exact: true,
 		auth: true,
 		title: 'Henkou - Product Settings',
-		component: Products
+		component: Productsv2
 	},
 	{
 		path: '/users',

@@ -34,19 +34,22 @@ const Base = ({ children, dispatch, ...rest }) => {
 	];
 	const menu = (
 		<Menu>
-			<Menu.Item key="0">
-				<Link to="/products">
-					<SettingFilled />
-					Manage Products
-				</Link>
-			</Menu.Item>
-			<Menu.Divider />
-			<Menu.Item key="1">
-				<Link to="/users">
-					<UserOutlined />
-					Manage Users
-				</Link>
-			</Menu.Item>
+			<Menu.ItemGroup title="Settings">
+				<Menu.Item key="0">
+					<Link to="/products">
+						<SettingFilled />
+						Manage Products
+					</Link>
+				</Menu.Item>
+				<Menu.Divider />
+				<Menu.Item key="1">
+					<Link to="/users">
+						<UserOutlined />
+						Manage Users
+					</Link>
+				</Menu.Item>
+			</Menu.ItemGroup>
+
 			<Menu.Divider />
 			<Menu.Item icon={<LogoutOutlined />} key="3" onClick={handleLogout}>
 				Logout
@@ -83,10 +86,18 @@ const Base = ({ children, dispatch, ...rest }) => {
 					<p>{rest.userInfo.EmployeeName} Encoder</p> */}
 					<span>Department</span>
 					<p style={{ verticalAlign: 'top' }}>{rest.userInfo.DepartmentName}</p>
-					<span>Section</span>
-					<p style={{ verticalAlign: 'middle' }}>{rest.userInfo.SectionName}</p>
-					<span>Team</span>
-					<p style={{ verticalAlign: 'bottom' }}>{rest.userInfo.TeamName}</p>
+					{rest.userInfo.SectionName ? (
+						<>
+							<span>Section</span>
+							<p style={{ verticalAlign: 'middle' }}>{rest.userInfo.SectionName}</p>
+						</>
+					) : null}
+					{rest.userInfo.TeamName ? (
+						<>
+							<span>Team</span>
+							<p style={{ verticalAlign: 'bottom' }}>{rest.userInfo.TeamName}</p>
+						</>
+					) : null}
 				</div>
 				<Menu
 					theme="dark"

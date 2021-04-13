@@ -23,6 +23,7 @@ const LoginForm = (props) => {
 		await Http.get('/sanctum/csrf-cookie');
 		try {
 			const result = await dispatch(api.login(formData));
+
 			// let res = await Http.get('/api/user');
 			// console.log(res);
 			if (result.status_code == 500) throw result.message;

@@ -13,23 +13,14 @@ import { PlanCustomerInformation } from './PlanCustomerInformation';
 import PendingHeaders from '../HenkouComponents/PendingHeaders';
 import Legend from '../Legend';
 import ActionHeaders from './ActionHeaders';
+import { uniqBy } from 'lodash';
+
+import { completeDetailsStatus } from '../../api/status';
 
 const { Search, TextArea } = Input;
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const HenkouContainer = (props) => {
-	const {
-		details,
-		product,
-		handleEvent,
-		handleUpdate,
-		assessment,
-		status,
-		suppliers,
-		uniqueProducts,
-		company,
-		affectedProducts,
-		...rest
-	} = props;
+	const { details, handleEvent, handleUpdate, assessment, status, master, logs, ...rest } = props;
 	const [showCollapse, setShowCollapse] = useState(false);
 	const [expand, setExpand] = useState(false);
 	const [row, setRow] = useState({});
@@ -38,11 +29,11 @@ const HenkouContainer = (props) => {
 		pendingModal: false,
 		actionModal: false
 	});
-
 	const [attachments, setAttachments] = useState([]);
 	const [pendingItems, setPendingItems] = useState([]);
 	const [actionItems, setActionItems] = useState([]);
 
+	const [options, setOptions] = useState([]);
 	const [form] = Form.useForm();
 	/* HENKOU PROCESS */
 	// const uniqueProducts = _.uniqBy(concatenatedProducts, (obj) => obj.product_key);
@@ -57,72 +48,91 @@ const HenkouContainer = (props) => {
 			return true;
 		}
 	};
-	const checkIfSupplier = (record) => {
-		if (
-			record.department == rest.userInfo.DepartmentName &&
-			record.section == rest.userInfo.SectionName &&
-			record.team == rest.userInfo.TeamName
-		) {
-			if (
-				suppliers.length > 0
-					? suppliers.find(
-							(item) => item.product_key == record.product_key && item.last_touch
-					  )
-						? suppliers.find((item) => item.product_key == record.product_key)
-								.last_touch
-						: false
-					: false
-			) {
-				return false;
-			} else {
-				return true;
-			}
-		} else {
-			return true;
-		}
-	};
+	// const checkIfSupplier = (record) => {
+	// 	if (
+	// 		record.department == rest.userInfo.DepartmentName &&
+	// 		record.section == rest.userInfo.SectionName &&
+	// 		record.team == rest.userInfo.TeamName
+	// 	) {
+	// 		if (
+	// 			suppliers.length > 0
+	// 				? suppliers.find(
+	// 						(item) => item.product_key == record.product_key && item.last_touch
+	// 				  )
+	// 					? suppliers.find((item) => item.product_key == record.product_key)
+	// 							.last_touch
+	// 					: false
+	// 				: false
+	// 		) {
+	// 			return false;
+	// 		} else {
+	// 			return true;
+	// 		}
+	// 	} else {
+	// 		return true;
+	// 	}
+	// };
 
-	const handleStatus = (row, key, isPendingItems = null) => {
-		row[key] = moment().format('YYYY-MM-DD HH:mm:ss');
+	const handleActionStatus = (record, key, isPendingItems = null) => {
+		record[key] = moment().format('YYYY-MM-DD HH:mm:ss');
 		if (isPendingItems) {
 			if (key == 'start') {
-				row.isItemStarted = true;
+				record.isItemStarted = true;
 			}
 			if (key == 'resume') {
 				// const diff_seconds = moment(row.start).diff(row.resume, 'seconds');
-				const ms = moment(row.resume, 'YYYY-MM-DD HH:mm:ss').diff(
-					moment(row.start, 'YYYY-MM-DD HH:mm:ss')
-				);
-				const d = moment.duration(ms);
-				row.resume_date = row[key];
-				row.duration = isNaN(moment(row.start).diff(row.resume))
+				// const ms = moment(row.resume, 'YYYY-MM-DD HH:mm:ss').diff(
+				// 	moment(row.start, 'YYYY-MM-DD HH:mm:ss')
+				// );
+				// const d = moment.duration(ms);
+				record.resume_date = row[key];
+				record.duration = isNaN(moment(record.start).diff(record.resume))
 					? ''
-					: durationAsString(row.start, row.resume);
+					: durationAsString(record.start, record.resume);
+				setRow({ ...row });
+				// row.pending_id = row.pending_id + 1;
 			}
-			pendingItems[row.index - 1] = row;
+			pendingItems[
+				pendingItems.findIndex((item) => item.pending_index == record.pending_index)
+			] = record;
 			const clonePendingItems = [...pendingItems];
-			console.log(clonePendingItems);
 			setPendingItems(clonePendingItems);
 		} else {
 			if (key == 'finished_date') {
-				row.received_date = moment().format('YYYY-MM-DD HH:mm:ss');
+				// row.received_date = moment().format('YYYY-MM-DD HH:mm:ss');
+				record.days_in_process = isNaN(moment(record.start_date).diff(record.finished_date))
+					? ''
+					: durationAsString(record.start_date, record.finished_date);
+				// setRow({ ...row });
 			}
-			if (key == 'start_date') {
-				row.toggleStatus = false;
-			}
-			handleUpdate(row, details, key);
+			actionItems[
+				actionItems.findIndex((item) => item.status_index == record.status_index)
+			] = record;
+			const cloneActionItems = [...actionItems];
+			setActionItems(cloneActionItems);
 		}
 	};
-	const handleAssessment = (value, key, row) => {
-		row[key] = value;
-		if (value !== 3) {
-			row.toggleSelect = false;
-		} else {
-			row.toggleSelect = true;
-		}
-		handleUpdate(row, details, key);
+	const handleAssessment = (value, key, record) => {
+		record[key] = value;
+		// if (value !== 3) {
+		// 	record.toggleSelect = false;
+		// } else {
+		// 	record.toggleSelect = true;
+		// }
+		handleUpdate(details, record, key);
 		// handleUpdate;
 	};
+	const handleEventStatus = (e, key, record) => {
+		if (key == 'assessment_id') {
+			record[key] = e;
+		} else if (key == 'log') {
+			record[key] = e.target.value;
+		} else if (key == 'start_date' || key == 'finished_date') {
+			record[key] = moment().format('YYYY-MM-DD HH:mm:ss');
+		}
+		handleUpdate(details, record, key);
+	};
+
 	/* HENKOU PROCESS */
 
 	/*  */
@@ -142,30 +152,36 @@ const HenkouContainer = (props) => {
 	};
 	/*  */
 	/* PENDING MODAL */
-	const handlePending = async (record) => {
-		console.log(record);
-		const pendingResource = await Http.get(`/api/henkou/pending/${record.id}`);
-		if (pendingResource.data.length <= 0) {
-			let pending = [];
-			for (let i = 0; i < 1; i++) {
-				pending.push({
-					index: i + 1,
-					rev_no: details.rev_no,
-					start: '',
-					reason: '',
-					resume: '',
-					duration: '',
-					product_key: record.ProductCode,
-					...record
-				});
+	const handleActionPending = async (record) => {
+		const pendingResource = await Http.get(
+			`/api/pending/detail_id/${record.detail_id}/affected_id/${record.affected_id}`
+		);
+		if (pendingResource.data.length == 0) {
+			if (pendingItems.length == 0) {
+				// setPendingItems([]);
+
+				let pending = [];
+				for (let i = 0; i < 1; i++) {
+					pending.push({
+						pending_id: null,
+						pending_index: i + 1,
+						rev_no: details.rev_no,
+						start: '',
+						reason: '',
+						resume: '',
+						duration: '',
+						product_key: record.ProductCode,
+						...record
+					});
+				}
+				setPendingItems(pending);
 			}
-			setPendingItems(pending);
-		} else {
+		} else if (pendingItems.length == 0) {
 			setPendingItems(
 				pendingResource.data.map((item, index) => {
 					return {
 						pending_id: item.id,
-						index: index + 1,
+						pending_index: index + 1,
 						start: item.start_date,
 						resume: item.resume_date,
 						...item,
@@ -174,47 +190,59 @@ const HenkouContainer = (props) => {
 				})
 			);
 		}
-		setRow(record);
+		setRow({ ...row });
 
 		setVisibilty({ ...isVisible, pendingModal: true });
 	};
 
 	const handlePendingOk = async () => {
-		const filteredPendingItems = pendingItems.filter((item) => {
-			return item.start || item.resume || item.reason;
-		});
-		console.log(filteredPendingItems, 'pendingOk');
-		if (filteredPendingItems.length > 0) {
-			const response = await Http.post('/api/henkou/pending', filteredPendingItems);
-		}
 		setVisibilty({ ...isVisible, pendingModal: false });
-		setPendingItems([]);
-		setRow({});
+		// setPendingItems([]);
+		// setRow({ ...row, disableFinish: false });
+		// setRow({});
 	};
 
 	const handlePendingCancel = () => {
 		setVisibilty({ ...isVisible, pendingModal: false });
-		setPendingItems([]);
-		setRow({});
+		const filterPendingItems = pendingItems.filter((item) => item.pending_id);
+		setPendingItems(filterPendingItems);
+		// setRow({});
 	};
 
-	const addPendingItems = (row, key) => {
+	const addPendingItems = (record, key) => {
+		function getMaxPendingID() {
+			return pendingItems.reduce(
+				(max, obj) => (obj.pending_index > max ? obj.pending_index : max),
+				pendingItems[0].pending_index
+			);
+		}
 		pendingItems.push({
-			index: pendingItems.length + 1,
+			pending_id: null,
+			pending_index: getMaxPendingID() + 1,
 			rev_no: details.rev_no,
 			start: '',
 			reason: '',
 			resume: '',
 			duration: '',
-			product_key: row.ProductCode,
-			...row
+			product_key: record.ProductCode,
+			...record
 		});
 		let cloneItems = [...pendingItems];
 		setPendingItems(cloneItems);
 	};
-	const handleReasonInput = (row, e) => {
-		row.reason = e.target.value;
-		pendingItems[row.index - 1] = row;
+	const handleActionDetails = (record, e) => {
+		record.log = e.target.value;
+		actionItems[
+			actionItems.findIndex((item) => item.status_index == record.status_index)
+		] = record;
+		const cloneActionItems = [...actionItems];
+		setActionItems(cloneActionItems);
+	};
+	const handleReasonInput = (record, e) => {
+		record.reason = e.target.value;
+		pendingItems[
+			pendingItems.findIndex((item) => item.pending_index == record.pending_index)
+		] = record;
 		const clonePendingItems = [...pendingItems];
 		setPendingItems(clonePendingItems);
 	};
@@ -234,11 +262,54 @@ const HenkouContainer = (props) => {
 	/* ATTACHMENT MODAL */
 	/* ACTION MODAL */
 	const handleAction = async (record) => {
+		const pendingResource = await Http.get(
+			`/api/pending/detail_id/${record.detail_id}/affected_id/${record.affected_id}`
+		);
+		setPendingItems(
+			pendingResource.data.map((item, index) => {
+				return {
+					pending_id: item.id,
+					pending_index: index + 1,
+					start: item.start_date,
+					resume: item.resume_date,
+					...item,
+					id: item.status_id
+				};
+			})
+		);
+		setActionItems(
+			await completeDetailsStatus(
+				record,
+				master.affectedProducts,
+				master.products,
+				master,
+				details
+			)
+		);
 		setRow(record);
 		setVisibilty({ ...isVisible, actionModal: true });
 	};
+	pendingItems;
 
 	const handleActionOk = async () => {
+		function getMaxActionID() {
+			return actionItems.reduce(
+				(max, obj) => (obj.status_index > max ? obj.status_index : max),
+				actionItems[0].status_index
+			);
+		}
+		// if (actionItems[getMaxActionID() - 1].log) {
+		// handleUpdate(details);
+		// } else {
+		handleUpdate(details, actionItems[getMaxActionID() - 1], null, pendingItems);
+		// }
+		const filteredPendingItems = pendingItems.filter((item) => {
+			return item.start || item.resume || item.reason;
+		});
+		if (filteredPendingItems.length > 0) {
+			const response = await Http.post('/api/henkou/pending', filteredPendingItems);
+		}
+
 		// const filteredPendingItems = pendingItems.filter((item) => {
 		// 	return item.start || item.resume || item.reason;
 		// });
@@ -255,6 +326,32 @@ const HenkouContainer = (props) => {
 		setPendingItems([]);
 		setRow({});
 	};
+
+	// const filteredStatus = (status) => {
+	// 	const filterStatus = status.filter((item) => item.product_name == row.product_name);
+	// 	const statusWithProductKey = filterStatus.map((item, index) => {
+	// 		return {
+	// 			status_index: index + 1,
+	// 			...item,
+	// 			logs: item.log ? item.log : item.logs,
+	// 			days_in_process: isNaN(moment(item.start_date).diff(item.finished_date))
+	// 				? ''
+	// 				: durationAsString(item.start_date, item.finished_date),
+	// 			product_key: affectedProducts.find((el) => el.id == item.affected_id)
+	// 				? product
+	// 					? product.find(
+	// 							(el) =>
+	// 								el.id ==
+	// 								affectedProducts.find((el) => el.id == item.affected_id)
+	// 									.product_category_id
+	// 					  ).product_key
+	// 					: null
+	// 				: null
+	// 		};
+	// 	});
+	// 	const uniqueStatusByProductKey = _.uniqBy(statusWithProductKey, (obj) => obj.product_name);
+	// 	return uniqueStatusByProductKey;
+	// };
 
 	/* ACTION MODAL */
 	const durationAsString = (start, end) => {
@@ -277,7 +374,32 @@ const HenkouContainer = (props) => {
 
 		return [daysFormatted, hoursFormatted, minutesFormatted, secondsFormatted].join('');
 	};
+	const onFocus = (value) => {
+		setOptions(
+			!value
+				? []
+				: [
+						{
+							value: 'Borrow Form'
+						}
+				  ]
+		);
+	};
+	const onSelect = (value, key, record) => {
+		record[key] = value;
+		// console.log(value, key, record, 'Onselect');
+		pendingItems[
+			pendingItems.findIndex((item) => item.pending_index == record.pending_index)
+		] = record;
+		const clonePendingItems = [...pendingItems];
+		setPendingItems(clonePendingItems);
+	};
 
+	const checkPendingOngoing = (record) => {
+		Http.get(
+			`/api/pending/detail_id/${record.detail_id}/affected_id/${record.affected_id}`
+		).then((res) => setPendingItems(res.data));
+	};
 	return (
 		<>
 			<Form
@@ -294,10 +416,8 @@ const HenkouContainer = (props) => {
 							onPressEnter={onEnter}
 							style={{ width: 300, margin: '0 0' }}></Search>
 					</Col>
-					<Col span={8} style={{ textAlign: 'center', padding: '10 0 0 0' }}>
-						Henkou Page
-					</Col>
-					<Col span={8} style={{ textAlign: 'right' }}>
+
+					<Col offset={8} span={8} style={{ textAlign: 'right' }}>
 						{expand ? (
 							<Input
 								addonBefore="Registration Date"
@@ -348,7 +468,44 @@ const HenkouContainer = (props) => {
 				<Row>
 					<Col span={24}>
 						{expand ? (
-							<TextArea value={details ? details.logs : ''} rows={5}></TextArea>
+							<>
+								<span>Summary(Henkou Details)</span>
+								<TextArea
+									placeholder="Summary(Henkou Details)"
+									autoSize
+									value={
+										logs.length > 0
+											? logs
+													.filter((item) => item.log)
+													.map((stat, index) => {
+														if (stat.log) {
+															if (index == 0) {
+																return `${moment
+																	.utc(stat.updated_at)
+																	.format(
+																		'YYYY-MM-DD, h:mm:ss a'
+																	) +
+																	':  ' +
+																	stat.log}`;
+															} else {
+																return (
+																	'\n' +
+																	moment
+																		.utc(stat.updated_at)
+																		.format(
+																			'YYYY-MM-DD, h:mm:ss a'
+																		) +
+																	':  ' +
+																	stat.log
+																);
+															}
+														}
+													})
+													.join('')
+											: ''
+									}
+									rows={5}></TextArea>
+							</>
 						) : (
 							<></>
 						)}
@@ -396,19 +553,13 @@ const HenkouContainer = (props) => {
 				visible={isVisible.pendingModal}>
 				{/* <HenkouTable headers={PendingHeaders()} data={pendingItems} /> */}
 				<Table
-					rowKey={(record) => record.index}
-					columns={PendingHeaders(handleStatus, handleReasonInput)}
-					dataSource={
-						pendingItems
-						//     .map((item) => {
-						// 	return {
-						// 		...item,
-						// 		duration: isNaN(moment(item.start).diff(item.resume))
-						// 			? ''
-						// 			: durationAsString(item.start, item.resume)
-						// 	};
-						// })
-					}
+					rowKey={(record) => record.pending_index}
+					columns={PendingHeaders(handleActionStatus, handleReasonInput, {
+						data: options,
+						onFocus,
+						onSelect
+					})}
+					dataSource={pendingItems}
 					pagination={false}
 					bordered
 				/>
@@ -430,30 +581,23 @@ const HenkouContainer = (props) => {
 				okText="Save"
 				onCancel={handleActionCancel}
 				bodyStyle={{ padding: 10 }}
-				width={650}
+				width={1000}
 				visible={isVisible.actionModal}>
 				{/* <HenkouTable headers={PendingHeaders()} data={pendingItems} /> */}
 				<Table
-					rowKey={(record) => record.index}
-					columns={ActionHeaders(handleStatus, handleReasonInput)}
-					dataSource={status
-						.map((item) => {
-							return {
-								id: item.id,
-								...item,
-								logs: item.log ? item.log : item.logs,
-								days_in_process: isNaN(
-									moment(item.start_date).diff(item.finished_date)
-								)
-									? ''
-									: durationAsString(item.start_date, item.finished_date)
-							};
-						})
-						.filter((item) => item.product_name == row.product_name)}
+					rowKey={(record) => record.status_index}
+					columns={ActionHeaders(
+						handleActionStatus,
+						handleActionDetails,
+						handleActionPending,
+
+						pendingItems
+					)}
+					dataSource={actionItems}
 					pagination={false}
 					bordered
 				/>
-				<div style={{ textAlign: 'right' }}>
+				{/* <div style={{ textAlign: 'right' }}>
 					<Button
 						style={{ margin: 10 }}
 						type="primary"
@@ -463,7 +607,7 @@ const HenkouContainer = (props) => {
 						onClick={() => addPendingItems(row, 'finished_date')}>
 						Add
 					</Button>
-				</div>
+				</div> */}
 			</Modal>
 			{expand ? (
 				<div style={{ padding: 5 }}>
@@ -489,15 +633,14 @@ const HenkouContainer = (props) => {
 						rowKey={(record) => record.id}
 						columns={henkouStatusHeader(
 							assessment,
-							handleStatus,
-							{ handleAction, handleAssessment, handlePending },
-							checkIfSupplier,
-							checkIfOwner
+							{ handleAction, handleEventStatus },
+							checkIfOwner,
+							status,
+							pendingItems
 						)}
 						bordered
 						dataSource={status.map((item) => {
 							return {
-								id: item.id,
 								...item,
 								logs: item.log ? item.log : item.logs,
 								days_in_process: isNaN(
@@ -505,11 +648,18 @@ const HenkouContainer = (props) => {
 								)
 									? ''
 									: durationAsString(item.start_date, item.finished_date),
-								product_key: affectedProducts.find(
+								product_key: master.affectedProducts.find(
 									(el) => el.id == item.affected_id
 								)
-									? affectedProducts.find((el) => el.id == item.affected_id)
-											.product_category_id
+									? master.products
+										? master.products.find(
+												(el) =>
+													el.id ==
+													master.affectedProducts.find(
+														(el) => el.id == item.affected_id
+													).product_category_id
+										  ).product_key
+										: null
 									: null
 							};
 						})}
@@ -523,6 +673,7 @@ const HenkouContainer = (props) => {
 	);
 };
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo
+	userInfo: state.auth.userInfo,
+	master: state.auth.master
 });
 export default connect(mapStateToProps)(HenkouContainer);
