@@ -22,6 +22,7 @@ const { Title } = Typography;
 const Base = ({ children, dispatch, ...rest }) => {
 	const handleLogout = (e) => {
 		dispatch(actions.authLogout());
+		window.location.href = `http://${window.location.host}/`;
 	};
 	const location = useLocation();
 	const { pathname } = location;
@@ -34,22 +35,23 @@ const Base = ({ children, dispatch, ...rest }) => {
 	];
 	const menu = (
 		<Menu>
-			<Menu.ItemGroup title="Settings">
-				<Menu.Item key="0">
-					<Link to="/products">
-						<SettingFilled />
-						Manage Products
-					</Link>
-				</Menu.Item>
-				<Menu.Divider />
-				<Menu.Item key="1">
-					<Link to="/users">
-						<UserOutlined />
-						Manage Users
-					</Link>
-				</Menu.Item>
-			</Menu.ItemGroup>
-
+			{rest.userInfo.access_level == 1 && (
+				<Menu.ItemGroup title="Settings">
+					<Menu.Item key="0">
+						<Link to="/products">
+							<SettingFilled />
+							Manage Products
+						</Link>
+					</Menu.Item>
+					<Menu.Divider />
+					<Menu.Item key="1">
+						<Link to="/users">
+							<UserOutlined />
+							Manage Users
+						</Link>
+					</Menu.Item>
+				</Menu.ItemGroup>
+			)}
 			<Menu.Divider />
 			<Menu.Item icon={<LogoutOutlined />} key="3" onClick={handleLogout}>
 				Logout
@@ -58,6 +60,7 @@ const Base = ({ children, dispatch, ...rest }) => {
 	);
 	return (
 		<Layout
+			hasSider={true}
 			style={{
 				minHeight: '100vh'
 			}}>
@@ -65,9 +68,13 @@ const Base = ({ children, dispatch, ...rest }) => {
 				id="components-layout-demo-responsive"
 				breakpoint="lg"
 				collapsedWidth="0"
-				// style={{
-				// 	overflow: 'auto'
-				// }}
+				style={{
+					overflow: 'auto',
+					height: '100vh',
+					position: 'fixed',
+					left: 0,
+					zIndex: 1
+				}}
 				// collapsed
 				// onBreakpoint={broken => {
 				//     console.log(broken);
@@ -124,10 +131,13 @@ const Base = ({ children, dispatch, ...rest }) => {
 						))}
 				</Menu>
 			</Sider>
-			<Layout>
+			<Layout style={{ marginLeft: 200 }}>
 				<Header
 					className="site-layout-sub-header-background"
-					style={{ paddingLeft: 15, paddingRight: 15 }}>
+					style={{
+						paddingLeft: 15,
+						paddingRight: 15
+					}}>
 					<Row>
 						<Col id="col_title" span={9} style={{ textAlign: 'left' }}>
 							<div className="project_title"></div>
@@ -149,7 +159,7 @@ const Base = ({ children, dispatch, ...rest }) => {
 													// http://asd_sql/photos/38610.jpg
 
 													src={`http://asd_sql/photos/${rest.userInfo.EmployeeCode}.jpg`}
-													// src={`http://hrdapps48:3001/ftp/employee_pictures/${rest.userInfo.EmployeeCode}.jpg`}
+													// src={`http://hrdapps68:3001/ftp/employee_pictures/${rest.userInfo.EmployeeCode}.jpg`}
 												></Avatar>
 												// <img
 												// 	src={`http://adminsql1/photos/${rest.userInfo.EmployeeCode}.jpg`}
@@ -170,10 +180,9 @@ const Base = ({ children, dispatch, ...rest }) => {
 					</Row>
 				</Header>
 				<Content
-					style={{ margin: '8px 8px 0', overflow: 'auto', backgroundColor: 'white' }}>
-					{/* <div className="site-layout-background" style={{ height: '100%' }}> */}
+					className="site-layout-background"
+					style={{ margin: '8px 8px 0', overflow: 'auto' }}>
 					{children}
-					{/* </div> */}
 				</Content>
 				<Footer style={{ textAlign: 'center' }}>Henkou ©2020 Created by SD-2A</Footer>
 			</Layout>

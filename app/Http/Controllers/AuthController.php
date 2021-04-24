@@ -64,7 +64,6 @@ class AuthController extends Controller
                 'password' => 'required',
             ]);
             // , $request->only('remember')
-            info($request->employee_no);
             $credentials = request(['employee_no', 'password']);
             if (Auth::attempt($credentials)) {
                 $user = User::where('employee_no', $request->employee_no)->first();
@@ -87,6 +86,8 @@ class AuthController extends Controller
                         AND D.DeletedDate IS NULL AND S.DeletedDate IS NULL
                         AND T.Deleteddate IS NULL AND DS.DeletedDate IS NULL
                  AND E.EmployeeCode= :employee_no"), array('employee_no' => $request->employee_no))[0];
+                // info(array_merge($user->toArray(), $userInfo));
+
                 if (!Hash::check($request->password, $user->password, [])) {
                     throw new \Exception('Error in Login');
                 }
@@ -99,7 +100,7 @@ class AuthController extends Controller
                 $tokenResult = $user->createToken('authToken')->plainTextToken;
                 return response()->json([
                     'status_code' => 200,
-                    'user' => $userInfo,
+                    'user' => collect($user)->merge(collect($userInfo)),
                     'access_token' => $tokenResult,
                     'token_type' => 'Bearer',
                 ]);

@@ -7,34 +7,44 @@ import Http from '../Http';
 
 const Users = ({ title, ...rest }) => {
 	const [users, SetUsers] = useUsersRetriever();
+	const { data, pagination, loading } = users;
 	useEffect(() => {
 		document.title = title || '';
 	}, [title]);
 	const confirm = (user) => {
-		console.log(users.data);
 		user.is_registered = 1;
 		Http.post('/api/verify', user).then((res) => console.warn(res));
+		users.data[users.data.findIndex((item) => item.id == user.id)] = user;
 		const [...usersClone] = users.data;
-		usersClone.splice(user.id - 1, 1, user);
 		SetUsers({
 			...users,
 			data: usersClone
 		});
-		// usersClone.
+	};
+	const handleTableChange = (page, filters, sorter) => {
+		SetUsers({
+			...users,
+			pagination: {
+				...page,
+				showTotal: (total) => `Total ${total} items`
+			}
+		});
 	};
 	return (
-		<div id="manage_users_page">
+		<>
 			{/* <div className="manage_users" /> */}
-			<h1 className="manage_users">𝘔𝘢𝘯𝘢𝘨𝘦 𝘜𝘴𝘦𝘳𝘴</h1>
-			<Spin spinning={users.loading}>
+			<h1 className="title-page">Manage Users</h1>
+			<Spin spinning={loading}>
 				<Table
 					rowKey={(record) => record.id}
 					style={{ margin: 10 }}
 					columns={ManageUserColumns(confirm)}
-					dataSource={users.data}
+					dataSource={data}
+					pagination={pagination}
+					onChange={handleTableChange}
 					bordered></Table>
 			</Spin>
-		</div>
+		</>
 	);
 };
 const mapStateToProps = (state) => ({

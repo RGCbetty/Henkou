@@ -35,6 +35,8 @@ class PendingController extends Controller
      */
     public function store(Request $request)
     {
+        date_default_timezone_set('Asia/Manila');
+        info($request);
         // function pending($item)
         // {
         //     return array(
@@ -61,23 +63,29 @@ class PendingController extends Controller
             if (isset($request[$i]['pending_id'])) {
                 array_push($existingPendings, array(
                     'id' => isset($request[$i]['pending_id']) ? $request[$i]['pending_id'] : null,
-                    'product_key' => $request[$i]['product_key'],
+                    'customer_code' => $request[$i]['customer_code'],
                     'affected_id' =>  $request[$i]['affected_id'],
-                    'detail_id' =>  $request[$i]['detail_id'],
+                    // 'detail_id' =>  $request[$i]['detail_id'],
+                    'status_id' => $request[$i]['id'],
                     'rev_no' =>  $request[$i]['rev_no'],
                     'start_date' =>  $request[$i]['start'],
                     'reason' => $request[$i]['reason'],
+                    'remarks' => $request[$i]['remarks'],
+                    'borrow_details' => $request[$i]['borrow_details'],
                     'resume_date' =>  $request[$i]['resume'],
                     'duration' => $request[$i]['duration']
                 ));
             } else {
                 array_push($newPendings, array(
-                    'product_key' => $request[$i]['product_key'],
+                    'customer_code' => $request[$i]['customer_code'],
                     'affected_id' =>  $request[$i]['affected_id'],
-                    'detail_id' =>  $request[$i]['detail_id'],
+                    // 'detail_id' =>  $request[$i]['detail_id'],
+                    'status_id' => $request[$i]['id'],
                     'rev_no' =>  $request[$i]['rev_no'],
                     'start_date' =>  $request[$i]['start'],
                     'reason' => $request[$i]['reason'],
+                    'remarks' => $request[$i]['remarks'],
+                    'borrow_details' => $request[$i]['borrow_details'],
                     'resume_date' =>  $request[$i]['resume'],
                     'duration' => $request[$i]['duration']
                 ));
@@ -90,7 +98,7 @@ class PendingController extends Controller
                 $existingPendings,
                 ['id', 'status_id'],
                 [
-                    'resume_date', 'duration', 'reason'
+                    'resume_date', 'duration', 'reason', 'borrow_details', 'remarks'
                 ]
             );
         }
@@ -99,7 +107,7 @@ class PendingController extends Controller
                 $newPendings,
                 ['id', 'status_id'],
                 [
-                    'resume_date', 'duration', 'reason'
+                    'resume_date', 'duration', 'reason', 'borrow_details', 'remarks'
                 ]
             );
         }
@@ -114,10 +122,16 @@ class PendingController extends Controller
      * @param  \App\Models\Pending  $pending
      * @return \Illuminate\Http\Response
      */
-    public function show($detail_id, $affected_id)
+    public function showByCustomerCodeAffectedID($customer_code, $affected_id)
     {
-        return Pending::select()->where('detail_id', $detail_id)->where('affected_id', $affected_id)->get();
+        return Pending::select()->where('customer_code', $customer_code)->where('affected_id', $affected_id)->get();
     }
+
+    public function showByCustomerCode($customer_code)
+    {
+        return Pending::select()->where('customer_code', $customer_code)->get();
+    }
+
 
     /**
      * Show the form for editing the specified resource.

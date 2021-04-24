@@ -41,6 +41,7 @@ export const headers = (
 		width: 150,
 		dataIndex: 'NameCode',
 		key: '3',
+		fixed: 'left',
 		align: 'center',
 		...columnSearch('NameCode', 'House Code')
 	},

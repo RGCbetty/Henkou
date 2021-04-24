@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import moment from 'moment';
 import { isObject, toInteger } from 'lodash';
 import Highlighter from 'react-highlight-words';
+import durationAsString from '../utils/diffDate';
 
 /* Component */
 import PDFLists from '../components/RegistrationComponents/PDFLists';
@@ -15,9 +16,8 @@ import { headers } from '../components/RegistrationComponents/THPlansHeader';
 import { Modal, notification, Table, Input, Space, Button, Skeleton, Empty, Spin } from 'antd';
 
 /* API */
-import { useThPlansRetriever, fetchThPlans, useTempThRetriever } from '../api/TH';
+import { useThPlansRetriever, THplansWithPlanStatus, fetchThTemp, fetchThPlans } from '../api/TH';
 // import { useActivePlanStatus, getPlanStatusByCustomerCode } from '../api/planstatus';
-import { getPlanStatusByCustomerCode } from '../api/planstatus';
 import { fetchDetails } from '../api/details';
 import { SearchOutlined } from '@ant-design/icons';
 import { setMaster } from '../redux/actions/master';
@@ -35,8 +35,10 @@ const Registration = ({ title, dispatch, ...rest }) => {
 	// const [productCategoriesPCMS, setProductCategoriesPCMS] = useActivePlanStatus();
 	// const [affectedProducts, setAffectedProducts] = useAffectedProductsRetriever();
 	// const [info, setInfo] = useMasterDetails();
-	const [tableTH, setTable] = useThPlansRetriever(userInfo, getPlanStatus);
-	const { plans, pagination, loading } = tableTH;
+	const [tableState, setTable] = useThPlansRetriever(userInfo);
+	const { plans, pagination, loading } = tableState;
+	const { showTotal, ...paginate } = pagination;
+
 	// const [departments, setDepartments] = useMasterDepartment();
 	// const [sections, setSections] = useMasterSection();
 	// const [teams, setTeams] = useMasterTeam();
@@ -47,7 +49,7 @@ const Registration = ({ title, dispatch, ...rest }) => {
 	const [pendingState, setPendingState] = useState({
 		items: [],
 		isPendingModalVisible: false,
-		product_name: ''
+		row: {}
 	});
 	const [options, setOptions] = useState([]);
 	/* PENDING */
@@ -92,42 +94,6 @@ const Registration = ({ title, dispatch, ...rest }) => {
 	};
 
 	/*  */
-	const getPlanStatus = async (henkouDetails, prods) => {
-		// let
-		// Http.get(`api/planstatus/${1}`).then(response => );
-		const planStatus = await getPlanStatusByCustomerCode(henkouDetails, prods, rest);
-		if (henkouDetails.Method == 1) {
-			if (
-				planStatus.find(
-					(item) => item.Status == 'Finished' && item.ProductCode == 'aPi@wUk3D'
-				)
-			) {
-				// planStatus.find(
-				// 	(item) =>
-				// 		(item.Status == 'Finished' && item.ProductCode == 'WQz0k4no5B9') ||
-				// 		item.ProductCode == 'WQz0k4no5B9'
-				// )
-				return planStatus.find(
-					(item) =>
-						item.Status == 'Finished' &&
-						(item.ProductCode == 'DbwGj5G8Y' || item.ProductCode == 'WQz0k4no5B9')
-				)
-					? 4
-					: 3;
-			}
-		} else if (henkouDetails.Method == 2) {
-			if (
-				planStatus.find(
-					(item) => item.Status == 'Finished' && item.ProductCode == 'aPi@wUk3D'
-				)
-			)
-				return planStatus.find(
-					(item) => item.Status == 'Finished' && item.ProductCode == 'iTJq1UgNMJr'
-				)
-					? 2
-					: 1;
-		}
-	};
 
 	const handleCancel = () => {
 		setIsModalVisible({ modal: false, foundsList: [] });
@@ -167,370 +133,15 @@ const Registration = ({ title, dispatch, ...rest }) => {
 			console.error(error);
 		}
 	};
-	const handleTableChange = async (page, filters, sorter) => {
-		let mounted = true;
-		try {
-			// const planstatus = await Http.get('/api/planstatuses');
-			// const instance = Http.create({
-			// 	baseURL: 'http://hrdapps68:8070/api',
-			// 	// baseURL: 'http://10.168.64.223:4900/',
-			// 	withCredentials: false
-			// });
-			// const activeProducts = await instance.get('/pcms/active/products');
-			// const response = await fetchThPlans(setTable, page);
-			// const { henkouPlans, pagination, total } = await response;
-			// async function findAsync(arr, id) {
-			// 	const promises = arr.map(async (item) => {
-			// 		return item.id == id ? item : null;
-			// 	});
-			// 	const results = await Promise.all(promises);
-
-			// 	const index = results.findIndex((result) => result);
-
-			// 	return arr[index] ? arr[index] : null;
-			// }
-			// const THplans = await Promise.all(
-			// 	henkouPlans.map(async (item, index) => {
-			// 		return {
-			// 			...item,
-			// 			remarks: tempTh.find(
-			// 				(el) =>
-			// 					el.customer_code == item.ConstructionCode &&
-			// 					el.plan_no == item.PlanNo &&
-			// 					el.th_no == item.RequestNo
-			// 			)
-			// 				? tempTh.find(
-			// 						(el) =>
-			// 							el.customer_code == item.ConstructionCode &&
-			// 							el.plan_no == item.PlanNo &&
-			// 							el.th_no == item.RequestNo
-			// 				  ).remarks
-			// 				: null,
-			// 			th_assessment_id: tempTh.find(
-			// 				(el) =>
-			// 					el.customer_code == item.ConstructionCode &&
-			// 					el.plan_no == item.PlanNo &&
-			// 					el.th_no == item.RequestNo
-			// 			)
-			// 				? tempTh.find(
-			// 						(el) =>
-			// 							el.customer_code == item.ConstructionCode &&
-			// 							el.plan_no == item.PlanNo &&
-			// 							el.th_no == item.RequestNo
-			// 				  ).th_assessment_id
-			// 				: null,
-			// 			reason_id: tempTh.find(
-			// 				(el) =>
-			// 					el.customer_code == item.ConstructionCode &&
-			// 					el.plan_no == item.PlanNo &&
-			// 					el.th_no == item.RequestNo
-			// 			)
-			// 				? tempTh.find(
-			// 						(el) =>
-			// 							el.customer_code == item.ConstructionCode &&
-			// 							el.plan_no == item.PlanNo &&
-			// 							el.th_no == item.RequestNo
-			// 				  ).reason_id
-			// 				: null,
-			// 			th_action_id: tempTh.find(
-			// 				(el) =>
-			// 					el.customer_code == item.ConstructionCode &&
-			// 					el.plan_no == item.PlanNo &&
-			// 					el.th_no == item.RequestNo
-			// 			)
-			// 				? tempTh.find(
-			// 						(el) =>
-			// 							el.customer_code == item.ConstructionCode &&
-			// 							el.plan_no == item.PlanNo &&
-			// 							el.th_no == item.RequestNo
-			// 				  ).th_action_id
-			// 				: null,
-			// 			start_date: tempTh.find(
-			// 				(el) =>
-			// 					el.customer_code == item.ConstructionCode &&
-			// 					el.plan_no == item.PlanNo &&
-			// 					el.th_no == item.RequestNo
-			// 			)
-			// 				? tempTh.find(
-			// 						(el) =>
-			// 							el.customer_code == item.ConstructionCode &&
-			// 							el.plan_no == item.PlanNo &&
-			// 							el.th_no == item.RequestNo
-			// 				  ).start_date
-			// 				: null,
-			// 			finished_date: tempTh.find(
-			// 				(el) =>
-			// 					el.customer_code == item.ConstructionCode &&
-			// 					el.plan_no == item.PlanNo &&
-			// 					el.th_no == item.RequestNo
-			// 			)
-			// 				? tempTh.find(
-			// 						(el) =>
-			// 							el.customer_code == item.ConstructionCode &&
-			// 							el.plan_no == item.PlanNo &&
-			// 							el.th_no == item.RequestNo
-			// 				  ).finished_date
-			// 				: null,
-			// 			pending_start_date: tempTh.find(
-			// 				(el) =>
-			// 					el.customer_code == item.ConstructionCode &&
-			// 					el.plan_no == item.PlanNo &&
-			// 					el.th_no == item.RequestNo
-			// 			)
-			// 				? tempTh.find(
-			// 						(el) =>
-			// 							el.customer_code == item.ConstructionCode &&
-			// 							el.plan_no == item.PlanNo &&
-			// 							el.th_no == item.RequestNo
-			// 				  ).pending_start_date
-			// 				: null,
-			// 			pending_resume_date: tempTh.find(
-			// 				(el) =>
-			// 					el.customer_code == item.ConstructionCode &&
-			// 					el.plan_no == item.PlanNo &&
-			// 					el.th_no == item.RequestNo
-			// 			)
-			// 				? tempTh.find(
-			// 						(el) =>
-			// 							el.customer_code == item.ConstructionCode &&
-			// 							el.plan_no == item.PlanNo &&
-			// 							el.th_no == item.RequestNo
-			// 				  ).pending_resume_date
-			// 				: null,
-			// 			plan_status: await findAsync(
-			// 				planstatus.data,
-			// 				await getPlanStatus(item, activeProducts.data)
-			// 			)
-			// 		};
-			// 	})
-			// );
-			if (rest.userInfo.SectionCode == '00465' && rest.userInfo.TeamCode == '00133') {
-				const response = await fetchThPlans(setTable, page);
-				// const tempTHplans = await fetchThTemp();
-				const planstatus = await Http.get('/api/planstatuses');
-				const instance = Http.create({
-					baseURL: 'http://hrdapps68:8070/api',
-					withCredentials: false
-				});
-				const { henkouPlans, pagination, total } = response;
-				const THplansWithPlanStatus = await instance.post('/pcms/planstatus', {
-					plans: henkouPlans
-				});
-				if (THplansWithPlanStatus.data.length) {
-					const THplans = THplansWithPlanStatus.data.map((item) => {
-						return {
-							...item,
-							remarks: master.tempTH.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).remarks
-								: null,
-							th_assessment_id: master.tempTH.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).th_assessment_id
-								: null,
-							reason_id: master.tempTH.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).reason_id
-								: null,
-							th_action_id: master.tempTH.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).th_action_id
-								: null,
-							start_date: master.tempTH.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).start_date
-								: null,
-							finished_date: master.tempTH.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).finished_date
-								: null,
-							pending_start_date: master.tempTH.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).pending_start_date
-								: null,
-							pending_resume_date: master.tempTH.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).pending_resume_date
-								: null,
-							daysinprocess: isNaN(
-								moment(
-									master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-									)
-										? master.tempTH.find(
-												(el) =>
-													el.customer_code == item.ConstructionCode &&
-													el.plan_no == item.PlanNo &&
-													el.th_no == item.RequestNo
-										  ).start_date
-										: null
-								).diff(
-									master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-									)
-										? master.tempTH.find(
-												(el) =>
-													el.customer_code == item.ConstructionCode &&
-													el.plan_no == item.PlanNo &&
-													el.th_no == item.RequestNo
-										  ).finished_date
-										: null
-								)
-							)
-								? ''
-								: durationAsString(
-										master.tempTH.find(
-											(el) =>
-												el.customer_code == item.ConstructionCode &&
-												el.plan_no == item.PlanNo &&
-												el.th_no == item.RequestNo
-										)
-											? master.tempTH.find(
-													(el) =>
-														el.customer_code == item.ConstructionCode &&
-														el.plan_no == item.PlanNo &&
-														el.th_no == item.RequestNo
-											  ).start_date
-											: null,
-										master.tempTH.find(
-											(el) =>
-												el.customer_code == item.ConstructionCode &&
-												el.plan_no == item.PlanNo &&
-												el.th_no == item.RequestNo
-										)
-											? master.tempTH.find(
-													(el) =>
-														el.customer_code == item.ConstructionCode &&
-														el.plan_no == item.PlanNo &&
-														el.th_no == item.RequestNo
-											  ).finished_date
-											: null
-								  ),
-							remarks: master.tempTH.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? master.tempTH.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).remarks
-								: null,
-							plan_status: planstatus.data.find((el) => el.id == item.plan_status)
-						};
-					});
-					if (mounted) {
-						setTable({
-							loading: false,
-							plans: THplans,
-							pagination: {
-								...pagination,
-								total: total,
-								showTotal: (total) => `Total ${total} items.`
-							}
-						});
-					}
-				} else {
-					if (mounted) {
-						setTable({
-							loading: false,
-							plans: [],
-							pagination: {
-								...pagination,
-								total: total,
-								showTotal: (total) => `Total ${total} items.`
-							}
-						});
-					}
-				}
+	const handleTableChange = (page, filters, sorter) => {
+		setTable({
+			...tableState,
+			pagination: {
+				...page,
+				showTotal: (total) => `Total ${total} items`
 			}
-		} catch (e) {
-			console.error(e);
-			if (e) mounted = false;
-		}
+		});
 	};
-
 	const handleOnChange = async (value, keys = null) => {
 		if (!keys) {
 			const e = value;
@@ -548,6 +159,11 @@ const Registration = ({ title, dispatch, ...rest }) => {
 	const openNotificationWithIcon = (type) => {
 		notification[type]({
 			message: 'Successfully Saved!'
+		});
+	};
+	const borrowNotification = (type) => {
+		notification[type]({
+			message: 'Borrow successfully!'
 		});
 	};
 	const handleRegister = async (details, row = null) => {
@@ -682,328 +298,18 @@ const Registration = ({ title, dispatch, ...rest }) => {
 	});
 
 	const handleSearch = async (selectedKeys, confirm, dataIndex) => {
-		const planstatus = await Http.get('/api/planstatuses');
-		setTable({
-			loading: true
+		confirm();
+		setState({
+			searchText: selectedKeys[0],
+			searchedColumn: dataIndex
 		});
-		if (selectedKeys.length > 0) {
-			const filterTHplans = await Http.get('/api/plan', {
-				params: { [`${dataIndex}`]: selectedKeys[0], ...pagination }
-			});
-			const instance = Http.create({
-				baseURL: 'http://hrdapps68:8070/api',
-				// baseURL: 'http://10.168.64.223:4900/',
-				withCredentials: false
-			});
-			const activeProducts = await instance.get('/pcms/active/products');
-			const { data, total } = filterTHplans.data;
-			async function findAsync(arr, id) {
-				const promises = arr.map(async (item) => {
-					return item.id == id ? item : null;
-				});
-				const results = await Promise.all(promises);
-
-				const index = results.findIndex((result) => result);
-
-				return arr[index] ? arr[index] : null;
-			}
-			const THplans = await Promise.all(
-				data.map(async (item, index) => {
-					return {
-						key: index,
-						...item,
-						remarks: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).remarks
-							: null,
-						th_assessment_id: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).th_assessment_id
-							: null,
-						reason_id: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).reason_id
-							: null,
-						th_action_id: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).th_action_id
-							: null,
-						start_date: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).start_date
-							: null,
-						finished_date: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).finished_date
-							: null,
-						pending_start_date: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).pending_start_date
-							: null,
-						pending_resume_date: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).pending_resume_date
-							: null,
-						plan_status: await findAsync(
-							planstatus.data,
-							await getPlanStatus(item, activeProducts.data)
-						)
-					};
-				})
-			);
-			setTable({
-				loading: false,
-				plans: THplans,
-				pagination: {
-					...pagination,
-					total: total,
-					showTotal: (total) => `Total ${total} items.`
-					// 200 is mock data, you should read it from server
-					// total: data.totalCount,
-				}
-			});
-			setState({
-				searchText: selectedKeys[0],
-				searchedColumn: dataIndex
-			});
-		} else {
-			setTable({
-				loading: false,
-				...tableTH
-			});
-		}
-
-		// confirm();
 	};
 	const handleReset = async (clearFilters) => {
-		let mounted = true;
-		try {
-			const planstatus = await Http.get('/api/planstatuses');
-			const page = {
-				current: 1,
-				pageSize: 10
-			};
-			const response = await fetchThPlans(setTable, page);
-			const instance = Http.create({
-				baseURL: 'http://hrdapps68:8070/api',
-				// baseURL: 'http://10.168.64.223:4900/',
-				withCredentials: false
-			});
-			const activeProducts = await instance.get('/pcms/active/products');
-			const { henkouPlans, pagination, total } = await response;
-			async function findAsync(arr, id) {
-				const promises = arr.map(async (item) => {
-					return item.id == id ? item : null;
-				});
-				const results = await Promise.all(promises);
-
-				const index = results.findIndex((result) => result);
-
-				return arr[index] ? arr[index] : null;
-			}
-			const THplans = await Promise.all(
-				henkouPlans.map(async (item, index) => {
-					return {
-						...item,
-						remarks: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).remarks
-							: null,
-						th_assessment_id: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).th_assessment_id
-							: null,
-						reason_id: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).reason_id
-							: null,
-						th_action_id: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).th_action_id
-							: null,
-						start_date: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).start_date
-							: null,
-						finished_date: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).finished_date
-							: null,
-						pending_start_date: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).pending_start_date
-							: null,
-						pending_resume_date: master.tempTH.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? master.tempTH.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).pending_resume_date
-							: null,
-						plan_status: await findAsync(
-							planstatus.data,
-							await getPlanStatus(item, activeProducts.data)
-						)
-					};
-				})
-			);
-			if (mounted)
-				setTable({
-					loading: false,
-					plans: THplans,
-					pagination: {
-						...pagination,
-						total: total,
-						showTotal: (total) => `Total ${total} items.`
-					}
-				});
-		} catch (e) {
-			if (e) mounted = false;
-		}
 		clearFilters();
-
-		setState({ searchText: '' });
+		setState({
+			searchText: '',
+			searchedColumn: ''
+		});
 	};
 	// const handleRegister = async (details, row = null) => {
 	// 	console.log(details);
@@ -1166,19 +472,29 @@ const Registration = ({ title, dispatch, ...rest }) => {
 	// };
 	/* TH Actions */
 	const handleOnClickEvent = async (row, key = null) => {
-		row[key] = moment().format('YYYY-MM-DD HH:mm:ss');
+		row[key] = moment()
+			.utc()
+			.local()
+			.format('YYYY-MM-DD HH:mm:ss');
 		row.employee_code = userInfo.EmployeeCode;
-		const toUpdatePlans = plans.map((item, index) => {
-			if (item.ConstructionCode == row.ConstructionCode && item.RequestNo == row.RequestNo) {
-				return row;
-			}
-			return item;
-		});
+		const toUpdatePlans = plans
+			.map((item, index) => {
+				if (
+					item.ConstructionCode == row.ConstructionCode &&
+					item.RequestNo == row.RequestNo
+				) {
+					return row;
+				}
+				return item;
+			})
+			.filter((item) => !item.finished_date);
 		setTable({
 			loading: false,
 			plans: toUpdatePlans,
 			pagination: {
-				...pagination
+				...pagination,
+				total: toUpdatePlans.length,
+				showTotal: (total) => `Total ${total} items`
 				// 200 is mock data, you should read it from server
 				// total: data.totalCount,
 			}
@@ -1242,13 +558,14 @@ const Registration = ({ title, dispatch, ...rest }) => {
 				baseURL: 'http://hrdapps68:8070/api',
 				withCredentials: false
 			});
-			const planstatuses = await Http.get('/api/planstatuses');
+			// const planstatuses = await Http.get('/api/planstatuses');
 			const response = await Http.get(`/api/plandetails/${constructionCode}`);
 			const planstatus = await instance.get(
 				`pcms/planstatus/${constructionCode}/${
 					response.data.house.length > 0 ? response.data.house[0].Method : null
 				}`
 			);
+			console.log(planstatus);
 			const revision = await Http.get(`/api/details/${constructionCode}`);
 			const { plan_specs } = response.data;
 			let plan_specification = [];
@@ -1349,147 +666,97 @@ const Registration = ({ title, dispatch, ...rest }) => {
 					};
 				});
 				if (detailsItem) {
-					console.log('detailssssss');
-					const fetchStatus = await Http.get(`/api/status/${detailsItem.id}`);
-					const fetchConsolidatedLogs = await Http.get(`/api/statuses/${detailsItem.id}`);
+					const fetchStatus = await Http.get(
+						`/api/henkou/plans/${detailsItem.customer_code}/products/${detailsItem.id}`
+					);
+					const fetchConsolidatedLogs = await Http.get(
+						`/api/henkou/plans/${detailsItem.customer_code}/logs`
+					);
+					const fetchConsolidatedPendingDetails = await Http.get(
+						`/api/henkou/plans/pending/${detailsItem.customer_code}`
+					);
+					const productLogs = fetchConsolidatedLogs.data.map((item) => {
+						return {
+							...item,
+							rev_no: item.details ? item.details.rev_no : null,
+							product_name:
+								master.products.length > 0
+									? master.products.find((el) => {
+											const affectedProds = master.affectedProducts.find(
+												(el) => el.id == item.affected_id
+											)
+												? master.affectedProducts.find(
+														(el) => el.id == item.affected_id
+												  ).product_category_id
+												: null;
+											return affectedProds ? el.id == affectedProds : null;
+									  })
+										? master.products.find((el) => {
+												const affectedProds = master.affectedProducts.find(
+													(el) => el.id == item.affected_id
+												)
+													? master.affectedProducts.find(
+															(el) => el.id == item.affected_id
+													  ).product_category_id
+													: null;
+												return affectedProds
+													? el.id == affectedProds
+													: null;
+										  }).product_name
+										: null
+									: null
+						};
+					});
+					const productPendingLogs = fetchConsolidatedPendingDetails.data.map((item) => {
+						return {
+							...item,
+							product_name:
+								master.products.length > 0
+									? master.products.find((el) => {
+											const affectedProds = master.affectedProducts.find(
+												(el) => el.id == item.affected_id
+											)
+												? master.affectedProducts.find(
+														(el) => el.id == item.affected_id
+												  ).product_category_id
+												: null;
+											return affectedProds ? el.id == affectedProds : null;
+									  })
+										? master.products.find((el) => {
+												const affectedProds = master.affectedProducts.find(
+													(el) => el.id == item.affected_id
+												)
+													? master.affectedProducts.find(
+															(el) => el.id == item.affected_id
+													  ).product_category_id
+													: null;
+												return affectedProds
+													? el.id == affectedProds
+													: null;
+										  }).product_name
+										: null
+									: null
+						};
+					});
+
+					const mergeLogs = [...productLogs, ...productPendingLogs];
 					setLogs(
-						fetchConsolidatedLogs.data
+						mergeLogs
 							.map((item) => {
-								return { id: item.id, log: item.log, updated_at: item.updated_at };
+								return {
+									id: item.id,
+									borrow_details: item.borrow_details,
+									rev_no: item.rev_no,
+									product_name: item.product_name,
+									log: item.log,
+									created_at: item.created_at
+								};
 							})
-							.sort((a, b) => moment(a.updated_at).diff(b.updated_at))
+							.sort((a, b) => moment(a.created_at).diff(b.created_at))
 					);
 					setStatus(fetchStatus.data);
-					// const productCategories = fetchStatus.data.map((item) => {
-					// 	return {
-					// 		...item,
-					// 		department:
-					// 			master.departments.length > 0
-					// 				? master.departments.find((attr) => {
-					// 						const prod = products.data.find(
-					// 							(el) =>
-					// 								attr.DepartmentCode == el.department_id &&
-					// 								item.product_id == el.id
-					// 						);
 
-					// 						return prod
-					// 							? attr.DepartmentCode == prod.department_id
-					// 							: false;
-					// 				  })
-					// 					? master.departments.find((attr) => {
-					// 							const prod = products.data.find(
-					// 								(el) =>
-					// 									attr.DepartmentCode == el.department_id &&
-					// 									item.product_id == el.id
-					// 							);
-
-					// 							return prod
-					// 								? attr.DepartmentCode == prod.department_id
-					// 								: false;
-					// 					  }).DepartmentName
-					// 					: null
-					// 				: null,
-					// 		section:
-					// 			master.sections.length > 0
-					// 				? master.sections.find((attr) => {
-					// 						const prod = products.data.find(
-					// 							(el) =>
-					// 								attr.SectionCode == el.section_id &&
-					// 								item.product_id == el.id
-					// 						);
-					// 						return prod ? attr.SectionCode == prod.section_id : false;
-					// 				  })
-					// 					? master.sections.find((attr) => {
-					// 							const prod = products.data.find(
-					// 								(el) =>
-					// 									attr.SectionCode == el.section_id &&
-					// 									item.product_id == el.id
-					// 							);
-					// 							return prod
-					// 								? attr.SectionCode == prod.section_id
-					// 								: false;
-					// 					  }).SectionName
-					// 					: null
-					// 				: null,
-					// 		team:
-					// 			master.teams.length > 0
-					// 				? master.teams.find((attr) => {
-					// 						const prod = products.data.find(
-					// 							(el) =>
-					// 								attr.TeamCode == el.team_id &&
-					// 								item.product_id == el.id
-					// 						);
-					// 						return prod ? attr.TeamCode == prod.team_id : false;
-					// 				  })
-					// 					? master.teams.find((attr) => {
-					// 							const prod = products.data.find(
-					// 								(el) =>
-					// 									attr.TeamCode == el.team_id &&
-					// 									item.product_id == el.id
-					// 							);
-					// 							return prod ? attr.TeamCode == prod.team_id : false;
-					// 					  }).TeamName
-					// 					: null
-					// 				: null
-					// 		// sequence:
-					// 		// 	details.method == '2'
-					// 		// 		? products.data.find((el) => el.id == item.product_id).waku_sequence
-					// 		// 		: products.data.find((el) => el.id == item.product_id).jiku_sequence,
-					// 		// product_name: products.data.find((el) => el.id == item.product_id).product_name
-					// 	};
-					// });
-					// const sortBySequence = _.sortBy(productCategories, ['sequence', 'product_name']);
-					// setStatus(sortBySequence);
-					// // const finalCheckProducts = fetchStatus.data.filter(
-					// // 	(stat) =>
-					// // 		stat.affected == 5 ||
-					// // 		stat.affected == 23 ||
-					// // 		stat.affected == 35 ||
-					// // 		stat.affected == 55
-					// // );
-					// // finalCheckProducts.map((el) => el.start_date && el.received_date && el.finished_date).length > 0;
-					// console.log(fetchStatus);
-					// fetchStatus.data.find((el) => {
-					// 	return (
-					// 		(!el.assessment_id || el.assessment_id == 1) &&
-					// 		el.received_date &&
-					// 		!el.finished_date
-					// 	);
-					// }).affected_id;
-
-					console.log(
-						master.affectedProducts.find((ap) => {
-							console.log(ap);
-							return ap.id ==
-								fetchStatus.data.find(
-									(el) =>
-										(!el.assessment_id || el.assessment_id == 1) &&
-										el.received_date &&
-										el.start_date &&
-										!el.finished_date
-								)
-								? fetchStatus.data.find(
-										(el) =>
-											(!el.assessment_id || el.assessment_id == 1) &&
-											el.received_date &&
-											el.start_date &&
-											!el.finished_date
-								  ).affected_id
-								: null;
-						}),
-						'WHOOPPPPPPPPP'
-					);
-					console.log(
-						fetchStatus.data.find(
-							(el) =>
-								(!el.assessment_id || el.assessment_id == 1) &&
-								el.received_date &&
-								el.start_date &&
-								!el.finished_date
-						),
-						'WHAAAAAAAAAAAAAAAZZZ'
-					);
-					const onGoingProductName =
+					const onGoingProductRow =
 						master.products.length > 0
 							? master.products.find((mp) => {
 									const affectedProds = master.affectedProducts.find((ap) => {
@@ -1534,52 +801,9 @@ const Registration = ({ title, dispatch, ...rest }) => {
 										: null;
 									return affectedProds ? mp.id == affectedProds : null;
 							  })
-								? master.products.find((mp) => {
-										const affectedProds = master.affectedProducts.find((ap) => {
-											const stats = fetchStatus.data.find(
-												(el) =>
-													(!el.assessment_id || el.assessment_id == 1) &&
-													el.received_date &&
-													el.start_date &&
-													!el.finished_date
-											)
-												? fetchStatus.data.find(
-														(el) =>
-															(!el.assessment_id ||
-																el.assessment_id == 1) &&
-															el.received_date &&
-															el.start_date &&
-															!el.finished_date
-												  ).affected_id
-												: null;
-											return stats ? ap.id == stats : null;
-										})
-											? master.affectedProducts.find((ap) => {
-													const stats = fetchStatus.data.find(
-														(el) =>
-															(!el.assessment_id ||
-																el.assessment_id == 1) &&
-															el.received_date &&
-															el.start_date &&
-															!el.finished_date
-													)
-														? fetchStatus.data.find(
-																(el) =>
-																	(!el.assessment_id ||
-																		el.assessment_id == 1) &&
-																	el.received_date &&
-																	el.start_date &&
-																	!el.finished_date
-														  ).affected_id
-														: null;
-													return stats ? ap.id == stats : null;
-											  }).product_category_id
-											: null;
-										return affectedProds ? mp.id == affectedProds : null;
-								  }).product_name
-								: null
 							: null;
-					const notYetStartedProductName =
+
+					const notYetStartedProductRow =
 						master.products.length > 0
 							? master.products.find((mp) => {
 									const affectedProds = master.affectedProducts.find((ap) => {
@@ -1616,68 +840,40 @@ const Registration = ({ title, dispatch, ...rest }) => {
 										: null;
 									return affectedProds ? mp.id == affectedProds : null;
 							  })
-								? master.products.find((mp) => {
-										const affectedProds = master.affectedProducts.find((ap) => {
-											const stats = fetchStatus.data.find(
-												(el) =>
-													(!el.assessment_id || el.assessment_id == 1) &&
-													el.received_date &&
-													!el.start_date &&
-													!el.finished_date
-											)
-												? fetchStatus.data.find(
-														(el) =>
-															(!el.assessment_id ||
-																el.assessment_id == 1) &&
-															el.received_date &&
-															!el.start_date &&
-															!el.finished_date
-												  ).affected_id
-												: null;
-											return stats ? ap.id == stats : null;
-										})
-											? master.affectedProducts.find(
-													(el) =>
-														el.id ==
-														fetchStatus.data.find(
-															(el) =>
-																(!el.assessment_id ||
-																	el.assessment_id == 1) &&
-																el.received_date &&
-																!el.start_date &&
-																!el.finished_date
-														).affected_id
-											  ).product_category_id
-											: null;
-										return affectedProds ? mp.id == affectedProds : null;
-								  }).product_name
-								: null
 							: null;
-					console.log(
-						fetchStatus.data.find((el) => {
-							console.log(el);
-							return (
+
+					const affectedProds = master.affectedProducts.find((ap) => {
+						const stats = fetchStatus.data.find(
+							(el) =>
 								(!el.assessment_id || el.assessment_id == 1) &&
 								el.received_date &&
 								el.start_date &&
 								!el.finished_date
-							);
-						}),
-						' notYetStartedProductNamenotYetStartedProductName'
-					);
-
-					if (notYetStartedProductName) {
-						return { status: 'notyetstarted', msg: notYetStartedProductName };
-					} else if (onGoingProductName) {
-						const pendingResource = await Http.get(
-							`/api/pending/detail_id/${detailsItem.id}/affected_id/${
-								fetchStatus.data.find(
+						)
+							? fetchStatus.data.find(
 									(el) =>
 										(!el.assessment_id || el.assessment_id == 1) &&
 										el.received_date &&
+										el.start_date &&
 										!el.finished_date
-								).affected_id
-							}`
+							  ).affected_id
+							: null;
+						return stats ? ap.id == stats : null;
+					});
+
+					if (notYetStartedProductRow) {
+						const affectedDepartment = master.departments.find((attr) => {
+							return attr.DepartmentCode == notYetStartedProductRow.department_id;
+						});
+						console.log(affectedDepartment);
+						return {
+							status: 'notyetstarted',
+							msg: notYetStartedProductRow.product_name,
+							dept: affectedDepartment.DepartmentName
+						};
+					} else if (onGoingProductRow.product_name) {
+						const pendingResource = await Http.get(
+							`api/henkou/plans/pending/${detailsItem.customer_code}/${affectedProds.id}`
 						);
 						if (pendingResource.data.length == 0) {
 							if (pendingState.items.length == 0) {
@@ -1704,17 +900,32 @@ const Registration = ({ title, dispatch, ...rest }) => {
 										).product_category_id
 									});
 								}
-								console.log(pending);
+
+								// const stats = fetchStatus.data.find(
+								// 	(el) =>
+								// 		(!el.assessment_id || el.assessment_id == 1) &&
+								// 		el.received_date &&
+								// 		el.start_date &&
+								// 		!el.finished_date
+								// )
+								// 	? fetchStatus.data.find(
+								// 			(el) =>
+								// 				(!el.assessment_id || el.assessment_id == 1) &&
+								// 				el.received_date &&
+								// 				el.start_date &&
+								// 				!el.finished_date
+								// 	  ).affected_id
+								// 	: null;
 								setPendingState({
 									...pendingState,
 									items: pending,
-									product_name: onGoingProductName
+									row: { ...onGoingProductRow, affected_id: affectedProds.id }
 								});
 							}
-						} else if (pendingItems.length == 0) {
+						} else if (pendingState.items.length == 0) {
 							setPendingState({
 								...pendingState,
-								product_name: onGoingProductName,
+								row: { ...onGoingProductRow, affected_id: affectedProds.id },
 								items: pendingResource.data.map((item, index) => {
 									return {
 										pending_id: item.id,
@@ -1726,8 +937,15 @@ const Registration = ({ title, dispatch, ...rest }) => {
 									};
 								})
 							});
-							return { status: 'ongoing', msg: onGoingProductName };
 						}
+						const affectedDepartment = master.departments.find((attr) => {
+							return attr.DepartmentCode == onGoingProductRow.department_id;
+						});
+						return {
+							status: 'ongoing',
+							msg: onGoingProductRow.product_name,
+							dept: affectedDepartment.DepartmentName
+						};
 					}
 				}
 				return { status: 'found', msg: 'No existing henkou!' };
@@ -1776,28 +994,12 @@ const Registration = ({ title, dispatch, ...rest }) => {
 			isPendingModalVisible: true
 		});
 	};
-	const durationAsString = (start, end) => {
-		const duration = moment.duration(moment(end).diff(moment(start)));
 
-		//Get Days
-		const days = Math.floor(duration.asDays()); // .asDays returns float but we are interested in full days only
-		const daysFormatted = days ? `${days}d ` : ''; // if no full days then do not display it at all
-
-		//Get Hours
-		const hours = duration.hours();
-		const hoursFormatted = hours ? `${hours}h ` : '';
-
-		//Get Minutes
-		const minutes = duration.minutes();
-		const minutesFormatted = minutes ? `${minutes}m ` : '';
-
-		const seconds = duration.seconds();
-		const secondsFormatted = `${seconds}s`;
-
-		return [daysFormatted, hoursFormatted, minutesFormatted, secondsFormatted].join('');
-	};
 	const handlePendingStatus = (record, key, isPendingItems = null) => {
-		record[key] = moment().format('YYYY-MM-DD HH:mm:ss');
+		record[key] = moment()
+			.utc()
+			.local()
+			.format('YYYY-MM-DD HH:mm:ss');
 		if (isPendingItems) {
 			if (key == 'start') {
 				record.isItemStarted = true;
@@ -1825,8 +1027,8 @@ const Registration = ({ title, dispatch, ...rest }) => {
 			});
 		}
 	};
-	const handleReasonInput = (record, e) => {
-		record.reason = e.target.value;
+	const handleReasonInput = (record, key, e) => {
+		record[key] = e.target.value;
 		pendingState.items[
 			pendingState.items.findIndex((item) => item.pending_index == record.pending_index)
 		] = record;
@@ -1870,8 +1072,47 @@ const Registration = ({ title, dispatch, ...rest }) => {
 				const resCreate = await Http.post(`/api/status/${details.id}`, {
 					status: henkouStatus,
 					updated_by: userInfo.EmployeeCode,
-					sectionCode: userInfo.SectionCode
+					sectionCode: userInfo.SectionCode,
+					details,
+					row: pendingState.row
 				});
+				if (resCreate.status == 200) {
+					borrowNotification('success');
+				}
+				const stats = henkouStatus.find(
+					(el) =>
+						(!el.assessment_id || el.assessment_id == 1) &&
+						el.received_date &&
+						el.start_date &&
+						!el.finished_date
+				)
+					? henkouStatus.find(
+							(el) =>
+								(!el.assessment_id || el.assessment_id == 1) &&
+								el.received_date &&
+								el.start_date &&
+								!el.finished_date
+					  )
+					: null;
+				const filteredPendingItems = pendingState.items
+					.filter((item) => {
+						return item.start || item.resume || item.reason;
+					})
+					.map((item) => {
+						return {
+							...item,
+							customer_code: details.customer_code,
+							affected_id: pendingState.row.affected_id,
+							id: stats.id
+						};
+					});
+
+				if (filteredPendingItems.length > 0) {
+					const response = await Http.post(
+						'/api/henkou/plans/pending',
+						filteredPendingItems
+					);
+				}
 			}
 		}
 
@@ -1893,11 +1134,34 @@ const Registration = ({ title, dispatch, ...rest }) => {
 
 		// setRow({});
 	};
+	const handleAddPendingItem = () => {
+		function getMaxPendingID() {
+			return pendingState.items.reduce(
+				(max, obj) => (obj.pending_index > max ? obj.pending_index : max),
+				pendingState.items[0].pending_index
+			);
+		}
+		pendingState.items.push({
+			pending_id: null,
+			pending_index: getMaxPendingID() + 1,
+			rev_no: details.rev_no,
+			customer_code: details.customer_code,
+			start: '',
+			reason: '',
+			resume: '',
+			duration: ''
+		});
+		let cloneItems = [...pendingState.items];
+		setPendingState({
+			...pendingState,
+			items: cloneItems
+		});
+	};
 	return (
-		<div id="registration_page" style={{ height: '5%' }}>
+		<>
 			{userInfo.SectionCode == '00465' && userInfo.TeamCode == '00133' ? (
 				<>
-					<div className="th_plans">𝘙𝘦𝘨𝘪𝘴𝘵𝘦𝘳 𝘛𝘏 𝘗𝘭𝘢𝘯𝘴</div>
+					<div className="title-page">Register TH Plans</div>
 					<Table
 						style={{ margin: '0 10px' }}
 						size="small"
@@ -1945,6 +1209,7 @@ const Registration = ({ title, dispatch, ...rest }) => {
 								handleReasonInput,
 								onFocus,
 								onSelect,
+								handleAddPendingItem,
 								handlePendingOk,
 								handlePendingCancel,
 								handlePendingModal
@@ -1953,7 +1218,7 @@ const Registration = ({ title, dispatch, ...rest }) => {
 						details={details}></ManualContainer>
 				</>
 			)}
-		</div>
+		</>
 	);
 };
 

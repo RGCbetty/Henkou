@@ -1,28 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Http from '../Http';
 import moment from 'moment';
-const durationAsString = (start, end) => {
-	const duration = moment.duration(moment(end).diff(moment(start)));
-
-	//Get Days
-	const days = Math.floor(duration.asDays()); // .asDays returns float but we are interested in full days only
-	const daysFormatted = days ? `${days}d ` : ''; // if no full days then do not display it at all
-
-	//Get Hours
-	const hours = duration.hours();
-	const hoursFormatted = hours ? `${hours}h ` : '';
-
-	//Get Minutes
-	const minutes = duration.minutes();
-	const minutesFormatted = minutes ? `${minutes}m ` : '';
-
-	const seconds = duration.seconds();
-	const secondsFormatted = `${seconds}s`;
-
-	return [daysFormatted, hoursFormatted, minutesFormatted, secondsFormatted].join('');
-};
+import durationAsString from '../utils/diffDate';
 export const completeDetailsStatus = async (record, affectedProducts, product, master, details) => {
-	const statuses = await Http.get(`/api/statuses/${record.detail_id}`);
+	const statuses = await Http.get(
+		`/api/henkou/plans/${details.customer_code}/products/${details.id}`
+	);
 	const filterByAffectedID = statuses.data.filter(
 		(item) => item.affected_id == record.affected_id
 	);

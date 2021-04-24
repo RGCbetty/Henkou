@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 // Route::get('/{any_path?}', 'SpaController@index')->where('any_path', '.*');
 
 
+// Route::get('/henkou/plans', 'HenkouController@home');
 
 Route::get('{reactRoutes}', 'SpaController@index')->where('reactRoutes', '^(?!api).*');
 // Route::get('/{any?}', 'SpaController@index')->where('any', '.*');

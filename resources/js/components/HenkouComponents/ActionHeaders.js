@@ -9,7 +9,7 @@ const ActionHeaders = (
 	handleActionStatus,
 	handleActionDetails,
 	handleActionPending,
-
+	checkIfOwner,
 	pendingItems
 ) => [
 	{
@@ -46,16 +46,14 @@ const ActionHeaders = (
 				<b>{text}</b>
 			) : (
 				<>
-					{console.log(row)}
-					{console.log(
-						!row.received_date || row.disableHistory || row.assessment_id !== 1
-					)}
 					<Button
 						type="primary"
 						disabled={
-							!row.received_date || row.disableHistory || row.assessment_id !== 1
+							!row.received_date ||
+							row.disableHistory ||
+							row.assessment_id !== 1 ||
+							checkIfOwner(row)
 						}
-						// disabled={row.assessment_id !== 1}
 						onClick={() => handleActionStatus(row, 'start_date')}
 						shape="circle"
 						icon={<PlayCircleOutlined />}
@@ -105,7 +103,8 @@ const ActionHeaders = (
 							!row.start_date ||
 							!row.received_date ||
 							pendingItems.some((item) => !item.start || !item.resume) ||
-							row.disableHistory
+							row.disableHistory ||
+							checkIfOwner(row)
 						}
 						onClick={() => handleActionStatus(row, 'finished_date')}
 						shape="circle"
@@ -128,15 +127,22 @@ const ActionHeaders = (
 		dataIndex: 'log',
 		align: 'center',
 		width: 150,
-		render: (text, row) => (
-			<TextArea
-				value={text}
-				disabled={row.resume && row.start ? true : false || row.disableHistory}
-				bordered={false}
-				onChange={(value) => handleActionDetails(row, value)}
-				autoSize={{ minRows: 1, maxRows: 4 }}
-			/>
-		)
+		render: (text, row) => {
+			console.log(row);
+			return (
+				<TextArea
+					value={text}
+					disabled={
+						row.resume && row.start
+							? true
+							: false || row.disableHistory || checkIfOwner(row)
+					}
+					bordered={false}
+					onChange={(value) => handleActionDetails(row, value)}
+					autoSize={{ minRows: 1, maxRows: 4 }}
+				/>
+			);
+		}
 	}
 ];
 export default ActionHeaders;

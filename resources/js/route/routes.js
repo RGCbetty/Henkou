@@ -72,6 +72,7 @@ const routes = [
 		path: '/users',
 		exact: true,
 		auth: true,
+		admin: true,
 		title: 'Henkou - Manage Users',
 		component: Users
 	},

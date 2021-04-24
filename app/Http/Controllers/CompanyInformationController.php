@@ -45,7 +45,6 @@ class CompanyInformationController extends Controller
     }
     public function sectionsByDepartment(Request $request)
     {
-        info($request->dep_id);
         try {
             $sections = DB::connection('company_information')->select(DB::raw('SELECT C.SectionCode,C.SectionName FROM DepartmentSectionRelations A
             LEFT JOIN Departments B ON A.DepartmentCode = B.DepartmentCode

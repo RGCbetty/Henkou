@@ -24,17 +24,22 @@ const FilterContainer = (props) => {
 						name={planDetails[i].name}
 						label={`${planDetails[i].title}`}
 						style={{ marginBottom: '0px' }}
-						rules={[
-							{
-								required: true,
-								message: 'Input something!'
-							}
-						]}>
+						rules={
+							planDetails[i].name !== 'TeamName' &&
+							planDetails[i].name !== 'SectionName'
+								? [
+										{
+											required: true,
+											message: `${planDetails[i].title} required!`
+										}
+								  ]
+								: null
+						}>
 						<Select
 							showSearch={planDetails[i].showSearch}
 							// defaultValue={planDetails[i].defaultValue}
 							onChange={(value) =>
-								events.handleSelectOnChange(value, planDetails[i].title, form)
+								events.handleSelectOnChange(planDetails[i].title, form)
 							}
 							style={{ width: planDetails[i].width }}>
 							{planDetails[i].items.length > 0
@@ -75,7 +80,10 @@ const FilterContainer = (props) => {
 					title: 'Section',
 					textAlign: 'center',
 					showSearch: true,
-					items: master.sections.length == 0 ? master.sections : master.sections,
+					items:
+						events.selectedState.sections.length > 0
+							? events.selectedState.sections
+							: master.sections,
 					code: 'SectionCode',
 					name: 'SectionName'
 				},
@@ -83,7 +91,10 @@ const FilterContainer = (props) => {
 					title: 'Team',
 					textAlign: 'right',
 					showSearch: true,
-					items: master.teams.length == 0 ? master.teams : master.teams,
+					items:
+						events.selectedState.teams.length > 0
+							? events.selectedState.teams
+							: master.teams,
 					code: 'TeamCode',
 					name: 'TeamName'
 				},
@@ -92,9 +103,9 @@ const FilterContainer = (props) => {
 					width: 200,
 					textAlign: 'left',
 					items: [
-						{ id: 1, house_type: 'All' },
-						{ id: 2, house_type: 'Wakugumi' },
-						{ id: 3, house_type: 'Jikugumi' }
+						{ id: 0, house_type: 'All' },
+						{ id: 1, house_type: 'Jikugumi' },
+						{ id: 2, house_type: 'Wakugumi' }
 					],
 					code: 'id',
 					name: 'house_type'
@@ -117,8 +128,9 @@ const FilterContainer = (props) => {
 					items: [
 						{ id: 1, status_type: 'All' },
 						{ id: 2, status_type: 'On-going' },
-						{ id: 3, status_type: 'Pending' },
-						{ id: 4, status_type: 'Finished' }
+						{ id: 3, status_type: 'Finished' },
+						{ id: 4, status_type: 'Pending' },
+						{ id: 5, status_type: 'Not yet started' }
 					],
 					code: 'id',
 					name: 'status_type'
@@ -135,7 +147,13 @@ const FilterContainer = (props) => {
 		  ]
 		: [];
 	const onFinish = (values) => {
+		events.handleOnEnterCustomerCode(values);
 		console.log('Received values of form: ', values);
+	};
+	const handleSearchInput = (value, form, e) => {
+		e.preventDefault();
+		form.setFieldsValue({ CustomerCode: value });
+		events.handleFetchPlans(form);
 	};
 
 	return (
@@ -147,30 +165,66 @@ const FilterContainer = (props) => {
 				DepartmentName: userInfo.DepartmentCode,
 				SectionName: userInfo.SectionCode,
 				TeamName: userInfo.TeamCode,
-				house_type: 1,
+				house_type: 0,
 				type_name: 0,
 				status_type: 2,
-				plan_status_name: 0
+				plan_status_name: 0,
+				DateToFilter: [
+					moment()
+						.utc()
+						.local()
+						.startOf('d'),
+					moment()
+						.utc()
+						.local()
+						.endOf('d')
+				]
 			}}
 			className="ant-advanced-search-form"
 			onFinish={onFinish}>
 			<Row gutter={[10, 10]}>
 				<Col span={8}>
-					<Search
-						placeholder="Enter Code"
-						allowClear
-						addonBefore="Customer Code"
-						style={{ width: 300, margin: '0 0' }}></Search>
+					<Form.Item
+						shouldUpdate
+						name={'CustomerCode'}
+						style={{ marginBottom: '0px' }}
+						rules={[
+							{
+								required: true,
+								message: 'Input something!'
+							}
+						]}>
+						<Search
+							placeholder="Enter Code"
+							allowClear
+							addonBefore="Customer Code"
+							onSearch={(value, e) => handleSearchInput(value, form, e)}
+							style={{ width: 300, margin: '0 0' }}></Search>
+					</Form.Item>
 				</Col>
 
 				<Col offset={8} span={8} style={{ textAlign: 'right' }}>
-					<RangePicker
-						defaultValue={[
-							moment(moment().format(dateFormat), dateFormat),
-							moment(moment().format(dateFormat), dateFormat)
-						]}
-						format={dateFormat}
-					/>
+					<Form.Item
+						shouldUpdate
+						name={'DateToFilter'}
+						style={{ marginBottom: '0px' }}
+						rules={[
+							{
+								required: true,
+								message: 'Input something!'
+							}
+						]}>
+						<RangePicker
+							// defaultValue={[
+							// 	moment(moment().format(dateFormat), dateFormat),
+							// 	moment(moment().format(dateFormat), dateFormat)
+							// ]}
+							// onCalendarChange={(val) => console.log(val, 'onCalendarChange')}
+							onChange={() => events.handleSelectOnChange('Date Range', form)}
+							inputReadOnly
+							format={dateFormat}
+						/>
+					</Form.Item>
 				</Col>
 				{FilterSelections()}
 			</Row>
@@ -182,7 +236,17 @@ const FilterContainer = (props) => {
 					<Button
 						style={{ margin: '0 8px' }}
 						onClick={() => {
-							form.resetFields();
+							form.setFieldsValue({
+								DepartmentName: null,
+								SectionName: null,
+								TeamName: null,
+								house_type: null,
+								type_name: null,
+								status_type: null,
+								plan_status_name: null,
+								CustomerCode: null,
+								DateToFilter: null
+							});
 						}}>
 						Clear
 					</Button>
@@ -195,6 +259,7 @@ const FilterContainer = (props) => {
 					</a>
 				</Col>
 			</Row>
+			{props.children}
 		</Form>
 	);
 };

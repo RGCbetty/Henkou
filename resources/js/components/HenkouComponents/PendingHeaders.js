@@ -53,7 +53,7 @@ const PendingHeaders = (handleStatus, handleReasonInput, options) => [
 				disabled={row.resume || !row.start}
 				options={options.data}
 				style={{
-					width: 200
+					width: 110
 				}}
 				onFocus={(value) => options.onFocus(value, 'reason', row)}
 				onSelect={(value) => options.onSelect(value, 'reason', row)}>
@@ -61,10 +61,26 @@ const PendingHeaders = (handleStatus, handleReasonInput, options) => [
 					value={text}
 					bordered={false}
 					disabled={row.resume || !row.start}
-					onChange={(value) => handleReasonInput(row, value)}
+					onChange={(value) => handleReasonInput(row, 'reason', value)}
 					autoSize={{ minRows: 1, maxRows: 4 }}
 				/>
 			</AutoComplete>
+		),
+		width: 150
+	},
+	{
+		title: 'Borrow Details',
+		key: '4',
+		dataIndex: 'borrow_details',
+		align: 'center',
+		render: (text, row) => (
+			<TextArea
+				value={text}
+				bordered={false}
+				disabled={row.resume || !row.start}
+				onChange={(value) => handleReasonInput(row, 'borrow_details', value)}
+				autoSize={{ minRows: 1, maxRows: 4 }}
+			/>
 		),
 		width: 150
 	},
@@ -95,6 +111,22 @@ const PendingHeaders = (handleStatus, handleReasonInput, options) => [
 		dataIndex: 'duration',
 		align: 'center',
 		width: 70
+	},
+	{
+		title: 'Remarks',
+		key: '4',
+		dataIndex: 'remarks',
+		align: 'center',
+		render: (text, row) => (
+			<TextArea
+				value={text}
+				bordered={false}
+				disabled={row.resume || !row.start}
+				onChange={(value) => handleReasonInput(row, 'remarks', value)}
+				autoSize={{ minRows: 1, maxRows: 4 }}
+			/>
+		),
+		width: 150
 	}
 ];
 export default PendingHeaders;

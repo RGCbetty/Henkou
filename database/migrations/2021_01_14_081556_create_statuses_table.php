@@ -15,6 +15,7 @@ class CreateStatusesTable extends Migration
     {
         Schema::create('statuses', function (Blueprint $table) {
             $table->id();
+            $table->string('customer_code', 12);
             $table->string('log')->nullable();
             $table->string('updated_by', 15)->nullable();;
             $table->timestamp('start_date')->nullable();

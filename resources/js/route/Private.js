@@ -29,4 +29,4 @@ const mapStateToProps = (state) => ({
 	isAuthenticated: state.auth.isAuthenticated
 });
 
-export default connect(mapStateToProps)(React.memo(PrivateRoute));
+export default connect(mapStateToProps)(PrivateRoute);

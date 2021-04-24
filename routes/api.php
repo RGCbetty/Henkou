@@ -59,19 +59,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/assessments', 'AssessmentController@index');
     /* Master */
     /* Henkou Details Record */
+    Route::get('/henkou/plans/{customer_code}/products/{affected_id}/logs', 'HenkouController@showStatusByAffectedID');
+
     Route::get('/details/{customer_code}', 'DetailController@latest');
     Route::post('/details', 'HenkouController@store');
     // Route::get('/product', 'ProductCategoryController@index');
     Route::post('/productcategories', 'ProductCategoryController@update');
-    // Route::get('/products/planstatus/{planstatus_id}', 'ProductCategoryController@show');
 
-    Route::get('/status/{id}', 'HenkouController@show');
-    Route::get('/statuses/{id}', 'HenkouController@index');
+    // Route::get('/products/planstatus/{planstatus_id}', 'ProductCategoryController@show');
+    Route::get('/henkou/plans', 'HenkouController@home');
+    Route::get('/henkou/plans/{customer_code}/products/{detail_id}', 'HenkouController@showStatusByDetailID');
+    Route::get('/henkou/plans/{customer_code}/logs', 'HenkouController@showByCustomerCode');
+
+    /* ALL LOGS WITH SAME CUSTOMER CODE */
+    /*  */
     Route::post('/status/{id}', 'HenkouController@update');
+
     /* Kouzou Pending */
-    Route::post('/henkou/pending', 'PendingController@store');
-    Route::get('/pending/detail_id/{detail_id}/affected_id/{affected_id}', 'PendingController@show');
+    Route::post('/henkou/plans/pending', 'PendingController@store');
+
+    Route::get('/henkou/plans/pending/{customer_code}', 'PendingController@showByCustomerCode');
+    Route::get('/henkou/plans/pending/{customer_code}/{affected_id}', 'PendingController@showByCustomerCodeAffectedID');
+
     /* Kouzou Pending */
+
     /* Henkou Attachments  */
     Route::post('/henkou/attachment/{id}', 'AttachmentController@store');
     Route::get('/henkou/attachments/{id}', 'AttachmentController@show');

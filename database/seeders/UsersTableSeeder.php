@@ -30,7 +30,7 @@ class UsersTableSeeder extends Seeder
         ]);
         User::create([
             'employee_no' => '05705',
-            'access_level' => 3,
+            'access_level' => 2,
             'is_registered' => true,
             'password' => bcrypt('05705'),
         ]);
@@ -42,7 +42,7 @@ class UsersTableSeeder extends Seeder
         ]);
         User::create([
             'employee_no' => '09005',
-            'access_level' => 3,
+            'access_level' => 1,
             'is_registered' => true,
             'password' => bcrypt('admin'),
         ]);
@@ -127,7 +127,7 @@ class UsersTableSeeder extends Seeder
         // "TeamName": "Oshiire"
         User::create([
             'employee_no' => '23578',
-            'access_level' => 3,
+            'access_level' => 2,
             'is_registered' => true,
             'password' => bcrypt('23578'),
         ]);

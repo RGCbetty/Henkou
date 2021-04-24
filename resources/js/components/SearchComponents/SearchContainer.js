@@ -162,7 +162,13 @@ const SearchContainer = () => {
 					</Col>
 					<Col span={8} style={{ textAlign: 'right' }}>
 						<DatePicker
-							defaultValue={moment(moment().format('YYYY-MM-DD'), dateFormat)}
+							defaultValue={moment(
+								moment()
+									.utc()
+									.local()
+									.format('YYYY-MM-DD'),
+								dateFormat
+							)}
 							disabled
 							format={dateFormat}
 						/>

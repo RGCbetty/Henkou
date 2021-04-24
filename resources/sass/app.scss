@@ -18,6 +18,21 @@
     margin-right: -50%;
     transform: translate(-50%, -50%);
 }
+/* TABLES */
+.table-row-not-yet-started {
+    background-color: #ffffff;
+}
+.table-row-on-going {
+    background-color: #9fdf7d;
+}
+.table-row-pending {
+    background-color: #ffa726;
+}
+.table-row-finished {
+    background-color: #00b2ee;
+}
+
+/* TABLES */
 #product_name {
     text-align: center;
 }
@@ -70,13 +85,26 @@
 .ant-table-container table > thead > tr:first-child th:first-child {
     border-top-left-radius: 2px;
 }
-#registration_page .th_plans {
+.title-page {
     margin: 0.5rem 0 0.15rem 0.6rem;
-    font-size: 1.5vw;
-    font-weight: bold;
+    font-family: Georgia, serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    word-spacing: 2px;
+    color: #000000;
+    font-weight: 400;
+    text-decoration: underline solid rgb(68, 68, 68);
+    font-style: italic;
+    font-variant: small-caps;
+    text-transform: none;
+}
+#registration_page {
+    height: 100% !important;
+    position: relative;
+    background-color: lawngreen;
 }
 
-#manage_users_page .manage_users {
+.manage_users {
     height: auto;
     margin: 0.5rem 0 0.5rem 0.5rem;
     display: inline-block;
@@ -91,7 +119,7 @@
     height: 80px;
     background-position: center;
     background-repeat: no-repeat;
-    background-image: url("../../public/henkou.svg");
+    background-image: url("../images/henkou.svg");
 }
 
 #components-layout-demo-responsive .avatar {
@@ -119,7 +147,7 @@
     background-repeat: no-repeat;
     background-size: 350px 200px;
 
-    background-image: url("../../public/HRD\ Henkou.svg");
+    background-image: url("../images/HRD Henkou.svg");
 }
 
 .site-layout-sub-header-background {
@@ -128,6 +156,7 @@
 
 .site-layout-background {
     background: #fff;
+    height: 100%;
 }
 
 #components-layout-demo-custom-trigger .trigger {
@@ -162,11 +191,16 @@
 }
 
 /* Manual Container */
+
 [data-theme="compact"] .ant-advanced-search-form,
 .ant-advanced-search-form {
-    padding: 24px;
-    background: #fbfbfb;
-    border: 1px solid #d9d9d9;
+    padding: 9px;
+    // min-height: fit-content;
+    height: 100%;
+
+    // background-color: lawngreen;
+
+    // border: 1px solid #d9d9d9;
     border-radius: 2px;
 }
 

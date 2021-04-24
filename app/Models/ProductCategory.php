@@ -9,6 +9,7 @@ class ProductCategory extends Model
 {
     use HasFactory;
     protected $primaryKey = 'id';
+    protected $hidden = ['created_at', 'updated_at', 'deleted_at'];
     protected $fillable = ['id', 'product_name', 'sequence_no', 'department_id', 'section_id', 'team_id', 'created_at', 'updated_at', 'updated_by'];
     public function customers()
     {

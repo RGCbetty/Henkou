@@ -15,17 +15,19 @@ class CreatePendingsTable extends Migration
     {
         Schema::create('pendings', function (Blueprint $table) {
             $table->id();
-            $table->string("product_key", 20);
+            $table->string('customer_code', 12);
             $table->string('rev_no', 8);
             $table->timestamp('start_date')->nullable();
-            $table->text("reason");
+            $table->text("reason")->nullable();
+            $table->text("remarks")->nullable();
+            $table->text("borrow_details")->nullable();
             $table->timestamp('resume_date')->nullable();
             $table->string("duration", 15)->nullable();
             $table->timestamps();
         });
         Schema::table('pendings', function (Blueprint $table) {
             $table->foreignId('affected_id')->constrained('affected_products');
-            $table->foreignId('detail_id')->constrained('details');
+            $table->foreignId('status_id')->constrained('statuses');
         });
     }
 

@@ -9,66 +9,66 @@ import {
 } from '@ant-design/icons';
 const { Option } = Select;
 const { TextArea } = Input;
-const FinishCol = ({ text, row, actions, status, pendingItems }) => {
-	const [pending, setPending] = useState([]);
-	useEffect(() => {
-		let mounted = true;
-		(async () => {
-			try {
-				const response = await Http.get(
-					`/api/pending/detail_id/${row.detail_id}/affected_id/${row.affected_id}`
-				);
-				const { data } = response;
-				if (mounted) {
-					setPending(data);
-				}
-			} catch (error) {
-				if (Http.isCancel(error)) {
-					console.error(error);
-				} else {
-					throw error;
-				}
-			}
-		})();
-		return () => {
-			mounted = false;
-		};
-	}, [pendingItems]);
-	return (
-		<Button
-			type="primary"
-			disabled={
-				!row.start_date ||
-				!row.received_date ||
-				row.assessment_id !== 1 ||
-				// !status[
-				// 	status.findIndex((el) => el.sequence == row.sequence) == 0
-				// 		? status.findIndex((el) => el.sequence == row.sequence)
-				// 		: status.findIndex((el) => el.sequence == row.sequence) - 1
-				// ].start_date ||
-				pending.some((item) => !item.resume_date) ||
-				(status.findIndex((el) => el.sequence == row.sequence) == 0
-					? !status[status.findIndex((el) => el.sequence == row.sequence)]
-							.received_date &&
-					  status[status.findIndex((el) => el.sequence == row.sequence)]
-							.assessment_id !== 1
-					: // !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-					// 		.received_date ||
-					status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-							.assessment_id == 1
-					? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-							.finished_date
-					: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-							.assessment_id
-					? true
-					: !status[status.findIndex((el) => el.sequence == row.sequence)].received_date)
-			}
-			onClick={() => actions.handleEventStatus(null, 'finished_date', row)}
-			shape="circle"
-			icon={<PauseCircleOutlined />}
-		/>
-	);
-};
+// const FinishCol = ({ text, row, actions, status, pendingItems }) => {
+// 	const [pending, setPending] = useState([]);
+// 	useEffect(() => {
+// 		let mounted = true;
+// 		(async () => {
+// 			try {
+// 				const response = await Http.get(
+// 					`/api/pending/detail_id/${row.detail_id}/affected_id/${row.affected_id}`
+// 				);
+// 				const { data } = response;
+// 				if (mounted) {
+// 					setPending(data);
+// 				}
+// 			} catch (error) {
+// 				if (Http.isCancel(error)) {
+// 					console.error(error);
+// 				} else {
+// 					throw error;
+// 				}
+// 			}
+// 		})();
+// 		return () => {
+// 			mounted = false;
+// 		};
+// 	}, [pendingItems]);
+// 	return (
+// 		<Button
+// 			type="primary"
+// 			disabled={
+// 				!row.start_date ||
+// 				!row.received_date ||
+// 				row.assessment_id !== 1 ||
+// 				// !status[
+// 				// 	status.findIndex((el) => el.sequence == row.sequence) == 0
+// 				// 		? status.findIndex((el) => el.sequence == row.sequence)
+// 				// 		: status.findIndex((el) => el.sequence == row.sequence) - 1
+// 				// ].start_date ||
+// 				pending.some((item) => !item.resume_date) ||
+// 				(status.findIndex((el) => el.sequence == row.sequence) == 0
+// 					? !status[status.findIndex((el) => el.sequence == row.sequence)]
+// 							.received_date &&
+// 					  status[status.findIndex((el) => el.sequence == row.sequence)]
+// 							.assessment_id !== 1
+// 					: // !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+// 					// 		.received_date ||
+// 					status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+// 							.assessment_id == 1
+// 					? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+// 							.finished_date
+// 					: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+// 							.assessment_id
+// 					? true
+// 					: !status[status.findIndex((el) => el.sequence == row.sequence)].received_date)
+// 			}
+// 			onClick={() => actions.handleEventStatus(null, 'finished_date', row)}
+// 			shape="circle"
+// 			icon={<PauseCircleOutlined />}
+// 		/>
+// 	);
+// };
 export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pendingItems) => [
 	{
 		title: 'Sequence',
@@ -142,6 +142,7 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 						row.finished_date ||
 						row.assessment_id == 2 ||
 						row.assessment_id == 3 ||
+						checkIfOwner(row) ||
 						(status.findIndex((el) => el.sequence == row.sequence) == 0
 							? !status[status.findIndex((el) => el.sequence == row.sequence)]
 									.received_date &&
@@ -160,7 +161,7 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 									.received_date)
 					}
 					onChange={(value) => actions.handleEventStatus(value, 'assessment_id', row)}
-					style={{ width: 175 }}>
+					style={{ width: 130 }}>
 					{assessment.map((item, index) => {
 						return (
 							<Option key={item.id} value={item.id}>
@@ -195,7 +196,7 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 		title: 'Action',
 		key: '6',
 		align: 'center',
-		width: 100,
+		width: 50,
 		dataIndex: 'action',
 		render: (text, row) => (
 			<Button
@@ -228,106 +229,106 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 			/>
 		)
 	},
-	{
-		title: 'Start',
-		key: '7',
-		dataIndex: 'start_date',
-		align: 'center',
-		width: 150,
-		render: (text, row, index) =>
-			text ? (
-				<b>{text}</b>
-			) : (
-				<>
-					<Button
-						type="primary"
-						disabled={
-							row.assessment_id !== 1 ||
-							!row.received_date ||
-							(status.findIndex((el) => el.sequence == row.sequence) == 0
-								? !status[status.findIndex((el) => el.sequence == row.sequence)]
-										.received_date ||
-								  status[status.findIndex((el) => el.sequence == row.sequence)]
-										.assessment_id !== 1
-								: //  !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-								// 		.received_date ||
-								status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-										.assessment_id == 1
-								? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-										.finished_date
-								: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-										.assessment_id
-								? true
-								: !status[status.findIndex((el) => el.sequence == row.sequence)]
-										.received_date)
-						}
-						// disabled={row.assessment_id !== 1}
-						onClick={() => actions.handleEventStatus(null, 'start_date', row)}
-						shape="circle"
-						icon={<PlayCircleOutlined />}
-					/>
-				</>
-			)
-	},
-	{
-		title: 'Henkou Details',
-		key: '8',
-		dataIndex: 'log',
-		align: 'center',
-		width: 150,
-		render: (text, row) => (
-			<TextArea
-				value={text}
-				bordered={false}
-				disabled={
-					row.resume && row.start
-						? true
-						: false || row.finished_date || row.assessment_id !== 1
-				}
-				onChange={(value) => actions.handleEventStatus(value, 'log', row)}
-				autoSize={{ minRows: 1, maxRows: 4 }}
-			/>
-		)
-	},
-	{
-		title: 'Finish',
-		key: '9',
-		dataIndex: 'finished_date',
-		align: 'center',
+	// {
+	// 	title: 'Start',
+	// 	key: '7',
+	// 	dataIndex: 'start_date',
+	// 	align: 'center',
+	// 	width: 150,
+	// 	render: (text, row, index) =>
+	// 		text ? (
+	// 			<b>{text}</b>
+	// 		) : (
+	// 			<>
+	// 				<Button
+	// 					type="primary"
+	// 					disabled={
+	// 						row.assessment_id !== 1 ||
+	// 						!row.received_date ||
+	// 						(status.findIndex((el) => el.sequence == row.sequence) == 0
+	// 							? !status[status.findIndex((el) => el.sequence == row.sequence)]
+	// 									.received_date ||
+	// 							  status[status.findIndex((el) => el.sequence == row.sequence)]
+	// 									.assessment_id !== 1
+	// 							: //  !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+	// 							// 		.received_date ||
+	// 							status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+	// 									.assessment_id == 1
+	// 							? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+	// 									.finished_date
+	// 							: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+	// 									.assessment_id
+	// 							? true
+	// 							: !status[status.findIndex((el) => el.sequence == row.sequence)]
+	// 									.received_date)
+	// 					}
+	// 					// disabled={row.assessment_id !== 1}
+	// 					onClick={() => actions.handleEventStatus(null, 'start_date', row)}
+	// 					shape="circle"
+	// 					icon={<PlayCircleOutlined />}
+	// 				/>
+	// 			</>
+	// 		)
+	// },
+	// {
+	// 	title: 'Henkou Details',
+	// 	key: '8',
+	// 	dataIndex: 'logs',
+	// 	align: 'center',
+	// 	width: 150,
+	// 	render: (text, row) => (
+	// 		<TextArea
+	// 			value={text}
+	// 			bordered={false}
+	// 			disabled={
+	// 				row.resume && row.start
+	// 					? true
+	// 					: false || row.finished_date || row.assessment_id !== 1
+	// 			}
+	// 			onChange={(value) => actions.handleEventStatus(value, 'log', row)}
+	// 			autoSize={{ minRows: 1, maxRows: 4 }}
+	// 		/>
+	// 	)
+	// },
+	// {
+	// 	title: 'Finish',
+	// 	key: '9',
+	// 	dataIndex: 'finished_date',
+	// 	align: 'center',
 
-		width: 150,
-		render: (text, row, index) =>
-			text ? (
-				<b>{text}</b>
-			) : (
-				<>
-					<FinishCol
-						text={text}
-						row={row}
-						actions={actions}
-						status={status}
-						pendingItems={pendingItems}
-					/>
-					{/* <Button
-						type="primary"
-						disabled={
-							!row.start_date ||
-							!row.received_date ||
-							row.assessment_id !== 1 ||
-							!status[
-								status.findIndex((el) => el.sequence == row.sequence) == 0
-									? status.findIndex((el) => el.sequence == row.sequence)
-									: status.findIndex((el) => el.sequence == row.sequence) - 1
-							].start_date ||
-							checkPendingOngoing(row)
-						}
-						onClick={() => actions.handleEventStatus(null, 'finished_date', row)}
-						shape="circle"
-						icon={<PauseCircleOutlined />}
-					/>*/}
-				</>
-			)
-	},
+	// 	width: 150,
+	// 	render: (text, row, index) =>
+	// 		text ? (
+	// 			<b>{text}</b>
+	// 		) : (
+	// 			<>
+	// 				<FinishCol
+	// 					text={text}
+	// 					row={row}
+	// 					actions={actions}
+	// 					status={status}
+	// 					pendingItems={pendingItems}
+	// 				/>
+	// 				{/* <Button
+	// 					type="primary"
+	// 					disabled={
+	// 						!row.start_date ||
+	// 						!row.received_date ||
+	// 						row.assessment_id !== 1 ||
+	// 						!status[
+	// 							status.findIndex((el) => el.sequence == row.sequence) == 0
+	// 								? status.findIndex((el) => el.sequence == row.sequence)
+	// 								: status.findIndex((el) => el.sequence == row.sequence) - 1
+	// 						].start_date ||
+	// 						checkPendingOngoing(row)
+	// 					}
+	// 					onClick={() => actions.handleEventStatus(null, 'finished_date', row)}
+	// 					shape="circle"
+	// 					icon={<PauseCircleOutlined />}
+	// 				/>*/}
+	// 			</>
+	// 		)
+	// },
 	{
 		title: 'Days in Process',
 		key: '10',

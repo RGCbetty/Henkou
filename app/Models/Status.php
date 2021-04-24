@@ -22,10 +22,14 @@ class Status extends Model
     ];
     public function details()
     {
-        return $this->belongsTo(Detail::class);
+        return $this->belongsTo(Detail::class, 'detail_id');
     }
-    public function pendings()
+    public function pending()
     {
         return $this->hasMany(Pending::class);
+    }
+    public function affectedProduct()
+    {
+        return $this->belongsTo(AffectedProduct::class, 'affected_id');
     }
 }

@@ -13,6 +13,9 @@ const mix = require("laravel-mix");
 
 mix.react("resources/js/app.js", "public/js")
     .sass("resources/sass/app.scss", "public/css")
+    .options({
+        processCssUrls: false
+    })
     .browserSync({
         proxy: "localhost:8000",
         notify: {
@@ -27,4 +30,4 @@ mix.react("resources/js/app.js", "public/js")
         mode: "production"
     });
 mix.disableNotifications();
-mix.setPublicPath('public');
+mix.setPublicPath("public");

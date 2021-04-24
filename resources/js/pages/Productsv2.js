@@ -99,9 +99,8 @@ const Products = ({ title, ...rest }) => {
 		}
 	);
 	return (
-		<div id="manage_users_page">
-			{/* <div className="manage_users" /> */}
-			<h1 className="manage_users">𝘗𝘳𝘰𝘥𝘶𝘤𝘵𝘴 𝘚𝘦𝘵𝘵𝘪𝘯𝘨𝘴</h1>
+		<>
+			<h1 className="title-page">Product Lists</h1>
 			<Form form={form} component={false}>
 				<Table
 					components={{
@@ -184,7 +183,7 @@ const Products = ({ title, ...rest }) => {
 					}}
 				/>
 			</Form>
-		</div>
+		</>
 	);
 };
 const mapStateToProps = (state) => ({

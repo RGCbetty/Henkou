@@ -13,7 +13,9 @@ import {
 	Upload,
 	notification,
 	Table,
-	Spin
+	Spin,
+	Alert,
+	message
 } from 'antd';
 import { DownOutlined, UpOutlined, UploadOutlined, SnippetsOutlined } from '@ant-design/icons';
 
@@ -24,8 +26,7 @@ import PlanDetails from '../RegistrationComponents/PlanDetails';
 
 import moment from 'moment';
 import Http from '../../Http';
-import { useActivePlanStatus } from '../../api/planstatus';
-import planDetails from '../RegistrationComponents/PlanDetails';
+import TextLoop from 'react-text-loop';
 
 const { Search, TextArea } = Input;
 const dateFormat = 'YYYY/MM/DD';
@@ -44,7 +45,6 @@ const ManualContainer = ({
 }) => {
 	const { master } = rest;
 	/* PCMS */
-	console.log(pending, 'pepepepeending');
 	// const [assignedProductCategoriesPCMS, setPlanDetail] = useState([]);
 	// const [productCategoriesPCMS, setProductCategoriesPCMS] = useActivePlanStatus();
 	// const [userProductCategoriesPCMS, setUserProducts] = useState([]);
@@ -62,7 +62,12 @@ const ManualContainer = ({
 	const [existState, setExistState] = useState({
 		showDetails: false,
 		showDepartments: false,
-		span: 12
+		span: 12,
+		toggleBorrowBtn: true,
+		message: '',
+		description: '',
+		department: '',
+		showAlert: false
 	});
 	const [form] = Form.useForm();
 	const onFinish = (values) => {
@@ -74,16 +79,37 @@ const ManualContainer = ({
 			notification[type]({
 				description: result.msg
 			});
+			// message.success('Not yet started! ' + result.msg, 0);
 		} else if (result.status == 'ongoing') {
-			notification[type]({
-				message: 'On-going!',
-				description: result.msg
+			// notification[type]({
+			// 	message: 'On-going!',
+			// 	description: result.msg
+			// });
+			setExistState({
+				...existState,
+				showDetails: false,
+				message: 'Ongoing!',
+				description: result.msg,
+				department: result.dept,
+				showAlert: true,
+				toggleBorrowBtn: false
 			});
+
+			// message.info('Ongoing! ' + result.msg, 0);
 		} else if (result.status == 'notyetstarted') {
-			notification[type]({
+			// notification[type]({
+			// 	description: result.msg
+			// });
+			setExistState({
+				...existState,
 				message: 'Not yet started!',
-				description: result.msg
+				description: result.msg,
+				department: result.dept,
+				showAlert: true,
+				showDetails: false
 			});
+
+			// message.info('Not yet started! ' + result.msg, 0);
 		} else {
 			notification[type]({
 				message: 'Plan not registered!'
@@ -92,54 +118,57 @@ const ManualContainer = ({
 	};
 	const handleEvent = async (value, keys = null) => {
 		setHenkouLoading(true);
-		if (!henkouLoading) {
-			if (!keys) {
-				const e = value;
-				e.preventDefault();
-				const result = await handleSpecs(e.target.value);
-				result.status == 'found'
-					? (setExpand(true),
-					  setDetails(true),
-					  setExistState({
-							...existState,
-							showDetails: true
-					  }),
-					  openNotificationWithIcon('info', result))
-					: result.status == 'ongoing'
-					? (setExpand(true),
-					  setDetails(true),
-					  setExistState({ ...existState, showDetails: false }),
-					  openNotificationWithIcon('info', result))
-					: result.status == 'notyetstarted'
-					? (setExpand(true),
-					  setDetails(true),
-					  setExistState({ ...existState, showDetails: false }),
-					  openNotificationWithIcon('info', result))
-					: (setExpand(false),
-					  setDetails(false),
-					  openNotificationWithIcon('info', result));
-				// setExpand(true);
-			} else {
-				if (keys == 'reason_id') {
-					if (value == 0) {
-						setExistState({
-							...existState,
-							showDepartments: true,
-							span: 8
-						});
-					} else {
-						setExistState({
-							...existState,
-							showDepartments: false,
-							span: 8
-						});
+		try {
+			if (!henkouLoading) {
+				if (!keys) {
+					const e = value;
+					e.preventDefault();
+					const result = await handleSpecs(e.target.value);
+					result.status == 'found'
+						? (setExpand(true),
+						  setDetails(true),
+						  setExistState({
+								...existState,
+								showDetails: true
+						  }),
+						  openNotificationWithIcon('info', result))
+						: result.status == 'ongoing'
+						? (setExpand(true),
+						  setDetails(true),
+						  openNotificationWithIcon('info', result))
+						: result.status == 'notyetstarted'
+						? (setExpand(true),
+						  setDetails(true),
+						  openNotificationWithIcon('info', result))
+						: (setExpand(false),
+						  setDetails(false),
+						  openNotificationWithIcon('info', result));
+					// setExpand(true);
+				} else {
+					if (keys == 'reason_id') {
+						if (value == 0) {
+							setExistState({
+								...existState,
+								showDepartments: true,
+								span: 8
+							});
+						} else {
+							setExistState({
+								...existState,
+								showDepartments: false,
+								span: 8
+							});
+						}
 					}
-				}
 
-				handleOnChange(value, keys);
+					handleOnChange(value, keys);
+				}
 			}
-			setHenkouLoading(false);
+		} catch (err) {
+			// console.error(err);
+			message.error('Please input valid code.');
 		}
+		setHenkouLoading(false);
 	};
 	const handleRegisterAndUpload = async (details) => {
 		/* Coming from Registration.js */
@@ -223,8 +252,12 @@ const ManualContainer = ({
 	};
 	return (
 		<>
-			<Spin tip="Loading..." spinning={henkouLoading}>
+			<Spin
+				tip="Loading..."
+				wrapperClassName="ant-advanced-search-form"
+				spinning={henkouLoading}>
 				<Form
+					layout={'horizontal'}
 					form={form}
 					name="advanced_search"
 					className="ant-advanced-search-form"
@@ -248,11 +281,54 @@ const ManualContainer = ({
 									style={{ width: 300, margin: '0 0' }}></Search>
 							</Form.Item>
 						</Col>
+						{existState.showAlert && (
+							<Col span={6}>
+								{/* <Form.Item
+									name={`Product`}
+									style={{ marginBottom: '0px' }}
+									rules={[
+										{
+											required: true,
+											message: 'Input something!'
+										}
+									]}> */}
+								<Alert
+									banner
+									message={
+										<TextLoop mask>
+											<div>{existState.message}</div>
+											<div>{existState.description}</div>
+											<div>{existState.department}</div>
+											{/* <div>Notice message three</div>
+											<div>Notice message four</div> */}
+										</TextLoop>
+									}
+									// description={existState.description}
+								/>
+								{/* <Alert
+									message={existState.message}
+									description={existState.description}
+									type="info"
+									closeText="Close Now"
+								/> */}
+								{/* </Form.Item> */}
+							</Col>
+						)}
 
-						<Col offset={8} span={8} style={{ textAlign: 'right' }}>
+						<Col
+							offset={existState.message ? 6 : 12}
+							span={4}
+							style={{ textAlign: 'right' }}>
 							<DatePicker
-								defaultValue={moment(moment().format('YYYY-MM-DD'), dateFormat)}
-								disabled
+								defaultValue={moment(
+									moment()
+										.utc()
+										.local()
+										.format('YYYY-MM-DD'),
+									dateFormat
+								)}
+								// inputReadOnly
+								disabledDate={() => true}
 								format={dateFormat}
 							/>
 						</Col>
@@ -478,30 +554,54 @@ const ManualContainer = ({
 											value={
 												logs.length > 0
 													? logs
-															.filter((item) => item.log)
+															.filter(
+																(item) =>
+																	item.log || item.borrow_details
+															)
 															.map((stat, index) => {
 																if (stat.log) {
 																	if (index == 0) {
 																		return `${moment
-																			.utc(stat.updated_at)
+																			.utc(stat.created_at)
 																			.format(
 																				'YYYY-MM-DD, h:mm:ss a'
-																			) +
-																			':  ' +
-																			stat.log}`;
-																	} else {
-																		return (
-																			'\n' +
-																			moment
-																				.utc(
-																					stat.updated_at
-																				)
-																				.format(
-																					'YYYY-MM-DD, h:mm:ss a'
-																				) +
-																			':  ' +
+																			)}  ${
+																			stat.product_name
+																		}(${stat.rev_no}):  ${
 																			stat.log
-																		);
+																		}`;
+																	} else {
+																		return `\n${moment
+																			.utc(stat.created_at)
+																			.format(
+																				'YYYY-MM-DD, h:mm:ss a'
+																			)}  ${
+																			stat.product_name
+																		}(${stat.rev_no}):  ${
+																			stat.log
+																		}`;
+																	}
+																} else if (stat.borrow_details) {
+																	if (index == 0) {
+																		return `${moment
+																			.utc(stat.created_at)
+																			.format(
+																				'YYYY-MM-DD, h:mm:ss a'
+																			)}  ${
+																			stat.product_name
+																		}(${stat.rev_no}):  ${
+																			stat.borrow_details
+																		}`;
+																	} else {
+																		return `\n${moment
+																			.utc(stat.created_at)
+																			.format(
+																				'YYYY-MM-DD, h:mm:ss a'
+																			)}  ${
+																			stat.product_name
+																		}(${stat.rev_no}):  ${
+																			stat.borrow_details
+																		}`;
 																	}
 																}
 															})
@@ -525,6 +625,7 @@ const ManualContainer = ({
 											<Button
 												type="primary"
 												// htmlType="submit"
+												disabled={existState.toggleBorrowBtn}
 												onClick={() =>
 													pending.actions.handlePendingModal(details)
 												}>
@@ -538,7 +639,7 @@ const ManualContainer = ({
 					) : null}
 				</Form>
 				<Modal
-					title={`Pending ${pending.state.product_name}`}
+					title={`Pending ${pending.state.row.product_name}`}
 					onOk={pending.actions.handlePendingOk}
 					okText="Save"
 					onCancel={pending.actions.handlePendingCancel}
@@ -567,43 +668,11 @@ const ManualContainer = ({
 							disabled={pending.state.items.some((item) => {
 								return !item.resume;
 							})}
-							onClick={() => addPendingItems(row, 'finished_date')}>
+							onClick={() => pending.actions.handleAddPendingItem()}>
 							Add
 						</Button>
 					</div>
 				</Modal>
-				{/* {details.existing_rev_no && status.length > 0 ? (
-				<div style={{ padding: 5 }}>
-					<Title level={4} style={{ margin: 0 }}>
-						Henkou Status
-					</Title>
-					<Table
-						style={{ marginTop: 10 }}
-						columns={headers}
-						loading={henkouLoading}
-						bordered
-						rowKey={(record) => record.id}
-						dataSource={status.map((item) => {
-							return {
-								id: item.id,
-								...item
-								// sequence:
-								// 	details.method == '2'
-								// 		? product.find((el) => el.product_key == item.product_key)
-								// 				.waku_sequence
-								// 		: product.find((el) => el.product_key == item.product_key)
-								// 				.jiku_sequence,
-								// product_name: product.find(
-								// 	(el) => el.product_key == item.product_key
-								// ).product_name
-							};
-						})}
-						scroll={{ x: 'max-content', y: 'calc(100vh - 23em)' }}
-					/>
-				</div>
-			) : (
-				''
-			)} */}
 			</Spin>
 		</>
 	);
