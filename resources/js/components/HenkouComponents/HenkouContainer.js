@@ -16,7 +16,8 @@ import {
 	Table,
 	Button,
 	List,
-	Spin
+	Spin,
+	BackTop
 } from 'antd';
 import { DownOutlined, UpOutlined, PaperClipOutlined } from '@ant-design/icons';
 /* Component */
@@ -63,7 +64,6 @@ const HenkouContainer = (props) => {
 			return true;
 		}
 	};
-	console.log(editedPendingItems, 'editedPendingItems');
 	const handleActionStatus = (record, key, isPendingItems = null) => {
 		record[key] = moment()
 			.utc()
@@ -514,7 +514,6 @@ const HenkouContainer = (props) => {
 						)}
 					</Row>
 					<Row>
-						{console.log(logs, 'logsgsgsgsgsgs')}
 						<Col span={24}>
 							{expand ? (
 								<>
@@ -624,6 +623,7 @@ const HenkouContainer = (props) => {
 									pendingItems
 								)}
 								bordered
+								pagination={false}
 								dataSource={status.map((item) => {
 									return {
 										...item,
@@ -648,7 +648,7 @@ const HenkouContainer = (props) => {
 											: null
 									};
 								})}
-								scroll={{ x: 'max-content', y: 'calc(100vh - 23em)' }}
+								scroll={{ x: 'max-content' }}
 							/>
 						</div>
 					) : (
@@ -742,6 +742,7 @@ const HenkouContainer = (props) => {
 				</div> */}
 				</Modal>
 			</Spin>
+			<BackTop></BackTop>
 		</>
 	);
 };

@@ -1,7 +1,8 @@
+import React from 'react';
+
 import Henkou from '../pages/Henkou';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
-import Productsv2 from '../pages/Productsv2';
 import Users from '../pages/Users';
 import Registration from '../pages/Registration';
 import Search from '../pages/Search';
@@ -9,6 +10,16 @@ import Stop from '../pages/Stop';
 import PageNotFound from '../pages/PageNotFound';
 import Loginv2 from '../pages/Loginv2';
 import SignUp from '../pages/Signup';
+import Master from '../pages/master';
+import Productsv2 from '../pages/Productsv2';
+import Planstatus from '../components/MasterComponents/Planstatus.jsx';
+import Assessment from '../components/MasterComponents/Assessment.jsx';
+import THaction from '../components/MasterComponents/THActions';
+import THAssessment from '../components/MasterComponents/THAssessment';
+import PlanType from '../components/MasterComponents/Type';
+import Reason from '../components/MasterComponents/Reason';
+
+import { FileSyncOutlined, FileTextOutlined } from '@ant-design/icons';
 
 const routes = [
 	{
@@ -62,11 +73,30 @@ const routes = [
 		component: Stop
 	},
 	{
-		path: '/products',
-		exact: true,
+		path: '/master',
+		exact: false,
 		auth: true,
+		routes: [
+			{
+				path: '/master/products',
+				icon: <FileTextOutlined />,
+				component: Productsv2,
+				name: 'Products'
+			},
+			{
+				path: '/master/planstatus',
+				icon: <FileSyncOutlined />,
+				component: Planstatus,
+				name: 'Plan Status'
+			},
+			{ path: '/master/assessments', component: Assessment, name: 'Assessments' },
+			{ path: '/master/types', component: PlanType, name: 'Henkou Types' },
+			{ path: '/master/reasons', component: Reason, name: 'Reasons' },
+			{ path: '/master/th/assessments', component: THAssessment, name: 'TH Assessments' },
+			{ path: '/master/th/actions', component: THaction, name: 'TH Actions' }
+		],
 		title: 'Henkou - Product Settings',
-		component: Productsv2
+		component: Master
 	},
 	{
 		path: '/users',

@@ -9,7 +9,6 @@ export const completeDetailsStatus = async (record, affectedProducts, product, m
 	const filterByAffectedID = statuses.data.filter(
 		(item) => item.affected_id == record.affected_id
 	);
-	console.log(filterByAffectedID);
 
 	const statusWithProductKey = filterByAffectedID.map((item, index) => {
 		if (filterByAffectedID.length == index + 1) {

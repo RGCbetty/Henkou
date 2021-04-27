@@ -144,6 +144,36 @@ class AuthController extends Controller
             ]);
         }
     }
+    public function role(Request $request)
+    {
+        try {
+            $user = User::find($request->id);
+            $role = $request->access_level;
+            switch ($role) {
+                case "Administrator":
+                    $user->access_level = 1;
+                    break;
+                case "Viewer":
+                    $user->access_level = 2;
+                    break;
+                case "Encoder":
+                    $user->access_level = 3;
+                    break;
+            }
+
+            $user->save();
+            return response()->json([
+                'status_code' => 200,
+                'message' => 'Role updated successfully!'
+            ]);
+        } catch (Exception $error) {
+            return response()->json([
+                'status_code' => 500,
+                'message' => 'Cannot change role.',
+                'error' => $error,
+            ]);
+        }
+    }
     public function verify(Request $request)
     {
         try {

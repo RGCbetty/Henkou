@@ -7,16 +7,16 @@ export const login = (credentials) => {
 		try {
 			const result = await Http.post('/api/login', credentials);
 			if (result.data.status_code == 500) throw result;
-			const departments = await Http.get('api/departments');
-			const sections = await Http.get('api/sections');
-			const teams = await Http.get('api/teams');
-			const planstatus = await Http.get('/api/planstatuses');
-			const affectedProducts = await Http.get('/api/products/planstatus');
-			const thAssessments = await Http.get('/api/THassessments');
-			const types = await Http.get(`/api/types`);
-			const thActions = await Http.get('/api/actions');
-			const reasons = await Http.get(`/api/reasons`);
-			const products = await Http.get(`api/products`);
+			const departments = await Http.get('/api/master/departments');
+			const sections = await Http.get('/api/master/sections');
+			const teams = await Http.get('/api/master/teams');
+			const products = await Http.get(`/api/master/products`);
+			const planstatus = await Http.get('/api/master/planstatuses');
+			const affectedProducts = await Http.get('/api/master/products/planstatus');
+			const thAssessments = await Http.get('/api/master/THassessments');
+			const types = await Http.get(`/api/master/types`);
+			const thActions = await Http.get('/api/master/actions');
+			const reasons = await Http.get(`/api/master/reasons`);
 
 			// console.log(result);
 			// const instance = Http.create({

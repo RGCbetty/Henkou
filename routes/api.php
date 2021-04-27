@@ -21,24 +21,29 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', 'AuthController@login');
 Route::get('/employee/{id}', 'AuthController@employee');
 Route::post('/register', 'AuthController@register');
-Route::get('/departments', 'CompanyInformationController@departments');
-Route::get('/teams', 'CompanyInformationController@teams');
-Route::get('/sections', 'CompanyInformationController@sections');
-Route::get('/planstatuses', 'PlanStatusController@index');
-Route::get('/products/planstatus/', 'AffectedProductController@index');
-Route::get('/THassessments', "ThAssessmentController@index");
-Route::get('/types', 'TypeController@index');
-Route::get('/actions', 'ThActionController@index');
-Route::get('/reasons', 'ReasonController@index');
-Route::get('/products', 'ProductCategoryController@all');
 
+
+Route::prefix('master')->group(function () {
+    Route::get('/departments', 'CompanyInformationController@departments');
+    Route::get('/teams', 'CompanyInformationController@teams');
+    Route::get('/sections', 'CompanyInformationController@sections');
+    Route::get('/products', 'ProductCategoryController@all');
+    Route::get('/assessments', 'AssessmentController@index');
+    Route::get('/planstatuses', 'PlanStatusController@index');
+    Route::get('/products/planstatus/', 'AffectedProductController@index');
+    Route::get('/THassessments', "ThAssessmentController@index");
+    Route::get('/types', 'TypeController@index');
+    Route::get('/actions', 'ThActionController@index');
+    Route::get('/reasons', 'ReasonController@index');
+});
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return response()->json($request->user());;
 // });
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/verify', 'AuthController@verify');
+    Route::post('user/role', 'AuthController@role');
+    Route::post('user/verify', 'AuthController@verify');
     Route::get('/users/{id}', 'AuthController@users');
     /* User */
     Route::get('/henkou/users', 'UserController@index');
@@ -56,7 +61,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/stop', 'InformationServiceController@stop');
     /* Specifications */
     /* Master */
-    Route::get('/assessments', 'AssessmentController@index');
     /* Master */
     /* Henkou Details Record */
     Route::get('/henkou/plans/{customer_code}/products/{affected_id}/logs', 'HenkouController@showStatusByAffectedID');

@@ -28438,6 +28438,25 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
+.editable-cell {
+  position: relative;
+}
+
+.editable-cell-value-wrap {
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.editable-row:hover .editable-cell-value-wrap {
+  padding: 4px 11px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+}
+
+[data-theme=dark] .editable-row:hover .editable-cell-value-wrap {
+  border: 1px solid #434343;
+}
+
 .centerPos {
   margin: 0;
   position: absolute;
@@ -28520,6 +28539,7 @@ input[type=number] {
 }
 
 .title-page {
+  display: inline-block;
   margin: 0.5rem 0 0.15rem 0.6rem;
   font-family: Georgia, serif;
   font-size: 20px;
@@ -28583,26 +28603,6 @@ input[type=number] {
 .site-layout-background {
   background: #fff;
   height: 100%;
-}
-
-#components-layout-demo-custom-trigger .trigger {
-  font-size: 18px;
-  line-height: 64px;
-  padding: 0 24px;
-  cursor: pointer;
-  transition: color 0.3s;
-}
-
-#components-layout-demo-custom-trigger {
-  overflow-y: auto;
-  overflow-x: hidden;
-  height: calc("100vh - 64px");
-  position: fixed;
-  left: 0;
-}
-
-#components-layout-demo-custom-trigger .trigger:hover {
-  color: #1890ff;
 }
 
 .site-layout .site-layout-background {

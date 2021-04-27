@@ -44,23 +44,27 @@ export const ManageUserColumns = (confirm) => [
 		key: 'access_level',
 		align: 'center',
 		dataIndex: 'access_level',
-		render: (role_id) => (
-			<b>
-				{(() => {
-					switch (role_id) {
-						case 1:
-							return 'Administrator';
-						case 2:
-							return 'Viewer';
-						case 3:
-							return 'Encoder';
+		editable: true
+		// render: (role_id) => {
+		// 	console.log(role_id);
+		// 	return (
+		// 		<b>
+		// 			{(() => {
+		// 				switch (role_id) {
+		// 					case 1:
+		// 						return 'Administrator';
+		// 					case 2:
+		// 						return 'Viewer';
+		// 					case 3:
+		// 						return 'Encoder';
 
-						default:
-							return 'N/A';
-					}
-				})()}
-			</b>
-		)
+		// 					default:
+		// 						return 'N/A';
+		// 				}
+		// 			})()}
+		// 		</b>
+		// 	);
+		// }
 	},
 	{
 		title: 'Status',

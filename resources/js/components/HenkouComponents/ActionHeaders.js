@@ -128,7 +128,6 @@ const ActionHeaders = (
 		align: 'center',
 		width: 150,
 		render: (text, row) => {
-			console.log(row);
 			return (
 				<TextArea
 					value={text}

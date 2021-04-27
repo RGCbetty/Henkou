@@ -11,40 +11,26 @@ import durationAsString from '../utils/diffDate';
 import PDFLists from '../components/RegistrationComponents/PDFLists';
 import ManualContainer from '../components/RegistrationComponents/ManualContainer';
 import { headers } from '../components/RegistrationComponents/THPlansHeader';
-
+import withSearch from '../utils/withSearch.jsx';
 /* Material Design */
-import { Modal, notification, Table, Input, Space, Button, Skeleton, Empty, Spin } from 'antd';
+import { Modal, notification, Table, Input, Space, Button, Skeleton, Empty } from 'antd';
 
 /* API */
-import { useThPlansRetriever, THplansWithPlanStatus, fetchThTemp, fetchThPlans } from '../api/TH';
+import { useThPlansRetriever } from '../api/TH';
 // import { useActivePlanStatus, getPlanStatusByCustomerCode } from '../api/planstatus';
 import { fetchDetails } from '../api/details';
 import { SearchOutlined } from '@ant-design/icons';
-import { setMaster } from '../redux/actions/master';
-import { useMasterDetails } from '../api/master';
-import { useProductsRetriever, useAffectedProductsRetriever } from '../api/products';
-// import { productCategories } from '../redux/reducers/PCMSproductCategories';
 
-const Registration = ({ title, dispatch, ...rest }) => {
-	const { userInfo, master } = rest;
+const Registration = ({ props, ...rest }) => {
+	const { getColumnSearchProps } = rest;
+	const { userInfo, master, title } = props;
 	const inputRef = useRef();
 	useEffect(() => {
 		document.title = title || '';
 	}, [title]);
-	// const [planStatuses, setPlanStatuses] = useMasterPlanStatuses();
-	// const [productCategoriesPCMS, setProductCategoriesPCMS] = useActivePlanStatus();
-	// const [affectedProducts, setAffectedProducts] = useAffectedProductsRetriever();
-	// const [info, setInfo] = useMasterDetails();
+
 	const [tableState, setTable] = useThPlansRetriever(userInfo);
 	const { plans, pagination, loading } = tableState;
-	const { showTotal, ...paginate } = pagination;
-
-	// const [departments, setDepartments] = useMasterDepartment();
-	// const [sections, setSections] = useMasterSection();
-	// const [teams, setTeams] = useMasterTeam();
-	// const [company, setCompany] = useMasterCompany();
-	// const [tempTh, setTempTh] = useTempThRetriever();
-	// const [products, setProducts] = useProductsRetriever();
 	/* PENDING */
 	const [pendingState, setPendingState] = useState({
 		items: [],
@@ -133,11 +119,13 @@ const Registration = ({ title, dispatch, ...rest }) => {
 			console.error(error);
 		}
 	};
-	const handleTableChange = (page, filters, sorter) => {
+	const handleTableChange = (page, filters, sorter, extra) => {
+		console.log(filters, sorter, extra);
 		setTable({
 			...tableState,
 			pagination: {
 				...page,
+				total: extra.currentDataSource,
 				showTotal: (total) => `Total ${total} items`
 			}
 		});
@@ -228,249 +216,89 @@ const Registration = ({ title, dispatch, ...rest }) => {
 		// } else if (row.Method == '1') {
 		// }
 	};
-	const getColumnSearchProps = (dataIndex, title) => ({
-		filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-			<div style={{ padding: 8 }}>
-				<Input
-					ref={inputRef}
-					placeholder={`Search ${title}`}
-					value={selectedKeys[0]}
-					onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-					onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
-					style={{ width: 188, marginBottom: 8, display: 'block' }}
-				/>
-				<Space>
-					<Button
-						type="primary"
-						onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
-						icon={<SearchOutlined />}
-						size="small"
-						style={{ width: 90 }}>
-						Search
-					</Button>
-					<Button
-						onClick={() => handleReset(clearFilters)}
-						size="small"
-						style={{ width: 90 }}>
-						Reset
-					</Button>
-					<Button
-						type="link"
-						size="small"
-						onClick={() => {
-							confirm({ closeDropdown: false });
-							setState({
-								searchText: selectedKeys[0],
-								searchedColumn: dataIndex
-							});
-						}}>
-						Filter
-					</Button>
-				</Space>
-			</div>
-		),
-		filterIcon: (filtered) => (
-			<SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
-		),
-		onFilter: (value, record) =>
-			record[dataIndex]
-				? record[dataIndex]
-						.toString()
-						.toLowerCase()
-						.includes(value.toLowerCase())
-				: '',
-		onFilterDropdownVisibleChange: (visible) => {
-			if (visible) {
-				setTimeout(() => inputRef.current, 100);
-			}
-		},
-		render: (text) =>
-			state.searchedColumn === dataIndex ? (
-				<Highlighter
-					highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
-					searchWords={[state.searchText]}
-					autoEscape
-					textToHighlight={text ? text.toString() : ''}
-				/>
-			) : (
-				text
-			)
-	});
+	// const getColumnSearchProps = (dataIndex, title) => ({
+	// 	filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+	// 		<div style={{ padding: 8 }}>
+	// 			<Input
+	// 				ref={inputRef}
+	// 				placeholder={`Search ${title}`}
+	// 				value={selectedKeys[0]}
+	// 				onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+	// 				onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+	// 				style={{ width: 188, marginBottom: 8, display: 'block' }}
+	// 			/>
+	// 			<Space>
+	// 				<Button
+	// 					type="primary"
+	// 					onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+	// 					icon={<SearchOutlined />}
+	// 					size="small"
+	// 					style={{ width: 90 }}>
+	// 					Search
+	// 				</Button>
+	// 				<Button
+	// 					onClick={() => handleReset(clearFilters)}
+	// 					size="small"
+	// 					style={{ width: 90 }}>
+	// 					Reset
+	// 				</Button>
+	// 				<Button
+	// 					type="link"
+	// 					size="small"
+	// 					onClick={() => {
+	// 						confirm({ closeDropdown: false });
+	// 						setState({
+	// 							searchText: selectedKeys[0],
+	// 							searchedColumn: dataIndex
+	// 						});
+	// 					}}>
+	// 					Filter
+	// 				</Button>
+	// 			</Space>
+	// 		</div>
+	// 	),
+	// 	filterIcon: (filtered) => (
+	// 		<SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+	// 	),
+	// 	onFilter: (value, record) =>
+	// 		record[dataIndex]
+	// 			? record[dataIndex]
+	// 					.toString()
+	// 					.toLowerCase()
+	// 					.includes(value.toLowerCase())
+	// 			: '',
+	// 	onFilterDropdownVisibleChange: (visible) => {
+	// 		if (visible) {
+	// 			setTimeout(() => inputRef.current, 100);
+	// 		}
+	// 	},
+	// 	render: (text) =>
+	// 		state.searchedColumn === dataIndex ? (
+	// 			<Highlighter
+	// 				highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+	// 				searchWords={[state.searchText]}
+	// 				autoEscape
+	// 				textToHighlight={text ? text.toString() : ''}
+	// 			/>
+	// 		) : (
+	// 			text
+	// 		)
+	// });
 
-	const handleSearch = async (selectedKeys, confirm, dataIndex) => {
-		confirm();
-		setState({
-			searchText: selectedKeys[0],
-			searchedColumn: dataIndex
-		});
-	};
-	const handleReset = async (clearFilters) => {
-		clearFilters();
-		setState({
-			searchText: '',
-			searchedColumn: ''
-		});
-	};
-	// const handleRegister = async (details, row = null) => {
-	// 	console.log(details);
-	// 	if (details.method == '2') {
-	// 		const owner = products.data.filter((item, index) => {
-	// 			if (
-	// 				rest.userInfo.DepartmentCode == item.department_id &&
-	// 				rest.userInfo.SectionCode == item.section_id &&
-	// 				rest.userInfo.TeamCode == item.team_id
-	// 			) {
-	// 				return item;
-	// 			}
-	// 		});
-
-	// 		const sortBySequenceOwner = _.sortBy(owner, ['sequence']);
-	// 		let params = {};
-	// 		for (let i = 0; i < sortBySequenceOwner.length; i++) {
-	// 			params[`product_${i + 1}`] = owner[i].product_key;
-	// 		}
-	// 		const customerKey = await Http.get(`api/customer`, { params: params });
-	// 		const customers = customerKey.data.map((item) => {
-	// 			return {
-	// 				...item,
-	// 				products:
-	// 					products.data.length > 0
-	// 						? products.data.filter((el) => {
-	// 								return el.product_key == item.customer_key;
-	// 						  })
-	// 						: null
-	// 			};
-	// 		});
-
-	// 		let customer = [];
-	// 		for (let i = 0; i < sortBySequenceOwner.length; i++) {
-	// 			for (let j = 0; j < customers.length; j++) {
-	// 				if (sortBySequenceOwner[i].product_key == customers[j].product_key) {
-	// 					for (let k = 0; k < customers[j].products.length; k++) {
-	// 						customer.push(customers[j].products[k]);
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 		const mappedProducts = products.data.map((item, index) => {
-	// 			if (
-	// 				customer.find((el) => {
-	// 					return el.id == item.id;
-	// 				})
-	// 			) {
-	// 				return {
-	// 					...item,
-	// 					remarks: row ? row.remarks : null,
-	// 					received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
-	// 					start_date: row ? row.start_date : null,
-	// 					finished_date: row ? row.finished_date : null
-	// 				};
-	// 			}
-	// 			if (
-	// 				rest.userInfo.DepartmentCode == item.department_id &&
-	// 				rest.userInfo.SectionCode == item.section_id &&
-	// 				rest.userInfo.TeamCode == item.team_id
-	// 			) {
-	// 				return {
-	// 					...item,
-	// 					remarks: row ? row.remarks : null,
-	// 					received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
-	// 					start_date: row ? row.start_date : null,
-	// 					finished_date: row ? row.finished_date : null
-	// 				};
-	// 			}
-	// 			return item;
-	// 		});
-	// 		const sortedProducts = _.sortBy(mappedProducts, ['waku_sequence', 'product_name']);
-	// 		const response = await Http.post('/api/details', {
-	// 			details,
-	// 			product: sortedProducts
-	// 		});
-	// 		if (response.status == 200) {
-	// 			openNotificationWithIcon('success');
-	// 		}
-	// 		setProducts(sortedProducts);
-	// 	} else {
-	// 		const owner = products.data.filter((item, index) => {
-	// 			if (
-	// 				rest.userInfo.DepartmentCode == item.department_id &&
-	// 				rest.userInfo.SectionCode == item.section_id &&
-	// 				rest.userInfo.TeamCode == item.team_id
-	// 			) {
-	// 				return item;
-	// 			}
-	// 		});
-
-	// 		const sortBySequenceOwner = _.sortBy(owner, ['sequence']);
-	// 		let params = {};
-	// 		for (let i = 0; i < sortBySequenceOwner.length; i++) {
-	// 			params[`product_${i + 1}`] = owner[i].product_key;
-	// 		}
-	// 		const customerKey = await Http.get(`api/customer`, { params: params });
-	// 		const customers = customerKey.data.map((item) => {
-	// 			return {
-	// 				...item,
-	// 				products:
-	// 					products.data.length > 0
-	// 						? products.data.filter((el) => {
-	// 								return el.product_key == item.customer_key;
-	// 						  })
-	// 						: null
-	// 			};
-	// 		});
-
-	// 		let customer = [];
-	// 		for (let i = 0; i < sortBySequenceOwner.length; i++) {
-	// 			for (let j = 0; j < customers.length; j++) {
-	// 				if (sortBySequenceOwner[i].product_key == customers[j].product_key) {
-	// 					for (let k = 0; k < customers[j].products.length; k++) {
-	// 						customer.push(customers[j].products[k]);
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 		const mappedProducts = products.data.map((item, index) => {
-	// 			if (
-	// 				customer.find((el) => {
-	// 					return el.id == item.id;
-	// 				})
-	// 			) {
-	// 				return {
-	// 					...item,
-	// 					remarks: row.remarks,
-	// 					received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
-	// 					start_date: row ? row.start_date : null,
-	// 					finished_date: row ? row.finished_date : null
-	// 				};
-	// 			}
-	// 			if (
-	// 				rest.userInfo.DepartmentCode == item.department_id &&
-	// 				rest.userInfo.SectionCode == item.section_id &&
-	// 				rest.userInfo.TeamCode == item.team_id
-	// 			) {
-	// 				return {
-	// 					...item,
-	// 					remarks: row ? row.remarks : null,
-	// 					received_date: moment().format('YYYY-MM-DD HH:mm:ss'),
-	// 					finished_date: row ? row.finished_date : null,
-	// 					start_date: row ? row.start_date : null,
-	// 					finished_date: row ? row.finished_date : null
-	// 				};
-	// 			}
-	// 			return item;
-	// 		});
-	// 		const sortedProducts = _.sortBy(mappedProducts, ['jiku_sequence', 'product_name']);
-	// 		const response = await Http.post('/api/details', {
-	// 			details,
-	// 			product: sortedProducts
-	// 		});
-	// 		if (response.status == 200) {
-	// 			openNotificationWithIcon('success');
-	// 		}
-	// 		setProducts(sortedProducts);
-	// 	}
+	// const handleSearch = async (selectedKeys, confirm, dataIndex) => {
+	// 	confirm();
+	// 	setState({
+	// 		searchText: selectedKeys[0],
+	// 		searchedColumn: dataIndex
+	// 	});
 	// };
-	/* TH Actions */
+	// const handleReset = async (clearFilters) => {
+	// 	clearFilters();
+	// 	setState({
+	// 		searchText: '',
+	// 		searchedColumn: ''
+	// 	});
+	// };
 	const handleOnClickEvent = async (row, key = null) => {
 		row[key] = moment()
 			.utc()
@@ -495,8 +323,6 @@ const Registration = ({ title, dispatch, ...rest }) => {
 				...pagination,
 				total: toUpdatePlans.length,
 				showTotal: (total) => `Total ${total} items`
-				// 200 is mock data, you should read it from server
-				// total: data.totalCount,
 			}
 		});
 		if (key == 'finished_date') {
@@ -519,8 +345,6 @@ const Registration = ({ title, dispatch, ...rest }) => {
 			plans: toUpdatePlans,
 			pagination: {
 				...pagination
-				// 200 is mock data, you should read it from server
-				// total: data.totalCount,
 			}
 		});
 	};
@@ -565,7 +389,6 @@ const Registration = ({ title, dispatch, ...rest }) => {
 					response.data.house.length > 0 ? response.data.house[0].Method : null
 				}`
 			);
-			console.log(planstatus);
 			const revision = await Http.get(`/api/details/${constructionCode}`);
 			const { plan_specs } = response.data;
 			let plan_specification = [];
@@ -576,24 +399,6 @@ const Registration = ({ title, dispatch, ...rest }) => {
 					}
 				}
 			}
-			// const planSpecs = plan_specs.map((item, index) => {
-			// 	let str = '';
-			// 	if (item.Menshin !== '0') {
-			// 		str += 'Menshin';
-			// 	}
-			// 	if (item.Gousetsu !== '0') {
-			// 		str ? (str += ',Gousetsu') : (str += 'Gousetsu');
-			// 	}
-			// 	if (item.CY !== '0') {
-			// 		str ? (str += ',CY') : (str += 'CY');
-			// 	}
-			// 	if (item['3Storey'] !== '0') {
-			// 		str ? (str += ',3Storey') : (str += '3Storey');
-			// 	}
-			// 	return str;
-			// });
-
-			// console.log(planSpecs);
 			let splitRevision = revision.data ? revision.data.rev_no.split('-') : '';
 			let secondaryRevision = toInteger(splitRevision[1]);
 			if (response.data.house.length > 0 && response.data.construction_schedule.length > 0) {
@@ -900,22 +705,6 @@ const Registration = ({ title, dispatch, ...rest }) => {
 										).product_category_id
 									});
 								}
-
-								// const stats = fetchStatus.data.find(
-								// 	(el) =>
-								// 		(!el.assessment_id || el.assessment_id == 1) &&
-								// 		el.received_date &&
-								// 		el.start_date &&
-								// 		!el.finished_date
-								// )
-								// 	? fetchStatus.data.find(
-								// 			(el) =>
-								// 				(!el.assessment_id || el.assessment_id == 1) &&
-								// 				el.received_date &&
-								// 				el.start_date &&
-								// 				!el.finished_date
-								// 	  ).affected_id
-								// 	: null;
 								setPendingState({
 									...pendingState,
 									items: pending,
@@ -950,11 +739,7 @@ const Registration = ({ title, dispatch, ...rest }) => {
 				}
 				return { status: 'found', msg: 'No existing henkou!' };
 			}
-			//  else {
-			// 	return { status: 'not found' };
-			// }
 		} catch (error) {
-			// return { status: 'not found' };
 			console.error(error);
 		}
 	};
@@ -1005,17 +790,9 @@ const Registration = ({ title, dispatch, ...rest }) => {
 				record.isItemStarted = true;
 			}
 			if (key == 'resume') {
-				// const diff_seconds = moment(row.start).diff(row.resume, 'seconds');
-				// const ms = moment(row.resume, 'YYYY-MM-DD HH:mm:ss').diff(
-				// 	moment(row.start, 'YYYY-MM-DD HH:mm:ss')
-				// );
-				// const d = moment.duration(ms);
-				// record.resume_date = row[key];
 				record.duration = isNaN(moment(record.start).diff(record.resume))
 					? ''
 					: durationAsString(record.start, record.resume);
-				// setRow({ ...row });
-				// row.pending_id = row.pending_id + 1;
 			}
 			pendingState.items[
 				pendingState.items.findIndex((item) => item.pending_index == record.pending_index)
@@ -1051,7 +828,6 @@ const Registration = ({ title, dispatch, ...rest }) => {
 	};
 	const onSelect = (value, key, record) => {
 		record[key] = value;
-		// console.log(value, key, record, 'Onselect');
 		pendingState.items[
 			pendingState.items.findIndex((item) => item.pending_index == record.pending_index)
 		] = record;
@@ -1120,9 +896,6 @@ const Registration = ({ title, dispatch, ...rest }) => {
 			...pendingState,
 			isPendingModalVisible: false
 		});
-		// setPendingItems([]);
-		// setRow({ ...row, disableFinish: false });
-		// setRow({});
 	};
 	const handlePendingCancel = () => {
 		const filterPendingItems = pendingState.items.filter((item) => item.pending_id);
@@ -1131,8 +904,6 @@ const Registration = ({ title, dispatch, ...rest }) => {
 			items: filterPendingItems,
 			isPendingModalVisible: false
 		});
-
-		// setRow({});
 	};
 	const handleAddPendingItem = () => {
 		function getMaxPendingID() {
@@ -1173,14 +944,12 @@ const Registration = ({ title, dispatch, ...rest }) => {
 							handleOnClickEvent,
 							handleInputText
 						)}
-						// loading={loading}
 						bordered
 						locale={{
 							emptyText: loading ? <Skeleton active={true} /> : <Empty />
 						}}
 						dataSource={loading ? [] : plans}
 						pagination={pagination}
-						// dataSource={plans}
 						scroll={{ x: 'max-content', y: 'calc(100vh - 20em)' }}
 						onChange={handleTableChange}
 					/>
@@ -1227,4 +996,4 @@ const mapStateToProps = (state) => ({
 	master: state.auth.master
 });
 
-export default connect(mapStateToProps)(Registration);
+export default connect(mapStateToProps)(withSearch(Registration));

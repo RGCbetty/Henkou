@@ -19,7 +19,26 @@ export const useUsersRetriever = () => {
 				const { data } = response;
 				if (mounted) {
 					setUsers({
-						data,
+						data: data.map((item, index) => {
+							let roles = [];
+							let role_name = '';
+							switch (item.access_level) {
+								case 1:
+									role_name = 'Administrator';
+									break;
+								case 2:
+									role_name = 'Viewer';
+									break;
+								case 3:
+									role_name = 'Encoder';
+									break;
+							}
+							roles.push(role_name);
+							return {
+								...item,
+								access_level: roles
+							};
+						}),
 						loading: false,
 						pagination: {
 							...users.pagination,

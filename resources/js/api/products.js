@@ -33,7 +33,7 @@ export const useProductsRetriever = () => {
 		let mounted = true;
 		(async () => {
 			try {
-				const products = await Http.get(`api/products`);
+				const products = await Http.get(`/api/master/products`);
 
 				if (mounted) {
 					setProducts({

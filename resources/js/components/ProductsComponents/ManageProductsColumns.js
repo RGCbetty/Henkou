@@ -2,7 +2,7 @@ import React from 'react';
 import { Space, Button, Popconfirm, Typography } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 
-const headers = (save, cancel, edit, isEditing, editingKey) => [
+const headers = (columnSearch, save, cancel, edit, isEditing, editingKey) => [
 	{
 		title: 'Product',
 		width: 300,
@@ -10,28 +10,29 @@ const headers = (save, cancel, edit, isEditing, editingKey) => [
 		key: 'product_name',
 		align: 'center',
 		fixed: 'left',
-		editable: true
+		editable: true,
+		...columnSearch('product_name', 'Product Name')
 	},
 	{
 		title: 'Department',
 		dataIndex: 'department',
 		width: 150,
-		align: 'center',
-		editable: true
+		align: 'center'
+		// editable: true
 	},
 	{
 		title: 'Section',
 		dataIndex: 'section',
 		width: 200,
-		align: 'center',
-		editable: true
+		align: 'center'
+		// editable: true
 	},
 	{
 		title: 'Team',
 		dataIndex: 'team',
 		width: 200,
-		align: 'center',
-		editable: true
+		align: 'center'
+		// editable: true
 	},
 
 	// {

@@ -2,6 +2,7 @@
 @import url("https://fonts.googleapis.com/css?family=Nunito");
 @import "../sass/loginform.scss";
 @import "../sass/signupform.scss";
+@import "../sass//userpage.scss";
 // Variables
 @import "variables";
 
@@ -86,6 +87,7 @@
     border-top-left-radius: 2px;
 }
 .title-page {
+    display: inline-block;
     margin: 0.5rem 0 0.15rem 0.6rem;
     font-family: Georgia, serif;
     font-size: 20px;
@@ -159,24 +161,24 @@
     height: 100%;
 }
 
-#components-layout-demo-custom-trigger .trigger {
-    font-size: 18px;
-    line-height: 64px;
-    padding: 0 24px;
-    cursor: pointer;
-    transition: color 0.3s;
-}
+// #components-layout-demo-custom-trigger .trigger {
+//     font-size: 18px;
+//     line-height: 64px;
+//     padding: 0 24px;
+//     cursor: pointer;
+//     transition: color 0.3s;
+// }
 
-#components-layout-demo-custom-trigger {
-    overflow-y: auto;
-    overflow-x: hidden;
-    height: calc("100vh - 64px");
-    position: fixed;
-    left: 0;
-}
-#components-layout-demo-custom-trigger .trigger:hover {
-    color: #1890ff;
-}
+// #components-layout-demo-custom-trigger {
+//     overflow-y: auto;
+//     overflow-x: hidden;
+//     height: calc("100vh - 64px");
+//     position: fixed;
+//     left: 0;
+// }
+// #components-layout-demo-custom-trigger .trigger:hover {
+//     color: #1890ff;
+// }
 
 // #components-layout-demo-custom-trigger .logo {
 //     height: 32px;

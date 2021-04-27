@@ -219,7 +219,8 @@ const Home = ({ title, ...rest }) => {
 					}}>
 					<div style={{ padding: 5 }}>
 						<div style={{ display: 'flex', justifyContent: 'space-between' }}>
-							<Typography.Title
+							<div className="title-page">Henkou Plans</div>
+							{/* <Typography.Title
 								level={4}
 								style={{
 									margin: 0,
@@ -227,11 +228,12 @@ const Home = ({ title, ...rest }) => {
 									verticalAlign: 'top'
 								}}>
 								Henkou Plans
-							</Typography.Title>
+							</Typography.Title> */}
 							<div
 								style={{
 									display: 'inline-block',
-									verticalAlign: 'right'
+									verticalAlign: 'right',
+									margin: '10px 0px 0px 0px'
 									// textAlign: 'right'
 								}}>
 								<Legend
@@ -263,7 +265,6 @@ const Home = ({ title, ...rest }) => {
 									return 'table-row-not-yet-started';
 								}
 							}}
-							style={{ marginTop: 10 }}
 							columns={HomeColumn()}
 							rowKey={(row) => row.id}
 							bordered

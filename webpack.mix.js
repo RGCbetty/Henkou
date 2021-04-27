@@ -30,4 +30,3 @@ mix.react("resources/js/app.js", "public/js")
         mode: "production"
     });
 mix.disableNotifications();
-mix.setPublicPath("public");

@@ -38,9 +38,9 @@ const Base = ({ children, dispatch, ...rest }) => {
 			{rest.userInfo.access_level == 1 && (
 				<Menu.ItemGroup title="Settings">
 					<Menu.Item key="0">
-						<Link to="/products">
+						<Link to="/master">
 							<SettingFilled />
-							Manage Products
+							Master Maintenance
 						</Link>
 					</Menu.Item>
 					<Menu.Divider />
@@ -66,8 +66,8 @@ const Base = ({ children, dispatch, ...rest }) => {
 			}}>
 			<Sider
 				id="components-layout-demo-responsive"
-				breakpoint="lg"
-				collapsedWidth="0"
+				// breakpoint="lg"
+				// collapsedWidth="0"
 				style={{
 					overflow: 'auto',
 					height: '100vh',

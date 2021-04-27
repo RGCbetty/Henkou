@@ -4,18 +4,22 @@
     </IfModule>
 
     RewriteEngine On
-
+    #RewriteBase /
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
-    RewriteRule ^ %1 [L,R=301]
+    #RewriteRule ^ %1 [L,R=301]
+    #RewriteRule ^(.*)/$ //$1 [L,R=301]
+	RewriteBase /mbwa
+	RewriteRule ^(.*)/$ /mbwa/$1 [L,R=301]
 
-    # Send Requests To Front Controller...
+    # Handle Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+

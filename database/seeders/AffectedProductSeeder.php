@@ -78,17 +78,17 @@ class AffectedProductSeeder extends Seeder
 
             /////////////////////////////* ONE TIME HENKOU JIKUGUMI *///////////////////////////
             array('plan_status_id' => '3', 'sequence_no' => '1', 'product_category_id' => '11'),
-            array('plan_status_id' => '3', 'sequence_no' => '2', 'product_category_id' => '35'),
-            array('plan_status_id' => '3', 'sequence_no' => '3', 'product_category_id' => '270'),
-            array('plan_status_id' => '3', 'sequence_no' => '4', 'product_category_id' => '61'),
-            array('plan_status_id' => '3', 'sequence_no' => '5', 'product_category_id' => '229'),
+            array('plan_status_id' => '3', 'sequence_no' => '2', 'product_category_id' => '270'),
+
+            array('plan_status_id' => '3', 'sequence_no' => '3', 'product_category_id' => '61'),
+            array('plan_status_id' => '3', 'sequence_no' => '4', 'product_category_id' => '229'),
+            array('plan_status_id' => '3', 'sequence_no' => '5', 'product_category_id' => '35'),
             array('plan_status_id' => '3', 'sequence_no' => '6', 'product_category_id' => '64'),
-            array('plan_status_id' => '3', 'sequence_no' => '7', 'product_category_id' => '256'),
-            array('plan_status_id' => '3', 'sequence_no' => '8', 'product_category_id' => '66'),
-            array('plan_status_id' => '3', 'sequence_no' => '9', 'product_category_id' => '231'),
-            array('plan_status_id' => '3', 'sequence_no' => '11', 'product_category_id' => '235'),
-            array('plan_status_id' => '3', 'sequence_no' => '11', 'product_category_id' => '236'),
-            array('plan_status_id' => '3', 'sequence_no' => '12', 'product_category_id' => '1'),
+            array('plan_status_id' => '3', 'sequence_no' => '7', 'product_category_id' => '66'),
+            array('plan_status_id' => '3', 'sequence_no' => '8', 'product_category_id' => '231'),
+            array('plan_status_id' => '3', 'sequence_no' => '9', 'product_category_id' => '235'),
+            array('plan_status_id' => '3', 'sequence_no' => '10', 'product_category_id' => '236'),
+            array('plan_status_id' => '3', 'sequence_no' => '11', 'product_category_id' => '1'),
             /////////////////////////////* ONE TIME HENKOU JIKUGUMI *///////////////////////////
 
             /////////////////////////////* KOUZOU FINISHED JIKUGUMI *///////////////////////////

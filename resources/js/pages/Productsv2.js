@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Input, Form, Skeleton, Empty } from 'antd';
+import { Table, Input, Form, Select, Empty, Skeleton } from 'antd';
 import { connect } from 'react-redux';
 import { useProductsRetriever } from '../api/products';
-import { useMasterDepartment, useMasterSection, useMasterTeam } from '../api/master';
+import withSearch from '../utils/withSearch.jsx';
 import ManageProductsColumns from '../components/ProductsComponents/ManageProductsColumns';
-const Products = ({ title, ...rest }) => {
+const { Option } = Select;
+const Products = ({ props, ...rest }) => {
+	const { getColumnSearchProps } = rest;
+	const { title, master } = props;
 	const [form] = Form.useForm();
-	const [departments, setDepartments] = useMasterDepartment();
-	const [sections, setSections] = useMasterSection();
-	const [teams, setTeams] = useMasterTeam();
+	// const [master.departments, setmaster.departments] = useMasterDepartment();
+	// const [master.sections, setmaster.sections] = useMasterSection();
+	// const [master.teams, setmaster.teams] = useMasterTeam();
 	const [products, setProducts] = useProductsRetriever();
+	console.log(products);
 	const [editingKey, setEditingKey] = useState('');
+	// console.log(products);
 	const isEditing = (record) => record.key === editingKey;
 	useEffect(() => {
 		document.title = title || '';
@@ -80,27 +85,42 @@ const Products = ({ title, ...rest }) => {
 			</td>
 		);
 	};
-	const mergedColumns = ManageProductsColumns(save, cancel, edit, isEditing, editingKey).map(
-		(col) => {
-			if (!col.editable) {
-				return col;
-			}
-
-			return {
-				...col,
-				onCell: (record) => ({
-					record,
-					inputType: col.dataIndex === 'age' ? 'number' : 'text',
-					dataIndex: col.dataIndex,
-					title: col.title,
-					editing: isEditing(record)
-				})
-			};
+	const mergedColumns = ManageProductsColumns(
+		getColumnSearchProps,
+		save,
+		cancel,
+		edit,
+		isEditing,
+		editingKey
+	).map((col) => {
+		if (!col.editable) {
+			return col;
 		}
-	);
+
+		return {
+			...col,
+			onCell: (record) => ({
+				record,
+				inputType: col.dataIndex === 'age' ? 'number' : 'text',
+				dataIndex: col.dataIndex,
+				title: col.title,
+				editing: isEditing(record)
+			})
+		};
+	});
+
 	return (
 		<>
 			<h1 className="title-page">Product Lists</h1>
+			<Select
+				style={{ float: 'right', margin: '10px 30px 20px 0px', width: '200px' }}
+				defaultValue="jack">
+				<Option value="jack">All</Option>
+				<Option value="ngi">E-PLAN PROCESS</Option>
+				<Option value="lucy">KOUZOU FINISHED-WAKU</Option>
+				<Option value="jones">ONE TIME HENKOU</Option>
+				<Option value="tom">KOUZOU FINISHED-JIKU</Option>
+			</Select>
 			<Form form={form} component={false}>
 				<Table
 					components={{
@@ -112,13 +132,12 @@ const Products = ({ title, ...rest }) => {
 					scroll={{ x: 'max-content', y: 'calc(100vh - 24em)' }}
 					rowClassName="editable-row"
 					bordered
-					// loading={products.loading}
 					columns={mergedColumns}
 					locale={{
 						emptyText: products.loading ? <Skeleton active={true} /> : <Empty />
 					}}
 					dataSource={
-						products.loading
+						products.data.length <= 0
 							? []
 							: products.data.map((item, index) => {
 									// console.log(item);
@@ -136,14 +155,14 @@ const Products = ({ title, ...rest }) => {
 									return {
 										key: item.id,
 										department:
-											departments.length > 0
-												? departments.find((attr) => {
+											master.departments.length > 0
+												? master.departments.find((attr) => {
 														return (
 															attr.DepartmentCode ==
 															item.department_id
 														);
 												  })
-													? departments.find((attr) => {
+													? master.departments.find((attr) => {
 															return (
 																attr.DepartmentCode ==
 																item.department_id
@@ -152,11 +171,11 @@ const Products = ({ title, ...rest }) => {
 													: null
 												: null,
 										section:
-											sections.length > 0
-												? sections.find((attr) => {
+											master.sections.length > 0
+												? master.sections.find((attr) => {
 														return attr.SectionCode == item.section_id;
 												  })
-													? sections.find((attr) => {
+													? master.sections.find((attr) => {
 															return (
 																attr.SectionCode == item.section_id
 															);
@@ -164,11 +183,11 @@ const Products = ({ title, ...rest }) => {
 													: null
 												: null,
 										team:
-											teams.length > 0
-												? teams.find((attr) => {
+											master.teams.length > 0
+												? master.teams.find((attr) => {
 														return attr.TeamCode == item.team_id;
 												  })
-													? teams.find((attr) => {
+													? master.teams.find((attr) => {
 															return attr.TeamCode == item.team_id;
 													  }).TeamName
 													: null
@@ -187,6 +206,7 @@ const Products = ({ title, ...rest }) => {
 	);
 };
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo
+	userInfo: state.auth.userInfo,
+	master: state.auth.master
 });
-export default connect(mapStateToProps)(Products);
+export default connect(mapStateToProps)(withSearch(Products));
