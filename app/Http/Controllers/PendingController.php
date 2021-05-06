@@ -7,36 +7,9 @@ use Illuminate\Http\Request;
 
 class PendingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         date_default_timezone_set('Asia/Manila');
-        info($request);
         // function pending($item)
         // {
         //     return array(
@@ -65,7 +38,7 @@ class PendingController extends Controller
                     'id' => isset($request[$i]['pending_id']) ? $request[$i]['pending_id'] : null,
                     'customer_code' => $request[$i]['customer_code'],
                     'affected_id' =>  $request[$i]['affected_id'],
-                    // 'detail_id' =>  $request[$i]['detail_id'],
+                    'updated_by' =>  $request[$i]['updated_by'],
                     'status_id' => $request[$i]['id'],
                     'rev_no' =>  $request[$i]['rev_no'],
                     'start_date' =>  $request[$i]['start'],
@@ -79,7 +52,7 @@ class PendingController extends Controller
                 array_push($newPendings, array(
                     'customer_code' => $request[$i]['customer_code'],
                     'affected_id' =>  $request[$i]['affected_id'],
-                    // 'detail_id' =>  $request[$i]['detail_id'],
+                    'updated_by' =>  $request[$i]['updated_by'],
                     'status_id' => $request[$i]['id'],
                     'rev_no' =>  $request[$i]['rev_no'],
                     'start_date' =>  $request[$i]['start'],
@@ -91,8 +64,6 @@ class PendingController extends Controller
                 ));
             }
         }
-        // foreach ($existingPendings as $pending) {
-        // }
         if (count($existingPendings) > 0) {
             Pending::upsert(
                 $existingPendings,
@@ -111,17 +82,7 @@ class PendingController extends Controller
                 ]
             );
         }
-        // Pending::insert($newPendings);
-
-        // Pending::firstOrCreate($pendings);
     }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Pending  $pending
-     * @return \Illuminate\Http\Response
-     */
     public function showByCustomerCodeAffectedID($customer_code, $affected_id)
     {
         return Pending::select()->where('customer_code', $customer_code)->where('affected_id', $affected_id)->get();
@@ -130,40 +91,5 @@ class PendingController extends Controller
     public function showByCustomerCode($customer_code)
     {
         return Pending::select()->where('customer_code', $customer_code)->get();
-    }
-
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Pending  $pending
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Pending $pending)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Pending  $pending
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Pending $pending)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Pending  $pending
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Pending $pending)
-    {
-        //
     }
 }

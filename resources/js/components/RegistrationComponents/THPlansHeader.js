@@ -72,15 +72,15 @@ export const headers = (
 		align: 'center',
 		key: '7',
 		render: (text, record) => (
-			<Tooltip title={text}>
-				<Button
-					type="link"
-					// icon={<PlayCircleOutlined />}
-					onClick={() => handleClickPDF(event, record)}>
-					View PDF
-					<FilePdfTwoTone />
-				</Button>
-			</Tooltip>
+			// <Tooltip title={text}>
+			<Button
+				type="link"
+				// icon={<PlayCircleOutlined />}
+				onClick={() => handleClickPDF(event, record)}>
+				View PDF
+				<FilePdfTwoTone />
+			</Button>
+			// </Tooltip>
 		)
 	},
 	{
@@ -166,6 +166,7 @@ export const headers = (
 				<Tooltip title={text}>
 					<Button
 						type="primary"
+						disabled={record.start_date}
 						onClick={() => handleOnClickEvent(record, 'pending_start_date')}
 						shape="circle"
 						icon={<PlayCircleOutlined />}
@@ -254,12 +255,12 @@ export const headers = (
 	{
 		title: 'Details',
 		width: 115,
-		dataIndex: 'remarks',
+		dataIndex: 'logs',
 		render: (text, record) => (
 			<TextArea
 				value={text}
 				bordered={false}
-				onChange={(value) => handleInputText(value, 'remarks', record)}
+				onChange={(value) => handleInputText(value, 'logs', record)}
 				autoSize={{ minRows: 1, maxRows: 4 }}
 			/>
 		),
@@ -287,13 +288,6 @@ export const headers = (
 					/>
 				</Tooltip>
 			)
-	},
-	{
-		title: 'Days in Process',
-		width: 140,
-		dataIndex: 'daysinprocess',
-		align: 'center',
-		key: '15'
 	},
 	{
 		title: 'Start (Remake)',

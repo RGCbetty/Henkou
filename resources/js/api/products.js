@@ -28,17 +28,19 @@ export const useAffectedProductsRetriever = () => {
 	return [affectedProducts, setAffectedProducts];
 };
 export const useProductsRetriever = () => {
-	const [products, setProducts] = useState({ loading: true, data: [] });
+	const [products, setProducts] = useState({ loading: true, data: [], planstatus: [] });
 	useEffect(() => {
 		let mounted = true;
 		(async () => {
 			try {
 				const products = await Http.get(`/api/master/products`);
+				const planstatus = await Http.get(`/api/master/planstatuses`);
 
 				if (mounted) {
 					setProducts({
 						loading: false,
-						data: products.data
+						data: products.data,
+						planstatus: planstatus.data
 					});
 				}
 			} catch (error) {

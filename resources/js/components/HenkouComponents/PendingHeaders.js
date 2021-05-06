@@ -5,7 +5,7 @@ const { Option } = Select;
 
 const { TextArea } = Input;
 
-const PendingHeaders = (handleStatus, handleReasonInput, options) => [
+const PendingHeaders = (handleStatus, handleReasonInput, userInfo, options) => [
 	{
 		title: 'No.',
 		dataIndex: 'pending_index',
@@ -73,15 +73,22 @@ const PendingHeaders = (handleStatus, handleReasonInput, options) => [
 		key: '4',
 		dataIndex: 'borrow_details',
 		align: 'center',
-		render: (text, row) => (
-			<TextArea
-				value={text}
-				bordered={false}
-				disabled={row.resume || !row.start}
-				onChange={(value) => handleReasonInput(row, 'borrow_details', value)}
-				autoSize={{ minRows: 1, maxRows: 4 }}
-			/>
-		),
+		render: (text, row) => {
+			console.log(row);
+			return (
+				<TextArea
+					value={text}
+					bordered={false}
+					disabled={
+						row.resume ||
+						!row.start ||
+						(row.reason.match(/borrow form/gi) ? false : true)
+					}
+					onChange={(value) => handleReasonInput(row, 'borrow_details', value)}
+					autoSize={{ minRows: 1, maxRows: 4 }}
+				/>
+			);
+		},
 		width: 150
 	},
 	{
@@ -97,7 +104,7 @@ const PendingHeaders = (handleStatus, handleReasonInput, options) => [
 				<>
 					<Button
 						type="primary"
-						disabled={!row.start}
+						disabled={!row.start || row.updated_by !== userInfo.EmployeeCode}
 						onClick={() => handleStatus(row, 'resume', true)}
 						shape="circle"
 						icon={<PauseCircleOutlined />}

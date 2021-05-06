@@ -3,15 +3,21 @@ import Http from '../Http';
 import moment from 'moment';
 import durationAsString from '../utils/diffDate';
 export const completeDetailsStatus = async (record, affectedProducts, product, master, details) => {
+	const [firstDigit, secondDigit] = details ? details.rev_no.split('-') : '';
+	// const [firstIndex] = details.rev_no.split('-');
 	const statuses = await Http.get(
-		`/api/henkou/plans/${details.customer_code}/products/${details.id}`
+		// `/api/henkou/plans/${details.customer_code}/products/${record.affected_id}/logs`
+		`api/henkou/plans/${details.customer_code}/revision/${firstDigit}/product/${record.affected_id}`
+		// `/api/henkou/plans/${details.customer_code}/product/id/${record.affected_id}`
+		// `/api/henkou/plans/${details.customer_code}/products/${details.id}`
 	);
-	const filterByAffectedID = statuses.data.filter(
-		(item) => item.affected_id == record.affected_id
-	);
+	console.log(statuses);
+	// const filterByAffectedID = statuses.data.filter(
+	// 	(item) => item.affected_id == record.affected_id
+	// );
 
-	const statusWithProductKey = filterByAffectedID.map((item, index) => {
-		if (filterByAffectedID.length == index + 1) {
+	const statusWithProductKey = statuses.data.map((item, index) => {
+		if (statuses.data.length == index + 1) {
 			return {
 				disableHistory: false,
 				status_index: index + 1,

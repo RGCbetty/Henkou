@@ -59,8 +59,11 @@ class AffectedProductSeeder extends Seeder
             // PILE PLAN OR PILE PLAN (JAPAN)
 
             array('plan_status_id' => '2', 'sequence_no' => '16', 'product_category_id' => '279'),
+            array('plan_status_id' => '2', 'sequence_no' => '17', 'product_category_id' => '158'),
+            array('plan_status_id' => '2', 'sequence_no' => '18', 'product_category_id' => '161'),
 
-            array('plan_status_id' => '2', 'sequence_no' => '17', 'product_category_id' => '282'),
+            array('plan_status_id' => '2', 'sequence_no' => '19', 'product_category_id' => '282'),
+
             /* WALL DESIGN */
             // array('plan_status_id' => '2', 'sequence_no' => '16', 'product_category_id' => '162'),
 
@@ -73,7 +76,7 @@ class AffectedProductSeeder extends Seeder
             // array('plan_status_id' => '2', 'sequence_no' => '20', 'product_category_id' => '139'),
 
             // array('plan_status_id' => '2', 'sequence_no' => '22', 'product_category_id' => '238'),
-            array('plan_status_id' => '2', 'sequence_no' => '18', 'product_category_id' => '1'),
+            array('plan_status_id' => '2', 'sequence_no' => '20', 'product_category_id' => '1'),
             /////////////////////////////* KOUZOU FINISHED WAKU *///////////////////////////////
 
             /////////////////////////////* ONE TIME HENKOU JIKUGUMI *///////////////////////////
@@ -112,7 +115,9 @@ class AffectedProductSeeder extends Seeder
             array('plan_status_id' => '4', 'sequence_no' => '17', 'product_category_id' => '280'),
             array('plan_status_id' => '4', 'sequence_no' => '18', 'product_category_id' => '174'),
             array('plan_status_id' => '4', 'sequence_no' => '19', 'product_category_id' => '278'),
-            array('plan_status_id' => '4', 'sequence_no' => '20', 'product_category_id' => '1'),
+            array('plan_status_id' => '4', 'sequence_no' => '20', 'product_category_id' => '158'),
+            array('plan_status_id' => '4', 'sequence_no' => '21', 'product_category_id' => '161'),
+            array('plan_status_id' => '4', 'sequence_no' => '22', 'product_category_id' => '1'),
             /////////////////////////////* KOUZOU FINISHED JIKUGUMI *///////////////////////////
         );
         for ($i = 0; $i < count($plan_statuses); $i++) {

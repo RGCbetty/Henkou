@@ -113,11 +113,7 @@ const Base = ({ children, dispatch, ...rest }) => {
 					selectedKeys={[pathname]}>
 					{drawerItems
 						.filter((item) => {
-							if (
-								rest.userInfo.SectionCode !== '00465' &&
-								rest.userInfo.TeamCode !== '00133' &&
-								rest.userInfo.DepartmentCode !== '122'
-							) {
+							if (rest.userInfo.access_level == 2) {
 								if (item.title == 'Registration') {
 									return false;
 								}

@@ -139,6 +139,7 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 					value={text}
 					disabled={
 						!row.received_date ||
+						row.start_date ||
 						row.finished_date ||
 						row.assessment_id == 2 ||
 						row.assessment_id == 3 ||

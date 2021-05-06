@@ -256,7 +256,7 @@ const Home = ({ title, ...rest }) => {
 								) {
 									return 'table-row-on-going';
 								} else if (
-									record.pending.length > 0 &&
+									record.pendings.length > 0 &&
 									record.start_date &&
 									!record.finished_date
 								) {

@@ -18,15 +18,16 @@ class Status extends Model
         'created_at',
         'updated_at',
         'assessment_id',
-        'detail_id'
+        'detail_id',
+        'rev_no'
     ];
     public function details()
     {
         return $this->belongsTo(Detail::class, 'detail_id');
     }
-    public function pending()
+    public function pendings()
     {
-        return $this->hasMany(Pending::class);
+        return $this->hasMany(Pending::class, 'status_id');
     }
     public function affectedProduct()
     {

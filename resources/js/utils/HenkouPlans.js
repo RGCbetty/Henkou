@@ -34,8 +34,8 @@ export class Plans {
 							? ''
 							: durationAsString(stat.start_date, stat.finished_date),
 						pending_reason:
-							stat.pending.length !== 0
-								? stat.pending[stat.pending.length - 1].reason
+							stat.pendings.length !== 0
+								? stat.pendings[stat.pending.length - 1].reason
 								: '-',
 						invoice: plan.invoice,
 						th_no: plan.th_no,

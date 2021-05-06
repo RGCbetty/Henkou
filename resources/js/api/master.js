@@ -7,7 +7,7 @@ export const useMasterPlanStatuses = () => {
 		let mounted = true;
 		(async () => {
 			try {
-				const planstatus = await Http.get('/api/planstatuses');
+				const planstatus = await Http.get('/api/master/planstatuses');
 				if (mounted) {
 					setPlanStatuses(planstatus.data);
 				}

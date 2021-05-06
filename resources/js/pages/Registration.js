@@ -1,10 +1,9 @@
 /* Utilities */
-import React, { useEffect, useState, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Http from '../Http';
 import { connect } from 'react-redux';
 import moment from 'moment';
-import { isObject, toInteger } from 'lodash';
-import Highlighter from 'react-highlight-words';
+import { filter, isObject, toInteger } from 'lodash';
 import durationAsString from '../utils/diffDate';
 
 /* Component */
@@ -19,7 +18,6 @@ import { Modal, notification, Table, Input, Space, Button, Skeleton, Empty } fro
 import { useThPlansRetriever } from '../api/TH';
 // import { useActivePlanStatus, getPlanStatusByCustomerCode } from '../api/planstatus';
 import { fetchDetails } from '../api/details';
-import { SearchOutlined } from '@ant-design/icons';
 
 const Registration = ({ props, ...rest }) => {
 	const { getColumnSearchProps } = rest;
@@ -30,8 +28,9 @@ const Registration = ({ props, ...rest }) => {
 	}, [title]);
 
 	const [tableState, setTable] = useThPlansRetriever(userInfo);
-	const { plans, pagination, loading } = tableState;
+	const { plans, filterplans, pagination, loading } = tableState;
 	/* PENDING */
+	console.log(filterplans);
 	const [pendingState, setPendingState] = useState({
 		items: [],
 		isPendingModalVisible: false,
@@ -45,10 +44,6 @@ const Registration = ({ props, ...rest }) => {
 	const [isModalVisible, setIsModalVisible] = useState({
 		modal: false,
 		foundsList: []
-	});
-	const [state, setState] = useState({
-		searchedColumn: '',
-		searchText: ''
 	});
 	const [details, setDetails] = useState({
 		customer_code: '',
@@ -120,7 +115,6 @@ const Registration = ({ props, ...rest }) => {
 		}
 	};
 	const handleTableChange = (page, filters, sorter, extra) => {
-		console.log(filters, sorter, extra);
 		setTable({
 			...tableState,
 			pagination: {
@@ -154,151 +148,27 @@ const Registration = ({ props, ...rest }) => {
 			message: 'Borrow successfully!'
 		});
 	};
-	const handleRegister = async (details, row = null) => {
-		// if (details.method == 2) {
-		// 	console.log(details);
-		// } else if (details.method == 1) {
-		// 	console.log(details);
-		// }
+	const handleRegister = async (row = null) => {
 		if (row) {
-			// if (row.Method == '2') {
-			const affectedProducts = await Http.get(
-				`api/products/planstatus/${row.plan_status.id}`
-			);
+			const response = await Http.post('api/henkou/register/th', {
+				details,
+				row
+			});
 
-			if (affectedProducts.data.length > 0) {
-				const mappedProducts = affectedProducts.data.map((item) => {
-					return {
-						...item,
-						assessment_id: row ? row.th_assessment_id : null,
-						remarks: row ? row.remarks : null,
-						received_date: row ? row.RequestAcceptedDate : null,
-						start_date: row ? row.start_date : null,
-						finished_date: row ? row.finished_date : null
-					};
-				});
-				details['logs'] = row.remarks;
-				const response = await Http.post('/api/details', {
-					details,
-					product: mappedProducts,
-					row
-				});
-
-				if (response.status == 200) {
-					openNotificationWithIcon('success');
-				}
+			if (response.status == 200) {
+				openNotificationWithIcon('success');
 			}
+			// }
 		} else {
-			const affectedProducts = await Http.get(
-				`api/products/planstatus/${details.plan_status_id}`
-			);
-			if (affectedProducts.data.length > 0) {
-				const mappedProducts = affectedProducts.data.map((item) => {
-					return {
-						...item,
-						assessment_id: row ? row.th_assessment_id : null,
-						remarks: details ? details.logs : null,
-						received_date: row ? row.RequestAcceptedDate : null,
-						start_date: row ? row.start_date : null,
-						finished_date: row ? row.finished_date : null
-					};
-				});
-				const response = await Http.post('/api/details', {
-					details,
-					product: mappedProducts
-				});
+			const response = await Http.post('api/henkou/register/kouzou', {
+				details
+			});
 
-				if (response.status == 200) {
-					openNotificationWithIcon('success');
-				}
+			if (response.status == 200) {
+				openNotificationWithIcon('success');
 			}
 		}
-		// } else if (row.Method == '1') {
-		// }
 	};
-	// const getColumnSearchProps = (dataIndex, title) => ({
-	// 	filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-	// 		<div style={{ padding: 8 }}>
-	// 			<Input
-	// 				ref={inputRef}
-	// 				placeholder={`Search ${title}`}
-	// 				value={selectedKeys[0]}
-	// 				onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-	// 				onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
-	// 				style={{ width: 188, marginBottom: 8, display: 'block' }}
-	// 			/>
-	// 			<Space>
-	// 				<Button
-	// 					type="primary"
-	// 					onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
-	// 					icon={<SearchOutlined />}
-	// 					size="small"
-	// 					style={{ width: 90 }}>
-	// 					Search
-	// 				</Button>
-	// 				<Button
-	// 					onClick={() => handleReset(clearFilters)}
-	// 					size="small"
-	// 					style={{ width: 90 }}>
-	// 					Reset
-	// 				</Button>
-	// 				<Button
-	// 					type="link"
-	// 					size="small"
-	// 					onClick={() => {
-	// 						confirm({ closeDropdown: false });
-	// 						setState({
-	// 							searchText: selectedKeys[0],
-	// 							searchedColumn: dataIndex
-	// 						});
-	// 					}}>
-	// 					Filter
-	// 				</Button>
-	// 			</Space>
-	// 		</div>
-	// 	),
-	// 	filterIcon: (filtered) => (
-	// 		<SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
-	// 	),
-	// 	onFilter: (value, record) =>
-	// 		record[dataIndex]
-	// 			? record[dataIndex]
-	// 					.toString()
-	// 					.toLowerCase()
-	// 					.includes(value.toLowerCase())
-	// 			: '',
-	// 	onFilterDropdownVisibleChange: (visible) => {
-	// 		if (visible) {
-	// 			setTimeout(() => inputRef.current, 100);
-	// 		}
-	// 	},
-	// 	render: (text) =>
-	// 		state.searchedColumn === dataIndex ? (
-	// 			<Highlighter
-	// 				highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
-	// 				searchWords={[state.searchText]}
-	// 				autoEscape
-	// 				textToHighlight={text ? text.toString() : ''}
-	// 			/>
-	// 		) : (
-	// 			text
-	// 		)
-	// });
-
-	// const handleSearch = async (selectedKeys, confirm, dataIndex) => {
-	// 	confirm();
-	// 	setState({
-	// 		searchText: selectedKeys[0],
-	// 		searchedColumn: dataIndex
-	// 	});
-	// };
-	// const handleReset = async (clearFilters) => {
-	// 	clearFilters();
-	// 	setState({
-	// 		searchText: '',
-	// 		searchedColumn: ''
-	// 	});
-	// };
 	const handleOnClickEvent = async (row, key = null) => {
 		row[key] = moment()
 			.utc()
@@ -317,23 +187,23 @@ const Registration = ({ props, ...rest }) => {
 			})
 			.filter((item) => !item.finished_date);
 		setTable({
+			...tableState,
 			loading: false,
 			plans: toUpdatePlans,
 			pagination: {
-				...pagination,
-				total: toUpdatePlans.length,
-				showTotal: (total) => `Total ${total} items`
+				...pagination
 			}
 		});
 		if (key == 'finished_date') {
 			row.daysinprocess = moment(row.start_date).diff(row.finished_date, 'days');
-			await handleRegister(details, row);
+			await handleSpecs(row.ConstructionCode);
+			await handleRegister(row);
 		}
 		const response = await Http.post('/api/th/plan', row);
 	};
 	const handleInputText = (event, key, row) => {
 		row[key] = event.target.value;
-
+		setDetails({ ...details, [key]: row[key] });
 		const toUpdatePlans = plans.map((item, index) => {
 			if (item.ConstructionCode == row.ConstructionCode && item.RequestNo == row.RequestNo) {
 				return row;
@@ -341,6 +211,7 @@ const Registration = ({ props, ...rest }) => {
 			return item;
 		});
 		setTable({
+			...tableState,
 			loading: false,
 			plans: toUpdatePlans,
 			pagination: {
@@ -358,97 +229,79 @@ const Registration = ({ props, ...rest }) => {
 			return item;
 		});
 		setTable({
+			...tableState,
 			loading: false,
 			plans: toUpdatePlans,
 			pagination: {
 				...pagination
-				// 200 is mock data, you should read it from server
-				// total: data.totalCount,
 			}
 		});
+		await handlePlanDetails(row.ConstructionCode, row.RequestNo);
 		const response = await Http.post('/api/th/plan', row);
-
-		// if (key == 'th_action_id') {
-		// 	if (val == 4) {
-		// 		await handleRegister(details, row);
-		// 	}
-		// }
-		await handleSpecs(row.ConstructionCode, row.RequestNo);
 	};
 	/* TH Actions */
-	const handleSpecs = async (constructionCode, th_no = null) => {
+	const handlePlanDetails = async (constructionCode, th_no = null) => {
 		try {
 			const instance = Http.create({
 				baseURL: 'http://hrdapps68:8070/api',
 				withCredentials: false
 			});
-			// const planstatuses = await Http.get('/api/planstatuses');
-			const response = await Http.get(`/api/plandetails/${constructionCode}`);
+			const { data: plan, status } = await Http.get(`/api/plandetails/${constructionCode}`);
+			const [firstDigit, secondDigit] = plan.latest ? plan.latest.rev_no.split('-') : '';
 			const planstatus = await instance.get(
-				`pcms/planstatus/${constructionCode}/${
-					response.data.house.length > 0 ? response.data.house[0].Method : null
-				}`
+				`pcms/planstatus/${constructionCode}/${plan.details.method}`
 			);
-			const revision = await Http.get(`/api/details/${constructionCode}`);
-			const { plan_specs } = response.data;
-			let plan_specification = [];
-			for (let i = 0; i < plan_specs.length; i++) {
-				for (const property in plan_specs[i]) {
-					if (plan_specs[i][property] !== '0') {
-						plan_specification.push(property);
-					}
-				}
-			}
-			let splitRevision = revision.data ? revision.data.rev_no.split('-') : '';
-			let secondaryRevision = toInteger(splitRevision[1]);
-			if (response.data.house.length > 0 && response.data.construction_schedule.length > 0) {
+			// const { data: henkou } = await Http.get(`/api/details/${constructionCode}`);
+			// let splitRevision = henkou ? henkou.rev_no.split('-') : '';
+			// let secondaryRevision = toInteger(splitRevision[1]);
+			if (status == 200) {
+				console.log(details);
 				setDetails((prevState) => {
 					return {
 						...prevState,
 						customer_code: constructionCode,
-						house_code:
-							response.data.house.length > 0 ? response.data.house[0].NameCode : null,
-						house_type:
-							response.data.house.length > 0
-								? response.data.house[0].ConstructionTypeName
-								: null,
-						method:
-							response.data.house.length > 0 ? response.data.house[0].Method : null,
-						plan_no:
-							response.data.house.length > 0 ? response.data.house[0].PlanNo : null,
-						floors:
-							response.data.house.length > 0 ? response.data.house[0].Floors : null,
-						joutou_date:
-							response.data.construction_schedule.length > 0
-								? response.data.construction_schedule[0].ExpectedHouseRaisingDate
-								: null,
-						days_before_joutou: '',
-						kiso_start:
-							response.data.construction_schedule.length > 0
-								? response.data.construction_schedule[0].StartedFoundationWorkDate
-								: null,
-						before_kiso_start: '',
+						house_code: plan.details.house_code,
+						house_type: plan.details.house_type,
+						method: plan.details.method,
+						plan_no: plan.details.plan_no,
+						floors: plan.details.floors,
+						joutou_date: plan.details.joutou_date,
+						days_before_joutou: plan.details.days_before_joutou,
+						kiso_start: plan.details.kiso_start,
+						before_kiso_start: plan.details.before_kiso_start,
 						dodai_invoice:
-							response.data.invoice.length > 0
-								? response.data.invoice[0].InvoiceDodai
+							plan.invoice.length > 0
+								? plan.invoice.find((item) => item.InvoiceName.match(/DODAI/gi))
+									? plan.invoice.find((item) => item.InvoiceName.match(/DODAI/gi))
+											.Invoice
+									: null
 								: null,
 						['1F_panel_invoice']:
-							response.data.invoice.length > 0
-								? response.data.invoice[0].InvoicePanel
+							plan.invoice.length > 0
+								? plan.invoice.find((item) => item.InvoiceName.match(/PANEL/gi))
+									? plan.invoice.find((item) => item.InvoiceName.match(/PANEL/gi))
+											.Invoice
+									: null
 								: null,
 						['1F_hari_invoice']:
-							response.data.invoice.length > 0
-								? response.data.invoice[0].Invoice1FHari
+							plan.invoice.length > 0
+								? plan.invoice.find((item) => item.InvoiceName.match(/HARI/gi))
+									? plan.invoice.find((item) => item.InvoiceName.match(/HARI/gi))
+											.Invoice
+									: null
 								: null,
 						['1F_iq_invoice']:
-							response.data.invoice.length > 0
-								? response.data.invoice[0].Invoice1FIQ
+							plan.invoice.length > 0
+								? plan.invoice.find((item) => item.InvoiceName.match(/IQ/gi))
+									? plan.invoice.find((item) => item.InvoiceName.match(/IQ/gi))
+											.Invoice
+									: null
 								: null,
-						plan_specification: plan_specification.join(),
-						existing_rev_no: revision.data.rev_no,
-						rev_no: revision.data
-							? `${splitRevision[0]}-${secondaryRevision + 1}`
-							: '1-0',
+						plan_specification: plan.specification
+							.map((item) => item.SpecificationName)
+							.join(', '),
+						existing_rev_no: plan.latest ? plan.latest.rev_no : null,
+						rev_no: plan.latest ? `${firstDigit}-${toInteger(secondDigit) + 1}` : '1-0',
 						type_id: '',
 						reason_id: '',
 						logs: '',
@@ -463,236 +316,199 @@ const Registration = ({ props, ...rest }) => {
 						updated_by: userInfo.EmployeeCode
 					};
 				});
-				const detailsItem = await fetchDetails(constructionCode);
+				return plan;
+			}
+		} catch (err) {
+			console.error(err);
+		}
+	};
+	const consolidatedHenkouLogs = async (planDetails) => {
+		const [firstDigit, secondDigit] = planDetails ? planDetails.rev_no.split('-') : '';
+		// const [firstIndex] = planDetails.rev_no.split('-');
+		const fetchConsolidatedLogs = await Http.get(
+			`api/henkou/plans/${planDetails.customer_code}/revision/${firstDigit}`
+		);
+		const fetchConsolidatedPendingDetails = await Http.get(
+			`/api/henkou/plans/pending/${planDetails.customer_code}`
+		);
+		const productLogs = fetchConsolidatedLogs.data.map((item) => {
+			return {
+				...item,
+				rev_no: item.details ? item.details.rev_no : null,
+				product_name:
+					master.products.length > 0
+						? master.products.find((el) => {
+								const affectedProds = master.affectedProducts.find(
+									(el) => el.id == item.affected_id
+								)
+									? master.affectedProducts.find(
+											(el) => el.id == item.affected_id
+									  ).product_category_id
+									: null;
+								return affectedProds ? el.id == affectedProds : null;
+						  })
+							? master.products.find((el) => {
+									const affectedProds = master.affectedProducts.find(
+										(el) => el.id == item.affected_id
+									)
+										? master.affectedProducts.find(
+												(el) => el.id == item.affected_id
+										  ).product_category_id
+										: null;
+									return affectedProds ? el.id == affectedProds : null;
+							  }).product_name
+							: null
+						: null
+			};
+		});
+		const productPendingLogs = fetchConsolidatedPendingDetails.data.map((item) => {
+			return {
+				...item,
+				product_name:
+					master.products.length > 0
+						? master.products.find((el) => {
+								const affectedProds = master.affectedProducts.find(
+									(el) => el.id == item.affected_id
+								)
+									? master.affectedProducts.find(
+											(el) => el.id == item.affected_id
+									  ).product_category_id
+									: null;
+								return affectedProds ? el.id == affectedProds : null;
+						  })
+							? master.products.find((el) => {
+									const affectedProds = master.affectedProducts.find(
+										(el) => el.id == item.affected_id
+									)
+										? master.affectedProducts.find(
+												(el) => el.id == item.affected_id
+										  ).product_category_id
+										: null;
+									return affectedProds ? el.id == affectedProds : null;
+							  }).product_name
+							: null
+						: null
+			};
+		});
+		const henkouLogs = [
+			{
+				log: details.logs,
+				updated_by: details.updated_by,
+				created_at: details.created_at,
+				rev_no: details.rev_no
+			},
+			...productLogs
+		];
+		const mergeLogs = [...productLogs, ...productPendingLogs];
+		setLogs(
+			henkouLogs
+				.map((item) => {
+					return {
+						id: item.id,
+						borrow_details: item.borrow_details,
+						rev_no: item.rev_no,
+						product_name: item.product_name,
+						updated_by: item.updated_by,
+						log: item.log,
+						created_at: item.created_at
+					};
+				})
+				.sort((a, b) => moment(a.created_at).diff(b.created_at))
+		);
+	};
+	const handleSpecs = async (constructionCode, th_no = null) => {
+		try {
+			const plan = await handlePlanDetails(constructionCode);
+			if (plan.latest) {
+				const fetchStatus = await Http.get(
+					`/api/henkou/plans/${plan.latest.customer_code}/products/${plan.latest.id}`
+				);
+				await consolidatedHenkouLogs(plan.latest);
+				setStatus(fetchStatus.data);
+				const stats = fetchStatus.data.find(
+					(el) =>
+						(!el.assessment_id || el.assessment_id == 1) &&
+						(el.affected_id == 5 ||
+							el.affected_id == 23 ||
+							el.affected_id == 34 ||
+							el.affected_id == 54) &&
+						el.received_date &&
+						el.start_date &&
+						el.finished_date
+				);
 				setDetails((prevState) => {
 					return {
 						...prevState,
-						...detailsItem
+						rev_no: stats ? '2-0' : prevState.rev_no
 					};
 				});
-				if (detailsItem) {
-					const fetchStatus = await Http.get(
-						`/api/henkou/plans/${detailsItem.customer_code}/products/${detailsItem.id}`
-					);
-					const fetchConsolidatedLogs = await Http.get(
-						`/api/henkou/plans/${detailsItem.customer_code}/logs`
-					);
-					const fetchConsolidatedPendingDetails = await Http.get(
-						`/api/henkou/plans/pending/${detailsItem.customer_code}`
-					);
-					const productLogs = fetchConsolidatedLogs.data.map((item) => {
-						return {
-							...item,
-							rev_no: item.details ? item.details.rev_no : null,
-							product_name:
-								master.products.length > 0
-									? master.products.find((el) => {
-											const affectedProds = master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-											)
-												? master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-												  ).product_category_id
-												: null;
-											return affectedProds ? el.id == affectedProds : null;
-									  })
-										? master.products.find((el) => {
-												const affectedProds = master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-												)
-													? master.affectedProducts.find(
-															(el) => el.id == item.affected_id
-													  ).product_category_id
-													: null;
-												return affectedProds
-													? el.id == affectedProds
-													: null;
-										  }).product_name
-										: null
-									: null
-						};
-					});
-					const productPendingLogs = fetchConsolidatedPendingDetails.data.map((item) => {
-						return {
-							...item,
-							product_name:
-								master.products.length > 0
-									? master.products.find((el) => {
-											const affectedProds = master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-											)
-												? master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-												  ).product_category_id
-												: null;
-											return affectedProds ? el.id == affectedProds : null;
-									  })
-										? master.products.find((el) => {
-												const affectedProds = master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-												)
-													? master.affectedProducts.find(
-															(el) => el.id == item.affected_id
-													  ).product_category_id
-													: null;
-												return affectedProds
-													? el.id == affectedProds
-													: null;
-										  }).product_name
-										: null
-									: null
-						};
-					});
-
-					const mergeLogs = [...productLogs, ...productPendingLogs];
-					setLogs(
-						mergeLogs
-							.map((item) => {
-								return {
-									id: item.id,
-									borrow_details: item.borrow_details,
-									rev_no: item.rev_no,
-									product_name: item.product_name,
-									log: item.log,
-									created_at: item.created_at
-								};
-							})
-							.sort((a, b) => moment(a.created_at).diff(b.created_at))
-					);
-					setStatus(fetchStatus.data);
-
-					const onGoingProductRow =
-						master.products.length > 0
-							? master.products.find((mp) => {
-									const affectedProds = master.affectedProducts.find((ap) => {
-										const stats = fetchStatus.data.find(
-											(el) =>
-												(!el.assessment_id || el.assessment_id == 1) &&
-												el.received_date &&
-												el.start_date &&
-												!el.finished_date
-										)
-											? fetchStatus.data.find(
-													(el) =>
-														(!el.assessment_id ||
-															el.assessment_id == 1) &&
-														el.received_date &&
-														el.start_date &&
-														!el.finished_date
-											  ).affected_id
-											: null;
-										return stats ? ap.id == stats : null;
-									})
-										? master.affectedProducts.find((ap) => {
-												const stats = fetchStatus.data.find(
-													(el) =>
-														(!el.assessment_id ||
-															el.assessment_id == 1) &&
-														el.received_date &&
-														el.start_date &&
-														!el.finished_date
-												)
-													? fetchStatus.data.find(
-															(el) =>
-																(!el.assessment_id ||
-																	el.assessment_id == 1) &&
-																el.received_date &&
-																el.start_date &&
-																!el.finished_date
-													  ).affected_id
-													: null;
-												return stats ? ap.id == stats : null;
-										  }).product_category_id
+				const onGoingProductRow =
+					master.products.length > 0
+						? master.products.find((mp) => {
+								const affectedProds = master.affectedProducts.find((ap) => {
+									const stats = fetchStatus.data.find(
+										(el) =>
+											(!el.assessment_id || el.assessment_id == 1) &&
+											el.received_date &&
+											el.start_date &&
+											!el.finished_date
+									)
+										? fetchStatus.data.find(
+												(el) =>
+													(!el.assessment_id || el.assessment_id == 1) &&
+													el.received_date &&
+													el.start_date &&
+													!el.finished_date
+										  ).affected_id
 										: null;
-									return affectedProds ? mp.id == affectedProds : null;
-							  })
-							: null;
-
-					const notYetStartedProductRow =
-						master.products.length > 0
-							? master.products.find((mp) => {
-									const affectedProds = master.affectedProducts.find((ap) => {
-										const stats = fetchStatus.data.find(
-											(el) =>
-												(!el.assessment_id || el.assessment_id == 1) &&
-												el.received_date &&
-												!el.start_date &&
-												!el.finished_date
-										)
-											? fetchStatus.data.find(
-													(el) =>
-														(!el.assessment_id ||
-															el.assessment_id == 1) &&
-														el.received_date &&
-														!el.start_date &&
-														!el.finished_date
-											  ).affected_id
-											: null;
-										return stats ? ap.id == stats : null;
-									})
-										? master.affectedProducts.find(
-												(ap) =>
-													ap.id ==
-													fetchStatus.data.find(
+									return stats ? ap.id == stats : null;
+								})
+									? master.affectedProducts.find((ap) => {
+											const stats = fetchStatus.data.find(
+												(el) =>
+													(!el.assessment_id || el.assessment_id == 1) &&
+													el.received_date &&
+													el.start_date &&
+													!el.finished_date
+											)
+												? fetchStatus.data.find(
 														(el) =>
 															(!el.assessment_id ||
 																el.assessment_id == 1) &&
 															el.received_date &&
-															!el.start_date &&
+															el.start_date &&
 															!el.finished_date
-													).affected_id
-										  ).product_category_id
+												  ).affected_id
+												: null;
+											return stats ? ap.id == stats : null;
+									  }).product_category_id
+									: null;
+								return affectedProds ? mp.id == affectedProds : null;
+						  })
+						: null;
+
+				const notYetStartedProductRow =
+					master.products.length > 0
+						? master.products.find((mp) => {
+								const affectedProds = master.affectedProducts.find((ap) => {
+									const stats = fetchStatus.data.find(
+										(el) =>
+											(!el.assessment_id || el.assessment_id == 1) &&
+											el.received_date &&
+											!el.start_date &&
+											!el.finished_date
+									)
+										? fetchStatus.data.find(
+												(el) =>
+													(!el.assessment_id || el.assessment_id == 1) &&
+													el.received_date &&
+													!el.start_date &&
+													!el.finished_date
+										  ).affected_id
 										: null;
-									return affectedProds ? mp.id == affectedProds : null;
-							  })
-							: null;
-
-					const affectedProds = master.affectedProducts.find((ap) => {
-						const stats = fetchStatus.data.find(
-							(el) =>
-								(!el.assessment_id || el.assessment_id == 1) &&
-								el.received_date &&
-								el.start_date &&
-								!el.finished_date
-						)
-							? fetchStatus.data.find(
-									(el) =>
-										(!el.assessment_id || el.assessment_id == 1) &&
-										el.received_date &&
-										el.start_date &&
-										!el.finished_date
-							  ).affected_id
-							: null;
-						return stats ? ap.id == stats : null;
-					});
-
-					if (notYetStartedProductRow) {
-						const affectedDepartment = master.departments.find((attr) => {
-							return attr.DepartmentCode == notYetStartedProductRow.department_id;
-						});
-						console.log(affectedDepartment);
-						return {
-							status: 'notyetstarted',
-							msg: notYetStartedProductRow.product_name,
-							dept: affectedDepartment.DepartmentName
-						};
-					} else if (onGoingProductRow.product_name) {
-						const pendingResource = await Http.get(
-							`api/henkou/plans/pending/${detailsItem.customer_code}/${affectedProds.id}`
-						);
-						if (pendingResource.data.length == 0) {
-							if (pendingState.items.length == 0) {
-								let pending = [];
-								for (let i = 0; i < 1; i++) {
-									pending.push({
-										pending_id: null,
-										pending_index: i + 1,
-										rev_no: detailsItem.rev_no,
-										start: '',
-										reason: '',
-										resume: '',
-										duration: '',
-										product_key: master.affectedProducts.find(
+									return stats ? ap.id == stats : null;
+								})
+									? master.affectedProducts.find(
 											(ap) =>
 												ap.id ==
 												fetchStatus.data.find(
@@ -700,45 +516,104 @@ const Registration = ({ props, ...rest }) => {
 														(!el.assessment_id ||
 															el.assessment_id == 1) &&
 														el.received_date &&
+														!el.start_date &&
 														!el.finished_date
 												).affected_id
-										).product_category_id
-									});
-								}
-								setPendingState({
-									...pendingState,
-									items: pending,
-									row: { ...onGoingProductRow, affected_id: affectedProds.id }
+									  ).product_category_id
+									: null;
+								return affectedProds ? mp.id == affectedProds : null;
+						  })
+						: null;
+
+				const affectedProds = master.affectedProducts.find((ap) => {
+					const stats = fetchStatus.data.find(
+						(el) =>
+							(!el.assessment_id || el.assessment_id == 1) &&
+							el.received_date &&
+							el.start_date &&
+							!el.finished_date
+					)
+						? fetchStatus.data.find(
+								(el) =>
+									(!el.assessment_id || el.assessment_id == 1) &&
+									el.received_date &&
+									el.start_date &&
+									!el.finished_date
+						  ).affected_id
+						: null;
+					return stats ? ap.id == stats : null;
+				});
+				if (notYetStartedProductRow) {
+					const affectedDepartment = master.departments.find((attr) => {
+						return attr.DepartmentCode == notYetStartedProductRow.department_id;
+					});
+					console.log(affectedDepartment);
+					return {
+						status: 'notyetstarted',
+						msg: notYetStartedProductRow.product_name,
+						dept: affectedDepartment.DepartmentName
+					};
+				} else if (onGoingProductRow) {
+					const pendingResource = await Http.get(
+						`api/henkou/plans/pending/${plan.latest.customer_code}/${affectedProds.id}`
+					);
+					if (pendingResource.data.length == 0) {
+						if (pendingState.items.length == 0) {
+							let pending = [];
+							for (let i = 0; i < 1; i++) {
+								pending.push({
+									pending_id: null,
+									pending_index: i + 1,
+									rev_no: plan.latest.rev_no,
+									start: '',
+									reason: '',
+									resume: '',
+									duration: '',
+									product_key: master.affectedProducts.find(
+										(ap) =>
+											ap.id ==
+											fetchStatus.data.find(
+												(el) =>
+													(!el.assessment_id || el.assessment_id == 1) &&
+													el.received_date &&
+													!el.finished_date
+											).affected_id
+									).product_category_id
 								});
 							}
-						} else if (pendingState.items.length == 0) {
 							setPendingState({
 								...pendingState,
-								row: { ...onGoingProductRow, affected_id: affectedProds.id },
-								items: pendingResource.data.map((item, index) => {
-									return {
-										pending_id: item.id,
-										pending_index: index + 1,
-										start: item.start_date,
-										resume: item.resume_date,
-										...item,
-										id: item.status_id
-									};
-								})
+								items: pending,
+								row: { ...onGoingProductRow, affected_id: affectedProds.id }
 							});
 						}
-						const affectedDepartment = master.departments.find((attr) => {
-							return attr.DepartmentCode == onGoingProductRow.department_id;
+					} else if (pendingState.items.length == 0) {
+						setPendingState({
+							...pendingState,
+							row: { ...onGoingProductRow, affected_id: affectedProds.id },
+							items: pendingResource.data.map((item, index) => {
+								return {
+									pending_id: item.id,
+									pending_index: index + 1,
+									start: item.start_date,
+									resume: item.resume_date,
+									...item,
+									id: item.status_id
+								};
+							})
 						});
-						return {
-							status: 'ongoing',
-							msg: onGoingProductRow.product_name,
-							dept: affectedDepartment.DepartmentName
-						};
 					}
+					const affectedDepartment = master.departments.find((attr) => {
+						return attr.DepartmentCode == onGoingProductRow.department_id;
+					});
+					return {
+						status: 'ongoing',
+						msg: onGoingProductRow.product_name,
+						dept: affectedDepartment.DepartmentName
+					};
 				}
-				return { status: 'found', msg: 'No existing henkou!' };
 			}
+			return { status: 'found', msg: 'No existing henkou!' };
 		} catch (error) {
 			console.error(error);
 		}
@@ -932,7 +807,53 @@ const Registration = ({ props, ...rest }) => {
 		<>
 			{userInfo.SectionCode == '00465' && userInfo.TeamCode == '00133' ? (
 				<>
-					<div className="title-page">Register TH Plans</div>
+					<div style={{ display: 'flex', justifyContent: 'space-between' }}>
+						<div className="title-page">Register TH Plans</div>
+
+						{/* <Title
+									level={4}
+									style={{
+										margin: 0,
+										display: 'inline-block',
+										verticalAlign: 'top'
+									}}>
+									Henkou Status
+								</Title> */}
+						<div
+							style={{
+								display: 'inline-block',
+								verticalAlign: 'right',
+								margin: '10px 10px 10px 0px'
+
+								// textAlign: 'right'
+							}}>
+							<Input.Search
+								style={{ width: 300 }}
+								placeholder="Enter Customer Code/House Code"
+								allowClear
+								onSearch={(nameSearch) =>
+									setTable({
+										...tableState,
+										filterplans: nameSearch
+											? plans.filter(
+													(person) =>
+														person.ConstructionCode.includes(
+															nameSearch
+														) ||
+														person.NameCode.match(
+															new RegExp(`${nameSearch}`, 'gi')
+														)
+											  )
+											: [],
+										pagination: {
+											...pagination,
+											total: nameSearch ? filterplans.length : plans.length
+										}
+									})
+								}></Input.Search>
+						</div>
+					</div>
+
 					<Table
 						style={{ margin: '0 10px' }}
 						size="small"
@@ -948,7 +869,7 @@ const Registration = ({ props, ...rest }) => {
 						locale={{
 							emptyText: loading ? <Skeleton active={true} /> : <Empty />
 						}}
-						dataSource={loading ? [] : plans}
+						dataSource={loading ? [] : filterplans.length > 0 ? filterplans : plans}
 						pagination={pagination}
 						scroll={{ x: 'max-content', y: 'calc(100vh - 20em)' }}
 						onChange={handleTableChange}

@@ -13,6 +13,10 @@ class AffectedProduct extends Model
     {
         return $this->belongsTo(ProductCategory::class, 'product_category_id');
     }
+    public function pendings()
+    {
+        return $this->hasMany(Pending::class, 'affected_id');
+    }
     // public function planStatus()
     // {
     //     return $this->belongsTo(PlanStatus::class, 'plan_status_id');

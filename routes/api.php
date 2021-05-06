@@ -63,10 +63,15 @@ Route::middleware('auth:sanctum')->group(function () {
     /* Master */
     /* Master */
     /* Henkou Details Record */
-    Route::get('/henkou/plans/{customer_code}/products/{affected_id}/logs', 'HenkouController@showStatusByAffectedID');
-
+    Route::get('/henkou/plans/{customer_code}/products/{affected_id}/logs', 'HenkouController@showProductLogsByAffectedID');
+    Route::get('/henkou/plans/{customer_code}/product/id/{affected_id}', 'HenkouController@showStatusByAffectedID');
     Route::get('/details/{customer_code}', 'DetailController@latest');
+
+    /* REGISTRATION */
     Route::post('/details', 'HenkouController@store');
+    Route::post('/henkou/register/kouzou', 'HenkouController@registerKouzou');
+    Route::post('/henkou/register/th', 'HenkouController@registerTh');
+    /* REGISTRATION */
     // Route::get('/product', 'ProductCategoryController@index');
     Route::post('/productcategories', 'ProductCategoryController@update');
 
@@ -74,6 +79,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/henkou/plans', 'HenkouController@home');
     Route::get('/henkou/plans/{customer_code}/products/{detail_id}', 'HenkouController@showStatusByDetailID');
     Route::get('/henkou/plans/{customer_code}/logs', 'HenkouController@showByCustomerCode');
+
+    Route::get('/henkou/plans/{customer_code}/revision/{revision_index}', 'HenkouController@henkouLogs');
+    Route::get('/henkou/plans/{customer_code}/revision/{revision_index}/product/{affected_id}', 'HenkouController@products');
+
 
     /* ALL LOGS WITH SAME CUSTOMER CODE */
     /*  */

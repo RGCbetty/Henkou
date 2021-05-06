@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import {
 	Form,
@@ -7,7 +7,6 @@ import {
 	Input,
 	Button,
 	Select,
-	Typography,
 	DatePicker,
 	Modal,
 	Upload,
@@ -18,20 +17,14 @@ import {
 	message
 } from 'antd';
 import { DownOutlined, UpOutlined, UploadOutlined, SnippetsOutlined } from '@ant-design/icons';
-
-import { planStatusHeaders } from '../RegistrationComponents/PlanStatus(PCMS)Header';
 import PendingHeaders from '../HenkouComponents/PendingHeaders';
-import headers from '../RegistrationComponents/HenkouStatusHeader';
 import PlanDetails from '../RegistrationComponents/PlanDetails';
-
 import moment from 'moment';
 import Http from '../../Http';
-import TextLoop from 'react-text-loop';
 
 const { Search, TextArea } = Input;
 const dateFormat = 'YYYY/MM/DD';
 const { Option } = Select;
-const { Title } = Typography;
 const ManualContainer = ({
 	handleSpecs,
 	details,
@@ -44,14 +37,6 @@ const ManualContainer = ({
 	...rest
 }) => {
 	const { master } = rest;
-	/* PCMS */
-	// const [assignedProductCategoriesPCMS, setPlanDetail] = useState([]);
-	// const [productCategoriesPCMS, setProductCategoriesPCMS] = useActivePlanStatus();
-	// const [userProductCategoriesPCMS, setUserProducts] = useState([]);
-	// const [subProductPCMS, setSubProduct] = useState(false);
-	// const [loading, setLoading] = useState(false);
-	// const [visible, setVisible] = useState(false);
-	/* PCMS */
 	const [henkouLoading, setHenkouLoading] = useState(false);
 	const [expand, setExpand] = useState(false);
 	const [showDetails, setDetails] = useState(false);
@@ -79,12 +64,7 @@ const ManualContainer = ({
 			notification[type]({
 				description: result.msg
 			});
-			// message.success('Not yet started! ' + result.msg, 0);
 		} else if (result.status == 'ongoing') {
-			// notification[type]({
-			// 	message: 'On-going!',
-			// 	description: result.msg
-			// });
 			setExistState({
 				...existState,
 				showDetails: false,
@@ -94,12 +74,7 @@ const ManualContainer = ({
 				showAlert: true,
 				toggleBorrowBtn: false
 			});
-
-			// message.info('Ongoing! ' + result.msg, 0);
 		} else if (result.status == 'notyetstarted') {
-			// notification[type]({
-			// 	description: result.msg
-			// });
 			setExistState({
 				...existState,
 				message: 'Not yet started!',
@@ -108,8 +83,6 @@ const ManualContainer = ({
 				showAlert: true,
 				showDetails: false
 			});
-
-			// message.info('Not yet started! ' + result.msg, 0);
 		} else {
 			notification[type]({
 				message: 'Plan not registered!'
@@ -143,7 +116,6 @@ const ManualContainer = ({
 						: (setExpand(false),
 						  setDetails(false),
 						  openNotificationWithIcon('info', result));
-					// setExpand(true);
 				} else {
 					if (keys == 'reason_id') {
 						if (value == 0) {
@@ -165,15 +137,19 @@ const ManualContainer = ({
 				}
 			}
 		} catch (err) {
-			// console.error(err);
 			message.error('Please input valid code.');
 		}
 		setHenkouLoading(false);
 	};
-	const handleRegisterAndUpload = async (details) => {
-		/* Coming from Registration.js */
-		await handleRegister(details);
-		/* Coming from Registration.js */
+	console.log(pending, 'testestsetestes!!!!!!!!!!');
+	const handleRegisterAndUpload = async () => {
+		// await handleRegister(details);
+		const { status } = await Http.post('api/henkou/register/kouzou', {
+			details
+		});
+		if (status == 200) {
+			message.success('Successfully Registered');
+		}
 		const { fileList } = upload;
 		const formData = new FormData();
 		fileList.forEach((file) => {
@@ -183,7 +159,6 @@ const ManualContainer = ({
 			setUpload({
 				status: true
 			});
-			// You can use any AJAX library you like
 			try {
 				const response = await Http.get(`/api/details/${details.customer_code}`);
 				const uploadResponse = await Http.post(
@@ -282,41 +257,22 @@ const ManualContainer = ({
 							</Form.Item>
 						</Col>
 						{existState.showAlert && (
-							<Col span={6}>
-								{/* <Form.Item
-									name={`Product`}
-									style={{ marginBottom: '0px' }}
-									rules={[
-										{
-											required: true,
-											message: 'Input something!'
-										}
-									]}> */}
+							<Col span={8}>
 								<Alert
 									banner
-									message={
-										<TextLoop mask>
-											<div>{existState.message}</div>
-											<div>{existState.description}</div>
-											<div>{existState.department}</div>
-											{/* <div>Notice message three</div>
-											<div>Notice message four</div> */}
-										</TextLoop>
+									message={<span>{existState.message}</span>}
+									description={
+										<span>
+											{existState.description}
+											<br />
+											{existState.department}
+										</span>
 									}
-									// description={existState.description}
 								/>
-								{/* <Alert
-									message={existState.message}
-									description={existState.description}
-									type="info"
-									closeText="Close Now"
-								/> */}
-								{/* </Form.Item> */}
 							</Col>
 						)}
-
 						<Col
-							offset={existState.message ? 6 : 12}
+							offset={existState.message ? 4 : 12}
 							span={4}
 							style={{ textAlign: 'right' }}>
 							<DatePicker
@@ -394,11 +350,9 @@ const ManualContainer = ({
 													onChange={(value, event) =>
 														handleEvent(value, 'type_id')
 													}>
-													{master.types.map((item, index) => {
+													{master.types.map((item) => {
 														return (
-															<Option
-																value={item.type_id}
-																key={index}>
+															<Option value={item.id} key={item.id}>
 																{item.type_name}
 															</Option>
 														);
@@ -418,11 +372,9 @@ const ManualContainer = ({
 													onChange={(value, event) =>
 														handleEvent(value, 'reason_id')
 													}>
-													{master.reasons.map((item, index) => {
+													{master.reasons.map((item) => {
 														return (
-															<Option
-																value={item.reason_id}
-																key={index}>
+															<Option value={item.id} key={item.id}>
 																{item.reason_name}
 															</Option>
 														);
@@ -447,7 +399,7 @@ const ManualContainer = ({
 															return (
 																<Option
 																	value={item.DepartmentCode}
-																	key={index}>
+																	key={item.DepartmentCode}>
 																	{item.DepartmentName}
 																</Option>
 															);
@@ -500,7 +452,7 @@ const ManualContainer = ({
 											<Button
 												type="primary"
 												// htmlType="submit"
-												onClick={() => handleRegisterAndUpload(details)}>
+												onClick={() => handleRegisterAndUpload()}>
 												Save
 											</Button>
 											{/* <Button
@@ -651,6 +603,7 @@ const ManualContainer = ({
 						columns={PendingHeaders(
 							pending.actions.handlePendingStatus,
 							pending.actions.handleReasonInput,
+							rest.userInfo,
 							{
 								data: pending.state.options,
 								onFocus: pending.actions.onFocus,

@@ -48,11 +48,11 @@ const HenkouContainer = (props) => {
 	const [pendingItems, setPendingItems] = useState([]);
 	const [editedPendingItems, setEditedPendingItems] = useState([]);
 	const [actionItems, setActionItems] = useState([]);
-
 	const [options, setOptions] = useState([]);
 	const [form] = Form.useForm();
 	/* HENKOU PROCESS */
 	// const uniqueProducts = _.uniqBy(concatenatedProducts, (obj) => obj.product_key);
+
 	const checkIfOwner = (record) => {
 		if (
 			record.department == rest.userInfo.DepartmentName
@@ -186,9 +186,11 @@ const HenkouContainer = (props) => {
 						pending_index: i + 1,
 						rev_no: details.rev_no,
 						customer_code: details.customer_code,
+						updated_by: rest.userInfo.EmployeeCode,
 						start: '',
 						reason: '',
 						remarks: '',
+						borrow_details: '',
 						resume: '',
 						duration: '',
 						...record
@@ -244,8 +246,11 @@ const HenkouContainer = (props) => {
 			pending_index: getMaxPendingID() + 1,
 			rev_no: details.rev_no,
 			customer_code: details.customer_code,
+			updated_by: rest.userInfo.EmployeeCode,
 			start: '',
 			reason: '',
+			borrow_details: '',
+			remarks: '',
 			resume: '',
 			duration: '',
 			...record
@@ -355,15 +360,16 @@ const HenkouContainer = (props) => {
 			pendingItems.some((row) => row.reason.match(/borrow/gi) && !row.pending_id)
 		) {
 			events.handleBorrow(details, actionItems[getMaxActionID() - 1]);
+			await events.consolidatedHenkouLogs(details);
 		} else {
 			events.handleUpdateWithDetails(details, actionItems[getMaxActionID() - 1]);
 		}
 		if (insertNewPendingItems.length > 0) {
 			const response = await Http.post('/api/henkou/plans/pending', insertNewPendingItems);
-			await events.refreshHenkouLogs();
+			await events.consolidatedHenkouLogs(details);
 		} else if (editedPendingItems.length > 0) {
 			const response = await Http.post('/api/henkou/plans/pending', editedPendingItems);
-			await events.refreshHenkouLogs();
+			await events.consolidatedHenkouLogs(details);
 		}
 
 		// }
@@ -483,7 +489,7 @@ const HenkouContainer = (props) => {
 
 						{expand ? (
 							PlanCustomerInformation(details).map((item, index) => (
-								<Col style={{ textAlign: item.textAlign }} span={6} key={index}>
+								<Col style={{ textAlign: item.textAlign }} span={8} key={index}>
 									<Form.Item
 										style={{ marginBottom: '0px' }}
 										rules={[
@@ -535,9 +541,11 @@ const HenkouContainer = (props) => {
 																		.utc(stat.created_at)
 																		.format(
 																			'YYYY-MM-DD, h:mm:ss a'
-																		)}  ${stat.product_name}(${
-																		stat.rev_no
-																	}):   ${stat.log}`;
+																		)} Registered By:${
+																		stat.updated_by
+																	}(${stat.rev_no}):   ${
+																		stat.log
+																	}`;
 																} else {
 																	return `\n${moment
 																		.utc(stat.created_at)
@@ -592,7 +600,8 @@ const HenkouContainer = (props) => {
 					{expand ? (
 						<div style={{ padding: 5 }}>
 							<div style={{ display: 'flex', justifyContent: 'space-between' }}>
-								<Title
+								<div className="title-page">Henkou Status</div>
+								{/* <Title
 									level={4}
 									style={{
 										margin: 0,
@@ -600,7 +609,7 @@ const HenkouContainer = (props) => {
 										verticalAlign: 'top'
 									}}>
 									Henkou Status
-								</Title>
+								</Title> */}
 								<div
 									style={{
 										display: 'inline-block',
@@ -622,12 +631,12 @@ const HenkouContainer = (props) => {
 									status,
 									pendingItems
 								)}
+								summary={(pageData) => console.log(pageData)}
 								bordered
 								pagination={false}
 								dataSource={status.map((item) => {
 									return {
 										...item,
-
 										days_in_process: isNaN(
 											moment(item.start_date).diff(item.finished_date)
 										)
@@ -648,6 +657,35 @@ const HenkouContainer = (props) => {
 											: null
 									};
 								})}
+								summary={() => {
+									if (logs.length > 0) {
+										const ReversedLogs = [...logs].reverse();
+										const firstProcess = logs.find((item) => item.start_date);
+										const finalChecking = ReversedLogs.findIndex(
+											(item) =>
+												item.affected_id == 5 ||
+												item.affected_id == 23 ||
+												item.affected_id == 34 ||
+												item.affected_id == 54
+										);
+										const totalDuration = durationAsString(
+											firstProcess ? firstProcess.start_date : 0,
+											ReversedLogs[finalChecking].finished_date
+										);
+										return (
+											ReversedLogs[finalChecking].finished_date && (
+												<Table.Summary.Row>
+													<Table.Summary.Cell align="center" colSpan={2}>
+														<Text keyboard> Total Duration</Text>
+													</Table.Summary.Cell>
+													<Table.Summary.Cell align="center" colSpan={5}>
+														{totalDuration}
+													</Table.Summary.Cell>
+												</Table.Summary.Row>
+											)
+										);
+									}
+								}}
 								scroll={{ x: 'max-content' }}
 							/>
 						</div>
@@ -685,11 +723,16 @@ const HenkouContainer = (props) => {
 					{/* <HenkouTable headers={PendingHeaders()} data={pendingItems} /> */}
 					<Table
 						rowKey={(record) => record.pending_index}
-						columns={PendingHeaders(handleActionStatus, handleReasonInput, {
-							data: options,
-							onFocus,
-							onSelect
-						})}
+						columns={PendingHeaders(
+							handleActionStatus,
+							handleReasonInput,
+							rest.userInfo,
+							{
+								data: options,
+								onFocus,
+								onSelect
+							}
+						)}
 						dataSource={pendingItems}
 						pagination={false}
 						bordered

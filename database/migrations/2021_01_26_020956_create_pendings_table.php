@@ -21,6 +21,7 @@ class CreatePendingsTable extends Migration
             $table->text("reason")->nullable();
             $table->text("remarks")->nullable();
             $table->text("borrow_details")->nullable();
+            $table->string('updated_by', 15);
             $table->timestamp('resume_date')->nullable();
             $table->string("duration", 15)->nullable();
             $table->timestamps();

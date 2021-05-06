@@ -113,13 +113,11 @@ const Products = ({ props, ...rest }) => {
 		<>
 			<h1 className="title-page">Product Lists</h1>
 			<Select
-				style={{ float: 'right', margin: '10px 30px 20px 0px', width: '200px' }}
-				defaultValue="jack">
-				<Option value="jack">All</Option>
-				<Option value="ngi">E-PLAN PROCESS</Option>
-				<Option value="lucy">KOUZOU FINISHED-WAKU</Option>
-				<Option value="jones">ONE TIME HENKOU</Option>
-				<Option value="tom">KOUZOU FINISHED-JIKU</Option>
+				style={{ float: 'right', margin: '10px 30px 20px 0px', width: '250px' }}
+				defaultValue="All">
+				{[{ id: 0, plan_status_name: 'All' }, ...products.planstatus].map((item) => {
+					return <Option value={item.id}>{item.plan_status_name}</Option>;
+				})}
 			</Select>
 			<Form form={form} component={false}>
 				<Table

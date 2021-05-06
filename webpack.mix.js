@@ -18,10 +18,17 @@ mix.react("resources/js/app.js", "public/js")
     })
     .browserSync({
         proxy: "localhost:8000",
+        files: [
+            "app/**/*",
+            "public/**/*",
+            "resources/views/**/*",
+            "resources/lang/**/*",
+            "routes/**/*"
+        ],
         notify: {
             styles: {
                 top: "auto",
-                bottom: "20px"
+                bottom: "0"
             }
         },
         ghostMode: false,

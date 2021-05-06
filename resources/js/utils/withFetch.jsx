@@ -33,7 +33,7 @@ const withFetch = (WrappedComponent, requestUrl) => {
 					});
 				}
 			} catch (error) {
-				throw new Error(error);
+				console.error(error);
 			}
 		};
 		render() {
