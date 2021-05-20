@@ -8,15 +8,21 @@ use Illuminate\Database\Eloquent\Model;
 class ProductCategory extends Model
 {
     use HasFactory;
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'product_key';
+    protected $keyType = 'string';
+    public $incrementing = 'false';
     protected $hidden = ['created_at', 'updated_at', 'deleted_at'];
-    protected $fillable = ['id', 'product_name', 'sequence_no', 'department_id', 'section_id', 'team_id', 'created_at', 'updated_at', 'updated_by'];
+    protected $fillable = ['product_name', 'product_key', 'created_at', 'updated_at', 'updated_by'];
     public function customers()
     {
         return $this->hasMany(Customer::class, 'product_key', 'product_key');
     }
     public function planstatus()
     {
-        return $this->belongsToMany(PlanStatus::class, 'affected_products', 'product_category_id', 'plan_status_id')->withPivot('sequence_no', 'updated_by');
+        return $this->belongsToMany(PlanStatus::class, 'affected_products', 'product_key', 'plan_status_id')->withPivot('sequence_no', 'updated_by');
+    }
+    public function designations()
+    {
+        return $this->hasMany(ProductDesignation::class, 'product_key');
     }
 }

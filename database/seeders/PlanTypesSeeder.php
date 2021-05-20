@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Type;
+use App\Models\PlanTypes;
 use Illuminate\Database\Seeder;
 
-class TypeSeeder extends Seeder
+class PlanTypesSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -15,11 +15,11 @@ class TypeSeeder extends Seeder
     public function run()
     {
         //
-        Type::create([
+        PlanTypes::create([
             'id' => 1,
             'type_name' => 'Kouzou Henkou'
         ]);
-        Type::create([
+        PlanTypes::create([
             'id' => 2,
             'type_name' => 'TH'
         ]);

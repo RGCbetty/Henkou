@@ -32,19 +32,58 @@ import durationAsString from '../../utils/diffDate';
 /* Utilities */
 const { Search, TextArea } = Input;
 const { Title, Text } = Typography;
-const HenkouContainer = (props) => {
-	const { details, events, assessment, status, master, logs, ...rest } = props;
-	const [showCollapse, setShowCollapse] = useState(false);
-	const [expand, setExpand] = useState(false);
-	const [row, setRow] = useState({});
+const HenkouContainer = ({ events, props, user }) => {
+	const { plan, assessment, products, logs, productsByFirstIndex } = props;
+	const [state, setState] = useState({
+		showCollapse: false,
+		showPlanDetails: false,
+
+		process: [],
+		pendingProcess: [],
+		editedPendingProcess: [],
+		attachments: [],
+
+		selectOption: [],
+		searchingHenkou: false,
+		savingHenkou: false,
+		// MODAL
+		pendingProductsModalTitle: '',
+		attachmentModalTitle: '',
+		processModalTitle: '',
+		attachmentModal: false,
+		pendingProductsModal: false,
+		processModal: false
+	});
+	const {
+		pendingProductsModalTitle,
+		pendingProductsModal,
+		attachmentModalTitle,
+		processModalTitle,
+		processModal,
+		showCollapse,
+		showPlanDetails,
+		searchingHenkou,
+		savingHenkou,
+		attachments,
+		pendingProcess,
+		editedPendingProcess,
+		process,
+		selectOption
+	} = state;
+	// const [showCollapse, setShowCollapse] = useState(false);
+	// const [showDetails, setExpand] = useState(false);
+	// const [row, setRow] = useState({});
 	const [isVisible, setVisibilty] = useState({
+		pendingTitle: '',
+		attachmentTitle: '',
+		actionTitle: '',
 		attachmentModal: false,
 		pendingModal: false,
 		actionModal: false
 	});
-	const [onSearchLoading, setOnSearchLoading] = useState(false);
-	const [confirmLoading, setConfirmLoading] = useState(false);
-	const [attachments, setAttachments] = useState([]);
+	// const [onSearchLoading, setOnSearchLoading] = useState(false);
+	// const [confirmLoading, setConfirmLoading] = useState(false);
+	// const [attachments, setAttachments] = useState([]);
 	const [pendingItems, setPendingItems] = useState([]);
 	const [editedPendingItems, setEditedPendingItems] = useState([]);
 	const [actionItems, setActionItems] = useState([]);
@@ -52,12 +91,19 @@ const HenkouContainer = (props) => {
 	const [form] = Form.useForm();
 	/* HENKOU PROCESS */
 	// const uniqueProducts = _.uniqBy(concatenatedProducts, (obj) => obj.product_key);
-
 	const checkIfOwner = (record) => {
 		if (
-			record.department == rest.userInfo.DepartmentName
-			// record.section == rest.userInfo.SectionName &&
-			// record.team == rest.userInfo.TeamName
+			record.is_rechecking &&
+			record.assessment_id == 1
+			// record.section == rest.user.SectionName &&
+			// record.team == rest.user.TeamName
+		) {
+			return false;
+		} else if (
+			record.affected_product.product_category.designations.some(
+				(designation) => designation.department_id == user.DepartmentCode
+			) &&
+			!record.is_rechecking
 		) {
 			return false;
 		} else {
@@ -121,19 +167,10 @@ const HenkouContainer = (props) => {
 			actionItems[
 				actionItems.findIndex((item) => item.status_index == record.status_index)
 			] = record;
+			// console.log
 			const cloneActionItems = [...actionItems];
 			setActionItems(cloneActionItems);
 		}
-	};
-	const handleAssessment = (value, key, record) => {
-		record[key] = value;
-		// if (value !== 3) {
-		// 	record.toggleSelect = false;
-		// } else {
-		// 	record.toggleSelect = true;
-		// }
-		events.handleUpdate(details, record, key);
-		// handleUpdate;
 	};
 	const handleEventStatus = (e, key, record) => {
 		if (key == 'assessment_id') {
@@ -146,7 +183,7 @@ const HenkouContainer = (props) => {
 				.local()
 				.format('YYYY-MM-DD HH:mm:ss');
 		}
-		events.handleUpdate(details, record, key);
+		events.handleUpdate(plan, record, key);
 	};
 
 	/* HENKOU PROCESS */
@@ -161,63 +198,92 @@ const HenkouContainer = (props) => {
 		});
 	};
 	const onEnter = async (e) => {
-		setOnSearchLoading(true);
+		setState((prevState) => ({ ...prevState, searchingHenkou: true }));
 		const result = await events.handleEvent(e.target.value);
 		result == 'found'
-			? (setExpand(true), setShowCollapse(true))
-			: (setExpand(false), openNotificationWithIcon('info'));
-		setOnSearchLoading(false);
+			? setState((prevState) => ({ ...prevState, showPlanDetails: true, showCollapse: true }))
+			: (setState((prevState) => ({
+					...prevState,
+					showPlanDetails: false,
+					showCollapse: false
+			  })),
+			  openNotificationWithIcon('info'));
+		setState((prevState) => ({ ...prevState, searchingHenkou: false }));
 	};
 	/*  */
 	/* PENDING MODAL */
 	const handleActionPending = async (record) => {
+		const { pendings, affected_product, ...rest } = record;
+		const { product_name } = affected_product.product_category;
 		// console.log(record);
-		const pendingResource = await Http.get(
-			`api/henkou/plans/pending/${details.customer_code}/${record.affected_id}`
-		);
-		if (pendingResource.data.length == 0) {
-			if (pendingItems.length == 0) {
-				// setPendingItems([]);
+		console.log(rest, 'resrsrst');
+		// const pendingResource = await Http.get(
+		// 	`api/henkou/plans/pending/${plan.customer_code}/${record.affected_id}`
+		// );
+		setState((prevState) => ({
+			...prevState,
+			pendingProductsModalTitle: product_name,
+			pendingProductsModal: true,
+			pendingProcess:
+				pendings.length > 0
+					? pendings
+					: [
+							{
+								pending_id: null,
+								pending_index: 1,
+								start: '',
+								reason: '',
+								remarks: '',
+								borrow_details: '',
+								resume: '',
+								duration: '',
+								...rest,
+								updated_by: ''
+							}
+					  ]
+		}));
+		// if (pendings.length == 0) {
+		// 	if (pendingProcess.length == 0) {
+		// 		// setPendingItems([]);
+		// 		let pending = [];
+		// 		for (let i = 0; i < 1; i++) {
+		// 			pending.push({
+		// 				pending_id: null,
+		// 				pending_index: i + 1,
+		// 				rev_no: plan.rev_no,
+		// 				customer_code: plan.customer_code,
+		// 				start: '',
+		// 				reason: '',
+		// 				remarks: '',
+		// 				borrow_details: '',
+		// 				resume: '',
+		// 				duration: '',
+		// 				...record,
+		// 				updated_by: user.EmployeeCode
+		// 			});
+		// 		}
+		// 		setPendingItems(pending);
+		// 	}
+		// } else if (pendingItems.length == 0) {
+		// 	setPendingItems((prevState) => {
+		// 		return [
+		// 			...prevState,
+		// 			pendingResource.data.map((item, index) => {
+		// 				return {
+		// 					pending_id: item.id,
+		// 					pending_index: index + 1,
+		// 					start: item.start_date,
+		// 					resume: item.resume_date,
+		// 					...item,
+		// 					id: item.status_id
+		// 				};
+		// 			})
+		// 		];
+		// 	});
+		// }
+		// setRow({ ...row });
 
-				let pending = [];
-				for (let i = 0; i < 1; i++) {
-					pending.push({
-						pending_id: null,
-						pending_index: i + 1,
-						rev_no: details.rev_no,
-						customer_code: details.customer_code,
-						updated_by: rest.userInfo.EmployeeCode,
-						start: '',
-						reason: '',
-						remarks: '',
-						borrow_details: '',
-						resume: '',
-						duration: '',
-						...record
-					});
-				}
-				setPendingItems(pending);
-			}
-		} else if (pendingItems.length == 0) {
-			setPendingItems((prevState) => {
-				return [
-					...prevState,
-					pendingResource.data.map((item, index) => {
-						return {
-							pending_id: item.id,
-							pending_index: index + 1,
-							start: item.start_date,
-							resume: item.resume_date,
-							...item,
-							id: item.status_id
-						};
-					})
-				];
-			});
-		}
-		setRow({ ...row });
-
-		setVisibilty({ ...isVisible, pendingModal: true });
+		// setVisibilty({ ...isVisible, pendingModal: true });
 	};
 
 	const handlePendingOk = async () => {
@@ -228,9 +294,14 @@ const HenkouContainer = (props) => {
 	};
 
 	const handlePendingCancel = () => {
-		setVisibilty({ ...isVisible, pendingModal: false });
-		const filterPendingItems = pendingItems.filter((item) => item.pending_id);
-		setPendingItems(filterPendingItems);
+		setState((prevState) => ({
+			...prevState,
+			// pendingProductsModalTitle: product_name,
+			pendingProductsModal: false,
+			pendingProcess: prevState.pendingProcess.filter((item) => item.pending_id)
+		}));
+		// const filterPendingItems = pendingItems.filter((item) => item.pending_id);
+		// setPendingItems(filterPendingItems);
 		// setRow({});
 	};
 
@@ -244,9 +315,9 @@ const HenkouContainer = (props) => {
 		pendingItems.push({
 			pending_id: null,
 			pending_index: getMaxPendingID() + 1,
-			rev_no: details.rev_no,
-			customer_code: details.customer_code,
-			updated_by: rest.userInfo.EmployeeCode,
+			rev_no: plan.rev_no,
+			customer_code: plan.customer_code,
+			updated_by: user.EmployeeCode,
 			start: '',
 			reason: '',
 			borrow_details: '',
@@ -288,11 +359,6 @@ const HenkouContainer = (props) => {
 				] = record;
 				setEditedPendingItems(editedItem);
 			}
-			console.log(
-				editedPendingItems.findIndex((item) => {
-					item.pending_index == record.pending_index;
-				})
-			);
 		}
 		const clonePendingItems = [...pendingItems];
 		setPendingItems(clonePendingItems);
@@ -306,18 +372,27 @@ const HenkouContainer = (props) => {
 		setVisibilty({ ...isVisible, attachmentModal: false });
 	};
 	const handleAttachmentModal = async () => {
-		const responseLists = await Http.get(`/api/henkou/attachments/${details.id}`);
-		setAttachments(responseLists.data);
-		setVisibilty({ ...isVisible, attachmentModal: true });
+		const { data, status } = await Http.get(`/api/henkou/attachments/${plan.id}`);
+		if (status == 200) {
+			setState((prevState) => ({ ...prevState, attachments: data }));
+			setVisibilty({ ...isVisible, attachmentModal: true });
+		}
 	};
 	/* ATTACHMENT MODAL */
 	/* ACTION MODAL */
 	const handleAction = async (record) => {
-		const pendingResource = await Http.get(
-			`api/henkou/plans/pending/${details.customer_code}/${record.affected_id}`
-		);
-		setPendingItems(
-			pendingResource.data.map((item, index) => {
+		console.log(record);
+		const { pendings } = record;
+		const { product_name } = record.affected_product.product_category;
+		// console.log(record);
+		// const pendingResource = await Http.get(
+		// 	`api/henkou/plans/pending/${plan.customer_code}/${record.affected_id}`
+		// );
+		setState((prevState) => ({
+			...prevState,
+			processModal: true,
+			processModalTitle: product_name,
+			pendingProcess: pendings.map((item, index) => {
 				return {
 					pending_id: item.id,
 					pending_index: index + 1,
@@ -326,20 +401,51 @@ const HenkouContainer = (props) => {
 					...item,
 					id: item.status_id
 				};
-			})
-		);
+			}),
+			process: productsByFirstIndex
+				.filter((item) => item.affected_id == record.affected_id)
+				.map((item, index) => {
+					return {
+						disableHistory: products.length == index + 1 ? false : true,
+						status_index: index + 1,
+						...item,
 
-		setActionItems(
-			await completeDetailsStatus(
-				record,
-				master.affectedProducts,
-				master.products,
-				master,
-				details
-			)
-		);
-		setRow(record);
-		setVisibilty({ ...isVisible, actionModal: true });
+						days_in_process: isNaN(moment(item.start_date).diff(item.finished_date))
+							? ''
+							: durationAsString(item.start_date, item.finished_date)
+					};
+				})
+		}));
+		// setPendingItems(
+		// 	pendings.map((item, index) => {
+		// 		return {
+		// 			pending_id: item.id,
+		// 			pending_index: index + 1,
+		// 			start: item.start_date,
+		// 			resume: item.resume_date,
+		// 			...item,
+		// 			id: item.status_id
+		// 		};
+		// 	})
+		// );
+		// setActionItems(
+		// 	productsByFirstIndex
+		// 		.map((item, index) => {
+		// 			return {
+		// 				disableHistory: products.length == index + 1 ? false : true,
+		// 				status_index: index + 1,
+		// 				...item,
+
+		// 				days_in_process: isNaN(moment(item.start_date).diff(item.finished_date))
+		// 					? ''
+		// 					: durationAsString(item.start_date, item.finished_date)
+		// 			};
+		// 		})
+		// 		.filter((item) => item.affected_id == record.affected_id)
+		// );
+		// setActionItems(await completeDetailsStatus(record, plan));
+		// setRow(record);
+		// setVisibilty({ ...isVisible, actionModal: true });
 	};
 
 	const handleActionOk = async () => {
@@ -359,17 +465,17 @@ const HenkouContainer = (props) => {
 			pendingItems.some((row) => row.reason.match(/borrow form/gi) && !row.pending_id) ||
 			pendingItems.some((row) => row.reason.match(/borrow/gi) && !row.pending_id)
 		) {
-			events.handleBorrow(details, actionItems[getMaxActionID() - 1]);
-			await events.consolidatedHenkouLogs(details);
+			events.handleBorrow(plan, actionItems[getMaxActionID() - 1]);
+			await events.consolidatedHenkouLogs(plan);
 		} else {
-			events.handleUpdateWithDetails(details, actionItems[getMaxActionID() - 1]);
+			events.handleUpdateWithDetails(plan, actionItems[getMaxActionID() - 1]);
 		}
 		if (insertNewPendingItems.length > 0) {
 			const response = await Http.post('/api/henkou/plans/pending', insertNewPendingItems);
-			await events.consolidatedHenkouLogs(details);
+			await events.consolidatedHenkouLogs(plan);
 		} else if (editedPendingItems.length > 0) {
 			const response = await Http.post('/api/henkou/plans/pending', editedPendingItems);
-			await events.consolidatedHenkouLogs(details);
+			await events.consolidatedHenkouLogs(plan);
 		}
 
 		// }
@@ -387,9 +493,24 @@ const HenkouContainer = (props) => {
 	};
 
 	const handleActionCancel = () => {
-		setVisibilty({ ...isVisible, actionModal: false });
-		setPendingItems([]);
-		setRow({});
+		setState((prevState) => ({
+			...prevState,
+			processModal: false,
+			pendingProcess: []
+			// process: productsByFirstIndex
+			// 	.map((item, index) => {
+			// 		return {
+			// 			disableHistory: products.length == index + 1 ? false : true,
+			// 			status_index: index + 1,
+			// 			...item,
+
+			// 			days_in_process: isNaN(moment(item.start_date).diff(item.finished_date))
+			// 				? ''
+			// 				: durationAsString(item.start_date, item.finished_date)
+			// 		};
+			// 	})
+			// 	.filter((item) => item.affected_id == record.affected_id)
+		}));
 	};
 
 	// const filteredStatus = (status) => {
@@ -421,15 +542,16 @@ const HenkouContainer = (props) => {
 	/* ACTION MODAL */
 
 	const onFocus = (value) => {
-		setOptions(
-			!value
+		setState((prevState) => ({
+			...prevState,
+			selectOption: !value
 				? []
 				: [
 						{
 							value: 'Borrow Form'
 						}
 				  ]
-		);
+		}));
 	};
 	const onSelect = (value, key, record) => {
 		record[key] = value;
@@ -452,7 +574,7 @@ const HenkouContainer = (props) => {
 			<Spin
 				tip="Loading..."
 				wrapperClassName="ant-advanced-search-form"
-				spinning={onSearchLoading}>
+				spinning={searchingHenkou}>
 				<Form
 					form={form}
 					name="advanced_search"
@@ -469,12 +591,12 @@ const HenkouContainer = (props) => {
 						</Col>
 
 						<Col offset={8} span={8} style={{ textAlign: 'right' }}>
-							{expand ? (
+							{plan?.created_at && (
 								<Input
 									addonBefore="Registration Date"
 									value={
-										details
-											? moment(details.created_at)
+										plan
+											? moment(plan.created_at)
 													.utc()
 													.local()
 													.format('YYYY-MM-DD HH:mm:ss')
@@ -482,13 +604,11 @@ const HenkouContainer = (props) => {
 									}
 									style={{ width: 300 }}
 								/>
-							) : (
-								''
 							)}
 						</Col>
 
-						{expand ? (
-							PlanCustomerInformation(details).map((item, index) => (
+						{showPlanDetails ? (
+							PlanCustomerInformation(plan).map((item, index) => (
 								<Col style={{ textAlign: item.textAlign }} span={8} key={index}>
 									<Form.Item
 										style={{ marginBottom: '0px' }}
@@ -518,10 +638,24 @@ const HenkouContainer = (props) => {
 						) : (
 							<></>
 						)}
+						{showCollapse ? (
+							<Col span={24} style={{ textAlign: 'right' }}>
+								<a
+									style={{ fontSize: 12 }}
+									onClick={() => {
+										setState((prevState) => ({
+											...prevState,
+											showPlanDetails: !showPlanDetails
+										}));
+									}}>
+									{!showPlanDetails ? <UpOutlined /> : <DownOutlined />} Collapse
+								</a>
+							</Col>
+						) : null}
 					</Row>
 					<Row>
 						<Col span={24}>
-							{expand ? (
+							{logs.length > 0 && (
 								<>
 									<span>Summary(Henkou Details)</span>
 									<TextArea
@@ -580,24 +714,10 @@ const HenkouContainer = (props) => {
 										}
 										rows={5}></TextArea>
 								</>
-							) : (
-								<></>
 							)}
 						</Col>
-
-						{showCollapse ? (
-							<Col span={24} style={{ textAlign: 'right' }}>
-								<a
-									style={{ fontSize: 12 }}
-									onClick={() => {
-										setExpand(!expand);
-									}}>
-									{expand ? <UpOutlined /> : <DownOutlined />} Collapse
-								</a>
-							</Col>
-						) : null}
 					</Row>
-					{expand ? (
+					{products.length > 0 && (
 						<div style={{ padding: 5 }}>
 							<div style={{ display: 'flex', justifyContent: 'space-between' }}>
 								<div className="title-page">Henkou Status</div>
@@ -628,33 +748,19 @@ const HenkouContainer = (props) => {
 									assessment,
 									{ handleAction, handleEventStatus },
 									checkIfOwner,
-									status,
+									products,
 									pendingItems
 								)}
-								summary={(pageData) => console.log(pageData)}
 								bordered
 								pagination={false}
-								dataSource={status.map((item) => {
+								dataSource={products.map((item) => {
 									return {
 										...item,
 										days_in_process: isNaN(
 											moment(item.start_date).diff(item.finished_date)
 										)
 											? ''
-											: durationAsString(item.start_date, item.finished_date),
-										product_key: master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.products
-												? master.products.find(
-														(el) =>
-															el.id ==
-															master.affectedProducts.find(
-																(el) => el.id == item.affected_id
-															).product_category_id
-												  ).product_key
-												: null
-											: null
+											: durationAsString(item.start_date, item.finished_date)
 									};
 								})}
 								summary={() => {
@@ -664,9 +770,9 @@ const HenkouContainer = (props) => {
 										const finalChecking = ReversedLogs.findIndex(
 											(item) =>
 												item.affected_id == 5 ||
-												item.affected_id == 23 ||
-												item.affected_id == 34 ||
-												item.affected_id == 54
+												item.affected_id == 25 ||
+												item.affected_id == 36 ||
+												item.affected_id == 58
 										);
 										const totalDuration = durationAsString(
 											firstProcess ? firstProcess.start_date : 0,
@@ -689,12 +795,10 @@ const HenkouContainer = (props) => {
 								scroll={{ x: 'max-content' }}
 							/>
 						</div>
-					) : (
-						''
 					)}
 				</Form>
 				<Modal
-					title="Attachments"
+					title={attachmentModalTitle}
 					onOk={attachmentModalOk}
 					onCancel={attachmentModalCancel}
 					bodyStyle={{ padding: 0 }}
@@ -713,27 +817,22 @@ const HenkouContainer = (props) => {
 					/>
 				</Modal>
 				<Modal
-					title={`Pending ${row.product_name}`}
+					title={pendingProductsModalTitle}
 					onOk={handlePendingOk}
 					okText="Save"
 					onCancel={handlePendingCancel}
 					bodyStyle={{ padding: 10 }}
 					width={800}
-					visible={isVisible.pendingModal}>
+					visible={pendingProductsModal}>
 					{/* <HenkouTable headers={PendingHeaders()} data={pendingItems} /> */}
 					<Table
 						rowKey={(record) => record.pending_index}
-						columns={PendingHeaders(
-							handleActionStatus,
-							handleReasonInput,
-							rest.userInfo,
-							{
-								data: options,
-								onFocus,
-								onSelect
-							}
-						)}
-						dataSource={pendingItems}
+						columns={PendingHeaders(handleActionStatus, handleReasonInput, user, {
+							data: selectOption,
+							onFocus,
+							onSelect
+						})}
+						dataSource={pendingProcess}
 						pagination={false}
 						bordered
 					/>
@@ -741,7 +840,7 @@ const HenkouContainer = (props) => {
 						<Button
 							style={{ margin: 10 }}
 							type="primary"
-							disabled={pendingItems.some((item) => {
+							disabled={pendingProcess.some((item) => {
 								return !item.resume;
 							})}
 							onClick={() => addPendingItems(row)}>
@@ -750,14 +849,14 @@ const HenkouContainer = (props) => {
 					</div>
 				</Modal>
 				<Modal
-					title={`${row.product_name}`}
+					title={processModalTitle}
 					onOk={handleActionOk}
 					okText="Save"
 					onCancel={handleActionCancel}
 					bodyStyle={{ padding: 10 }}
 					width={1000}
-					confirmLoading={confirmLoading}
-					visible={isVisible.actionModal}>
+					confirmLoading={savingHenkou}
+					visible={processModal}>
 					{/* <HenkouTable headers={PendingHeaders()} data={pendingItems} /> */}
 					<Table
 						rowKey={(record) => record.status_index}
@@ -768,7 +867,7 @@ const HenkouContainer = (props) => {
 							checkIfOwner,
 							pendingItems
 						)}
-						dataSource={actionItems}
+						dataSource={process}
 						pagination={false}
 						bordered
 					/>
@@ -790,7 +889,6 @@ const HenkouContainer = (props) => {
 	);
 };
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo,
-	master: state.auth.master
+	user: state.auth.user
 });
 export default connect(mapStateToProps)(HenkouContainer);

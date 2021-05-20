@@ -15,12 +15,12 @@ import { Table, Input, Button, Space, Form, Modal, Transfer, Tag, Switch } from 
 import difference from 'lodash/difference';
 import { SearchOutlined, UpOutlined, PaperClipOutlined } from '@ant-design/icons';
 import { Popconfirm, Typography } from 'antd';
-const Products = () => {
+const Products = ({ master }) => {
 	const [form] = Form.useForm();
 	const inputRef = useRef();
-	const [departments, setDepartments] = useMasterDepartment();
-	const [sections, setSections] = useMasterSection();
-	const [teams, setTeams] = useMasterTeam();
+	// const [departments, setDepartments] = useMasterDepartment();
+	// const [sections, setSections] = useMasterSection();
+	// const [teams, setTeams] = useMasterTeam();
 	const [company, setCompany] = useMasterCompany();
 	const [masterProducts, setMasterProducts] = useProductsRetriever();
 	const [allSupplier, setAllSupplier] = useMasterSuppliers();
@@ -189,7 +189,10 @@ const Products = () => {
 		);
 	};
 	const openModal = async (record) => {
-		const supplierKeys = await Http.get(`api/supplier`, { params: record });
+		const supplierKeys = await Http.get(`http://localhost:3000/api/supplier`, {
+			params: record
+		});
+		console.log(supplierKeys);
 		setSuppliers(supplierKeys.data);
 		const matchedSuppliers = supplierKeys.data.map((item) => {
 			return product.data.length > 0
@@ -425,11 +428,11 @@ const Products = () => {
 							return {
 								key: item.id,
 								department:
-									departments.length > 0
-										? departments.find((attr) => {
+									master.departments.length > 0
+										? master.departments.find((attr) => {
 												return attr.DepartmentCode == item.department_id;
 										  })
-											? departments.find((attr) => {
+											? master.departments.find((attr) => {
 													return (
 														attr.DepartmentCode == item.department_id
 													);
@@ -437,21 +440,21 @@ const Products = () => {
 											: null
 										: null,
 								section:
-									sections.length > 0
-										? sections.find((attr) => {
+									master.sections.length > 0
+										? master.sections.find((attr) => {
 												return attr.SectionCode == item.section_id;
 										  })
-											? sections.find((attr) => {
+											? master.sections.find((attr) => {
 													return attr.SectionCode == item.section_id;
 											  }).SectionName
 											: null
 										: null,
 								team:
-									teams.length > 0
-										? teams.find((attr) => {
+									master.teams.length > 0
+										? master.teams.find((attr) => {
 												return attr.TeamCode == item.team_id;
 										  })
-											? teams.find((attr) => {
+											? master.teams.find((attr) => {
 													return attr.TeamCode == item.team_id;
 											  }).TeamName
 											: null
@@ -517,7 +520,7 @@ const Products = () => {
 				visible={modal.visible}
 				onOk={() => modalOk()}
 				onCancel={() => modalCancel()}
-				width={1000}>
+				width={1200}>
 				<div style={{ overflowY: 'scroll', height: 'calc(100vh - 12em)' }}>
 					<TableTransfer
 						titles={['Product Categories', 'Suppliers']}
@@ -525,11 +528,11 @@ const Products = () => {
 							return {
 								key: item.id,
 								department:
-									departments.length > 0
-										? departments.find((attr) => {
+									master.departments.length > 0
+										? master.departments.find((attr) => {
 												return attr.DepartmentCode == item.department_id;
 										  })
-											? departments.find((attr) => {
+											? master.departments.find((attr) => {
 													return (
 														attr.DepartmentCode == item.department_id
 													);
@@ -585,6 +588,7 @@ const Products = () => {
 	);
 };
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo
+	user: state.auth.user,
+	master: state.auth.master
 });
 export default connect(mapStateToProps)(Products);

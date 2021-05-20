@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\PlanTypes;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,16 +15,16 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            UsersTableSeeder::class, TypeSeeder::class,
-            ReasonSeeder::class,
             ProductCategorySeeder::class,
+            UsersTableSeeder::class,
+            PlanTypesSeeder::class,
+            ReasonSeeder::class,
             AssessmentSeeder::class,
-            CustomerSeeder::class,
-            SupplierSeeder::class,
             ActionThOptionSeeder::class,
             AssessmentThOptionSeeder::class,
             PlanStatusSeeder::class,
-            AffectedProductSeeder::class
+            AffectedProductSeeder::class,
+            ProductDesignationSeeder::class
         ]);
 
         // \App\Models\User::factory(10)->create();

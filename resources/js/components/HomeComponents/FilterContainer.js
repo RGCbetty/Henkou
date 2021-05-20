@@ -9,10 +9,10 @@ const dateFormat = 'YYYY/MM/DD';
 const { Search } = Input;
 const { Option } = Select;
 
-const FilterContainer = (props) => {
+const FilterContainer = ({ user, props, events, children }) => {
+	const { departments, sections, teams, planType, planStatus, loading } = props;
 	const [expand, setExpand] = useState(false);
 	const [form] = Form.useForm();
-	const { userInfo, events, master } = props;
 	const FilterSelections = () => {
 		const count = !expand ? planDetails.length : 0;
 		const items = [];
@@ -38,6 +38,7 @@ const FilterContainer = (props) => {
 						<Select
 							showSearch={planDetails[i].showSearch}
 							// defaultValue={planDetails[i].defaultValue}
+							loading={loading}
 							onChange={(value) =>
 								events.handleSelectOnChange(planDetails[i].title, form)
 							}
@@ -72,7 +73,7 @@ const FilterContainer = (props) => {
 					title: 'Department',
 					textAlign: 'left',
 					showSearch: true,
-					items: master.departments,
+					items: departments,
 					code: 'DepartmentCode',
 					name: 'DepartmentName'
 				},
@@ -80,10 +81,7 @@ const FilterContainer = (props) => {
 					title: 'Section',
 					textAlign: 'center',
 					showSearch: true,
-					items:
-						events.selectedState.sections.length > 0
-							? events.selectedState.sections
-							: master.sections,
+					items: sections,
 					code: 'SectionCode',
 					name: 'SectionName'
 				},
@@ -91,10 +89,7 @@ const FilterContainer = (props) => {
 					title: 'Team',
 					textAlign: 'right',
 					showSearch: true,
-					items:
-						events.selectedState.teams.length > 0
-							? events.selectedState.teams
-							: master.teams,
+					items: teams,
 					code: 'TeamCode',
 					name: 'TeamName'
 				},
@@ -114,10 +109,7 @@ const FilterContainer = (props) => {
 					title: 'Henkou Type',
 					width: 200,
 					textAlign: 'center',
-					items:
-						master.types.length == 0
-							? [{ id: 0, type_name: 'All' }]
-							: [{ id: 0, type_name: 'All' }, ...master.types],
+					items: [{ id: 0, type_name: 'All' }, ...planType],
 					code: 'id',
 					name: 'type_name'
 				},
@@ -140,7 +132,7 @@ const FilterContainer = (props) => {
 					title: 'Plan Status',
 					width: 250,
 					textAlign: 'right',
-					items: [{ id: 0, plan_status_name: 'All' }, ...master.planstatus],
+					items: [{ id: 0, plan_status_name: 'All' }, ...planStatus],
 					code: 'id',
 					name: 'plan_status_name'
 				}
@@ -162,9 +154,9 @@ const FilterContainer = (props) => {
 			form={form}
 			name="advanced_search"
 			initialValues={{
-				DepartmentName: userInfo.DepartmentCode,
-				SectionName: userInfo.SectionCode,
-				TeamName: userInfo.TeamCode,
+				DepartmentName: user.DepartmentCode,
+				SectionName: user.SectionCode,
+				TeamName: user.TeamCode,
 				house_type: 0,
 				type_name: 0,
 				status_type: 2,
@@ -259,13 +251,12 @@ const FilterContainer = (props) => {
 					</a>
 				</Col>
 			</Row>
-			{props.children}
+			{children}
 		</Form>
 	);
 };
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo,
-	master: state.auth.master
+	user: state.auth.user
 });
 
 export default connect(mapStateToProps)(FilterContainer);

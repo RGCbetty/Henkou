@@ -22,12 +22,13 @@
         "sass-loader": "^8.0.0"
     },
     "dependencies": {
-        "antd": "^4.9.1",
+        "antd": "^4.15.4",
         "axios": "^0.19.2",
         "bootstrap": "^4.5.3",
         "clsx": "^1.1.1",
         "cross-env": "^7.0.2",
         "crypto-js": "^4.0.0",
+        "immutability-helper": "^3.1.1",
         "js-cookie": "^2.2.1",
         "laravel-mix": "^5.0.9",
         "lodash": "^4.17.20",
@@ -35,6 +36,8 @@
         "popper.js": "^1.16.1",
         "prop-types": "^15.7.2",
         "react": "^16.14.0",
+        "react-dnd": "^14.0.2",
+        "react-dnd-html5-backend": "^14.0.0",
         "react-dom": "^16.14.0",
         "react-flash-message": "^1.0.4",
         "react-highlight-words": "^0.17.0",

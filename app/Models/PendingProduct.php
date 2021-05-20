@@ -5,12 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Pending extends Model
+class PendingProduct extends Model
 {
     use HasFactory;
     protected $fillable = [
         'product_key',
-        'status_id',
+        'product_id',
         'rev_no',
         'start_date',
         'reason',
@@ -20,8 +20,12 @@ class Pending extends Model
         'updated_by',
         'updated_at'
     ];
-    public function statuses()
+    public function products()
     {
-        return $this->belongsTo(Status::class);
+        return $this->belongsTo(Product::class);
+    }
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'updated_by', 'EmployeeCode');
     }
 }

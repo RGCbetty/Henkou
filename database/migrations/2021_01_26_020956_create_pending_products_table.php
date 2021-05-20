@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePendingsTable extends Migration
+class CreatePendingProductsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreatePendingsTable extends Migration
      */
     public function up()
     {
-        Schema::create('pendings', function (Blueprint $table) {
+        Schema::create('pending_products', function (Blueprint $table) {
             $table->id();
             $table->string('customer_code', 12);
             $table->string('rev_no', 8);
@@ -26,10 +26,14 @@ class CreatePendingsTable extends Migration
             $table->string("duration", 15)->nullable();
             $table->timestamps();
         });
-        Schema::table('pendings', function (Blueprint $table) {
+        Schema::table('pending_products', function (Blueprint $table) {
             $table->foreignId('affected_id')->constrained('affected_products');
-            $table->foreignId('status_id')->constrained('statuses');
+            $table->foreignId('product_id')->constrained('products');
         });
+        // Schema::create('pending_products', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->timestamps();
+        // });
     }
 
     /**
@@ -39,6 +43,6 @@ class CreatePendingsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('pendings');
+        Schema::dropIfExists('pending_products');
     }
 }

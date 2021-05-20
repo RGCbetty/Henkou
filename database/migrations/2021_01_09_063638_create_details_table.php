@@ -16,28 +16,20 @@ class CreateDetailsTable extends Migration
     {
         Schema::create('details', function (Blueprint $table) {
             // $table->string('id', 20)->nullable(false);
-            $table->id();
             $table->string('customer_code', 12);
             $table->string('plan_no', 8);
-            $table->string('rev_no', 8);
-            $table->string('plan_specification', 50)->nullable();
             $table->string('house_code', 15);
             $table->string('house_type', 30);
             $table->integer('method');
-            $table->text('logs')->nullable();
-            $table->tinyInteger('th_no')->nullable();
             $table->tinyInteger("floors");
             $table->timestamps();
             $table->string('updated_by', 15);
-            $table->integer('department_id')->nullable();
-            $table->unique(['customer_code', 'plan_no', 'rev_no']);
+            $table->primary(['customer_code', 'plan_no']);
+            $table->unique(['customer_code', 'plan_no']);
         });
         Schema::table('details', function (Blueprint $table) {
-            $table->foreignId('reason_id')->nullable()->constrained('reasons');
-            $table->foreignId('type_id')->nullable()->constrained('types');
-            $table->foreignId('invoice_id')->nullable()->constrained('invoices');
-            $table->foreignId('plan_status_id')->constrained('plan_statuses');
-            $table->foreignId('construction_schedule_id')->nullable()->constrained('construction_schedules');
+            $table->foreign('customer_code')->references('customer_code')->on('construction_schedules');
+            // $table->foreignId('construction_schedule_id')->nullable()->constrained('construction_schedules');
         });
     }
 

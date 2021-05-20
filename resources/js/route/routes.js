@@ -3,6 +3,7 @@ import React from 'react';
 import Henkou from '../pages/Henkou';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
+import Products from '../pages/Products';
 import Users from '../pages/Users';
 import Registration from '../pages/Registration';
 import Search from '../pages/Search';

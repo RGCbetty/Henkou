@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Status extends Model
+class Product extends Model
 {
     use HasFactory;
     protected $fillable = [
@@ -18,19 +18,23 @@ class Status extends Model
         'created_at',
         'updated_at',
         'assessment_id',
-        'detail_id',
+        'plan_id',
         'rev_no'
     ];
-    public function details()
+    public function plan()
     {
-        return $this->belongsTo(Detail::class, 'detail_id');
+        return $this->belongsTo(Plan::class, 'plan_id');
     }
     public function pendings()
     {
-        return $this->hasMany(Pending::class, 'status_id');
+        return $this->hasMany(PendingProduct::class);
     }
     public function affectedProduct()
     {
         return $this->belongsTo(AffectedProduct::class, 'affected_id');
+    }
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'updated_by', 'EmployeeCode');
     }
 }

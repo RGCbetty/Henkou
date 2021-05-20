@@ -10,205 +10,101 @@ import { fetchDetails } from '../api/details';
 // import { useActivePlanStatus } from '../api/planstatus';
 /* Components */
 import HenkouContainer from '../components/HenkouComponents/HenkouContainer';
-
-const Henkou = ({ title, ...rest }) => {
+/* Utilities */
+import LogsUtils from '../utils/HenkouLogs';
+const LogsHelper = new LogsUtils();
+const Henkou = ({ title, user }) => {
 	useEffect(() => {
 		document.title = title || '';
 	}, [title]);
-	const { master, userInfo } = rest;
-	// const [products, setProducts] = useProductsRetriever();
-	// const [affectedProducts, setAffectedProducts] = useAffectedProductsRetriever();
-	const [details, setDetail] = useState({});
-	const [assessment, setAsssessment] = useState([]);
-	const [planDetail, setPlanDetail] = useState([]);
-	const [status, setStatus] = useState([]);
-	const [logs, setLogs] = useState([]);
+
+	const [state, setState] = useState({
+		plan: {},
+		assessment: [],
+		products: [],
+		logs: [],
+		productsByFirstIndex: []
+	});
+
 	const handleEvent = async (constructionCode) => {
-		const details = await fetchDetails(constructionCode);
-		const assessment = await Http.get('/api/master/assessments');
-		setAsssessment(assessment.data);
+		const { data, status } = await Http.get(`/api/henkou/plan/details/${constructionCode}`);
+		const { Assessment, HenkouPlan, LatestProducts, ProductsByFirstIndexRevision } = data;
+		// const assessment = await Http.get('/api/master/assessments');
+		// setState((prevState) => ({
+		//     ...prevState,
+		//     assessment
+		// }))
+		if (status == 200) {
+			// setDetail((prevState) => {
+			// 	return {
+			// 		...prevState,
+			// 		...details
+			// 		// plan_status: master.planstatus.find((plan) => plan.id == details.plan_status_id)
+			// 		// 	.plan_status_name
+			// 	};
+			// });
+			// const { data: products, status } = await Http.get(
+			// 	`/api/henkou/plans/${details.customer_code}/products/${details.id}`
+			// );
+			// await consolidatedHenkouLogs(details);
 
-		if (details) {
-			setDetail((prevState) => {
-				return {
-					...prevState,
-					...details,
-					plan_status: master.planstatus.find((plan) => plan.id == details.plan_status_id)
-						.plan_status_name
-				};
-			});
-			const fetchStatus = await Http.get(
-				`/api/henkou/plans/${details.customer_code}/products/${details.id}`
-			);
-			await consolidatedHenkouLogs(details);
-			const mappedProducts = fetchStatus.data.map((item, index) => {
-				return {
-					...item,
-					department:
-						master.departments.length > 0
-							? master.departments.find((attr) => {
-									const prod = master.products.find((el) => {
-										const affectedProds = master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).product_category_id
-											: null;
-										return (
-											attr.DepartmentCode == el.department_id &&
-											el.id == affectedProds
-										);
-									});
-									return prod ? attr.DepartmentCode == prod.department_id : false;
-							  })
-								? master.departments.find((attr) => {
-										const prod = master.products.find((el) => {
-											const affectedProds = master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-											)
-												? master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-												  ).product_category_id
-												: null;
-											return (
-												attr.DepartmentCode == el.department_id &&
-												el.id == affectedProds
-											);
-										});
-										return prod
-											? attr.DepartmentCode == prod.department_id
-											: false;
-								  }).DepartmentName
-								: null
-							: null,
-					section:
-						master.sections.length > 0
-							? master.sections.find((attr) => {
-									const prod = master.products.find((el) => {
-										const affectedProds = master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).product_category_id
-											: null;
-										return (
-											attr.SectionCode == el.section_id &&
-											el.id == affectedProds
-										);
-									});
-									return prod ? attr.SectionCode == prod.section_id : false;
-							  })
-								? master.sections.find((attr) => {
-										const prod = master.products.find((el) => {
-											const affectedProds = master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-											)
-												? master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-												  ).product_category_id
-												: null;
-											return (
-												attr.SectionCode == el.section_id &&
-												el.id == affectedProds
-											);
-										});
-										return prod ? attr.SectionCode == prod.section_id : false;
-								  }).SectionName
-								: null
-							: null,
-					team:
-						master.teams.length > 0
-							? master.teams.find((attr) => {
-									const prod = master.products.find((el) => {
-										const affectedProds = master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).product_category_id
-											: null;
-										return (
-											attr.TeamCode == el.team_id && el.id == affectedProds
-										);
-									});
-									return prod ? attr.TeamCode == prod.team_id : false;
-							  })
-								? master.teams.find((attr) => {
-										const prod = master.products.find((el) => {
-											const affectedProds = master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-											)
-												? master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-												  ).product_category_id
-												: null;
-											return (
-												attr.TeamCode == el.team_id &&
-												el.id == affectedProds
-											);
-										});
-										return prod ? attr.TeamCode == prod.team_id : false;
-								  }).TeamName
-								: null
-							: null,
-					sequence:
-						details.method == '2'
-							? master.affectedProducts.find((el) => el.id == item.affected_id)
-								? master.affectedProducts.find((el) => el.id == item.affected_id)
-										.sequence_no
-								: null
-							: master.affectedProducts.find((el) => el.id == item.affected_id)
-							? master.affectedProducts.find((el) => el.id == item.affected_id)
-									.sequence_no
-							: null,
+			setState((prevState) => ({
+				...prevState,
+				assessment: Assessment,
+				productsByFirstIndex: ProductsByFirstIndexRevision,
+				logs: LogsHelper.mergeLogs(ProductsByFirstIndexRevision),
+				plan: {
+					...prevState.plan,
+					...HenkouPlan
+				},
+				products: LatestProducts
+			}));
 
-					product_name:
-						master.products.length > 0
-							? master.products.find((el) => {
-									const affectedProds = master.affectedProducts.find(
-										(el) => el.id == item.affected_id
-									)
-										? master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-										  ).product_category_id
-										: null;
-									return affectedProds ? el.id == affectedProds : null;
-							  })
-								? master.products.find((el) => {
-										const affectedProds = master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).product_category_id
-											: null;
-										return affectedProds ? el.id == affectedProds : null;
-								  }).product_name
-								: null
-							: null
-				};
-			});
-			setStatus(mappedProducts);
+			// setStatus(products);
 			return 'found';
 		} else {
 			return 'not found';
 		}
 	};
 	const handleUpdateWithDetails = async (details, row) => {
+		const productsClone = status.filter((item) => item.assessment_id == 1);
 		if (row.finished_date) {
 			status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
 			status[
 				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = userInfo.EmployeeCode;
-			status[status.findIndex((element) => element.affected_id == row.affected_id) + 1]
+			].updated_by = user.EmployeeCode;
+
+			!row.is_rechecking
 				? status[status.findIndex((element) => element.affected_id == row.affected_id) + 1]
-						.received_date
+						?.received_date
 					? null
 					: (status[
 							status.findIndex((element) => element.affected_id == row.affected_id) +
 								1
+					  ].received_date = row.finished_date)
+				: productsClone[
+						productsClone.findIndex(
+							(element) => element.affected_id == row.affected_id
+						) + 1
+				  ]
+				? status[
+						status.indexOf(
+							productsClone[
+								productsClone.findIndex(
+									(element) => element.affected_id == row.affected_id
+								) + 1
+							]
+						)
+				  ]?.received_date
+					? null
+					: (status[
+							status.indexOf(
+								productsClone[
+									productsClone.findIndex(
+										(element) => element.affected_id == row.affected_id
+									) + 1
+								]
+							)
 					  ].received_date = row.finished_date)
 				: null;
 			const statusClone = [...status];
@@ -234,203 +130,43 @@ const Henkou = ({ title, ...rest }) => {
 				// });
 
 				if (row.sequence > 2) {
-					const resCreate = await Http.post(`/api/status/${details.id}`, {
-						status,
-						updated_by: userInfo.EmployeeCode,
-						sectionCode: userInfo.SectionCode,
-						details,
-						row
-					});
-					handleEvent(details.customer_code);
-
-					setStatus(
-						resCreate.data.map((item, index) => {
-							return {
-								...item,
-								status_index: index + 1,
-								department:
-									master.departments.length > 0
-										? master.departments.find((attr) => {
-												const prod = master.products.find((el) => {
-													const affectedProds = master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-													)
-														? master.affectedProducts.find(
-																(el) => el.id == item.affected_id
-														  ).product_category_id
-														: null;
-													return (
-														attr.DepartmentCode == el.department_id &&
-														el.id == affectedProds
-													);
-												});
-												return prod
-													? attr.DepartmentCode == prod.department_id
-													: false;
-										  })
-											? master.departments.find((attr) => {
-													const prod = master.products.find((el) => {
-														const affectedProds = master.affectedProducts.find(
-															(el) => el.id == item.affected_id
-														)
-															? master.affectedProducts.find(
-																	(el) =>
-																		el.id == item.affected_id
-															  ).product_category_id
-															: null;
-														return (
-															attr.DepartmentCode ==
-																el.department_id &&
-															el.id == affectedProds
-														);
-													});
-													return prod
-														? attr.DepartmentCode == prod.department_id
-														: false;
-											  }).DepartmentName
-											: null
-										: null,
-								section:
-									master.sections.length > 0
-										? master.sections.find((attr) => {
-												const prod = master.products.find((el) => {
-													const affectedProds = master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-													)
-														? master.affectedProducts.find(
-																(el) => el.id == item.affected_id
-														  ).product_category_id
-														: null;
-													return (
-														attr.SectionCode == el.section_id &&
-														el.id == affectedProds
-													);
-												});
-												return prod
-													? attr.SectionCode == prod.section_id
-													: false;
-										  })
-											? master.sections.find((attr) => {
-													const prod = master.products.find((el) => {
-														const affectedProds = master.affectedProducts.find(
-															(el) => el.id == item.affected_id
-														)
-															? master.affectedProducts.find(
-																	(el) =>
-																		el.id == item.affected_id
-															  ).product_category_id
-															: null;
-														return (
-															attr.SectionCode == el.section_id &&
-															el.id == affectedProds
-														);
-													});
-													return prod
-														? attr.SectionCode == prod.section_id
-														: false;
-											  }).SectionName
-											: null
-										: null,
-								team:
-									master.teams.length > 0
-										? master.teams.find((attr) => {
-												const prod = master.products.find((el) => {
-													const affectedProds = master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-													)
-														? master.affectedProducts.find(
-																(el) => el.id == item.affected_id
-														  ).product_category_id
-														: null;
-													return (
-														attr.TeamCode == el.team_id &&
-														el.id == affectedProds
-													);
-												});
-												return prod ? attr.TeamCode == prod.team_id : false;
-										  })
-											? master.teams.find((attr) => {
-													const prod = master.products.find((el) => {
-														const affectedProds = master.affectedProducts.find(
-															(el) => el.id == item.affected_id
-														)
-															? master.affectedProducts.find(
-																	(el) =>
-																		el.id == item.affected_id
-															  ).product_category_id
-															: null;
-														return (
-															attr.TeamCode == el.team_id &&
-															el.id == affectedProds
-														);
-													});
-													return prod
-														? attr.TeamCode == prod.team_id
-														: false;
-											  }).TeamName
-											: null
-										: null,
-								sequence:
-									details.method == '2'
-										? master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-										  )
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).sequence_no
-											: null
-										: master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-										  )
-										? master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-										  ).sequence_no
-										: null,
-
-								product_name:
-									master.products.length > 0
-										? master.products.find((el) => {
-												const affectedProds = master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-												)
-													? master.affectedProducts.find(
-															(el) => el.id == item.affected_id
-													  ).product_category_id
-													: null;
-												return affectedProds
-													? el.id == affectedProds
-													: null;
-										  })
-											? master.products.find((el) => {
-													const affectedProds = master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-													)
-														? master.affectedProducts.find(
-																(el) => el.id == item.affected_id
-														  ).product_category_id
-														: null;
-													return affectedProds
-														? el.id == affectedProds
-														: null;
-											  }).product_name
-											: null
-										: null
-							};
-						})
+					const { data: newProducts, status: statusCode } = await Http.post(
+						`/api/status/${details.id}`,
+						{
+							status,
+							updated_by: user.EmployeeCode,
+							sectionCode: user.SectionCode,
+							details,
+							row
+						}
 					);
+					console.log(newProducts, 'newwwwwwwwwwwwwwwwwwwwww');
+					if (statusCode == 200) {
+						handleEvent(details.customer_code);
+						setStatus(newProducts);
+					}
 				}
 			}
 
-			if ([5, 23, 34, 54].indexOf(row.affected_id) == -1) {
+			if ([5, 25, 36, 58].indexOf(row.affected_id) == -1) {
 				const resUpdate = await Http.post(`/api/status/${details.id}`, [
 					statusClone[
-						status.findIndex((element) => element.affected_id == row.affected_id)
+						statusClone.findIndex((element) => element.affected_id == row.affected_id)
 					],
-					statusClone[
-						status.findIndex((element) => element.affected_id == row.affected_id) + 1
-					]
+					row.is_rechecking
+						? productsClone[
+								productsClone.findIndex(
+									(element) => element.affected_id == row.affected_id
+								) + 1
+						  ]
+						: statusClone[
+								statusClone.findIndex(
+									(element) => element.affected_id == row.affected_id
+								) + 1
+						  ]
 				]);
 			} else {
+				/* FOR FINAL CHECKING PRODUCT */
 				const resUpdate = await Http.post(`/api/status/${details.id}`, {
 					products:
 						statusClone[
@@ -442,7 +178,7 @@ const Henkou = ({ title, ...rest }) => {
 			status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
 			status[
 				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = userInfo.EmployeeCode;
+			].updated_by = user.EmployeeCode;
 			const statusClone = [...status];
 			setStatus(statusClone);
 			const resUpdate = await Http.post(`/api/status/${details.id}`, {
@@ -455,6 +191,7 @@ const Henkou = ({ title, ...rest }) => {
 		await consolidatedHenkouLogs(details);
 	};
 	const handleBorrow = async (details, row) => {
+		// console.log(row, 'rowzzzzzzzzzzzz');
 		if (row.finished_date) {
 			// setLogs((prevState) => [
 			// 	...prevState,
@@ -467,7 +204,7 @@ const Henkou = ({ title, ...rest }) => {
 
 			status[
 				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = userInfo.EmployeeCode;
+			].updated_by = user.EmployeeCode;
 			status[status.findIndex((element) => element.affected_id == row.affected_id) + 1]
 				? (status[
 						status.findIndex((element) => element.affected_id == row.affected_id) + 1
@@ -475,7 +212,7 @@ const Henkou = ({ title, ...rest }) => {
 				: null;
 			const statusClone = [...status];
 			setStatus(statusClone);
-			if ([5, 23, 34, 54].indexOf(row.affected_id) == -1) {
+			if ([5, 25, 36, 58].indexOf(row.affected_id) == -1) {
 				const resUpdate = await Http.post(`/api/status/${details.id}`, [
 					statusClone[
 						status.findIndex((element) => element.affected_id == row.affected_id)
@@ -496,7 +233,7 @@ const Henkou = ({ title, ...rest }) => {
 			status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
 			status[
 				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = userInfo.EmployeeCode;
+			].updated_by = user.EmployeeCode;
 			const statusClone = [...status];
 			setStatus(statusClone);
 			const resUpdate = await Http.post(`/api/status/${details.id}`, {
@@ -506,171 +243,26 @@ const Henkou = ({ title, ...rest }) => {
 					]
 			});
 		}
-		const resCreate = await Http.post(`/api/status/${details.id}`, {
-			status,
-			updated_by: userInfo.EmployeeCode,
-			sectionCode: userInfo.SectionCode,
-			details,
-			row
-		});
-		handleEvent(details.customer_code);
-		setStatus(
-			resCreate.data.map((item, index) => {
-				return {
-					...item,
-					status_index: index + 1,
-					department:
-						master.departments.length > 0
-							? master.departments.find((attr) => {
-									const prod = master.products.find((el) => {
-										const affectedProds = master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).product_category_id
-											: null;
-										return (
-											attr.DepartmentCode == el.department_id &&
-											el.id == affectedProds
-										);
-									});
-									return prod ? attr.DepartmentCode == prod.department_id : false;
-							  })
-								? master.departments.find((attr) => {
-										const prod = master.products.find((el) => {
-											const affectedProds = master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-											)
-												? master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-												  ).product_category_id
-												: null;
-											return (
-												attr.DepartmentCode == el.department_id &&
-												el.id == affectedProds
-											);
-										});
-										return prod
-											? attr.DepartmentCode == prod.department_id
-											: false;
-								  }).DepartmentName
-								: null
-							: null,
-					section:
-						master.sections.length > 0
-							? master.sections.find((attr) => {
-									const prod = master.products.find((el) => {
-										const affectedProds = master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).product_category_id
-											: null;
-										return (
-											attr.SectionCode == el.section_id &&
-											el.id == affectedProds
-										);
-									});
-									return prod ? attr.SectionCode == prod.section_id : false;
-							  })
-								? master.sections.find((attr) => {
-										const prod = master.products.find((el) => {
-											const affectedProds = master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-											)
-												? master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-												  ).product_category_id
-												: null;
-											return (
-												attr.SectionCode == el.section_id &&
-												el.id == affectedProds
-											);
-										});
-										return prod ? attr.SectionCode == prod.section_id : false;
-								  }).SectionName
-								: null
-							: null,
-					team:
-						master.teams.length > 0
-							? master.teams.find((attr) => {
-									const prod = master.products.find((el) => {
-										const affectedProds = master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).product_category_id
-											: null;
-										return (
-											attr.TeamCode == el.team_id && el.id == affectedProds
-										);
-									});
-									return prod ? attr.TeamCode == prod.team_id : false;
-							  })
-								? master.teams.find((attr) => {
-										const prod = master.products.find((el) => {
-											const affectedProds = master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-											)
-												? master.affectedProducts.find(
-														(el) => el.id == item.affected_id
-												  ).product_category_id
-												: null;
-											return (
-												attr.TeamCode == el.team_id &&
-												el.id == affectedProds
-											);
-										});
-										return prod ? attr.TeamCode == prod.team_id : false;
-								  }).TeamName
-								: null
-							: null,
-					sequence:
-						details.method == '2'
-							? master.affectedProducts.find((el) => el.id == item.affected_id)
-								? master.affectedProducts.find((el) => el.id == item.affected_id)
-										.sequence_no
-								: null
-							: master.affectedProducts.find((el) => el.id == item.affected_id)
-							? master.affectedProducts.find((el) => el.id == item.affected_id)
-									.sequence_no
-							: null,
-
-					product_name:
-						master.products.length > 0
-							? master.products.find((el) => {
-									const affectedProds = master.affectedProducts.find(
-										(el) => el.id == item.affected_id
-									)
-										? master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-										  ).product_category_id
-										: null;
-									return affectedProds ? el.id == affectedProds : null;
-							  })
-								? master.products.find((el) => {
-										const affectedProds = master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).product_category_id
-											: null;
-										return affectedProds ? el.id == affectedProds : null;
-								  }).product_name
-								: null
-							: null
-				};
-			})
+		const { data: newProducts, status: statusCode } = await Http.post(
+			`/api/status/${details.id}`,
+			{
+				status,
+				updated_by: user.EmployeeCode,
+				sectionCode: user.SectionCode,
+				details,
+				row
+			}
 		);
+		// console.log(newProducts, 'newwwwwwwwwwwwwwwwwwwwww');
+		if (statusCode == 200) {
+			handleEvent(details.customer_code);
+			setStatus(newProducts);
+		}
 	};
 	const handleUpdate = async (details, row, key) => {
 		status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
 		status[status.findIndex((element) => element.affected_id == row.affected_id)].updated_by =
-			userInfo.EmployeeCode;
+			user.EmployeeCode;
 		const statusClone = [...status];
 		setStatus(statusClone);
 		if (key == 'finished_date') {
@@ -705,7 +297,7 @@ const Henkou = ({ title, ...rest }) => {
 			// 		];
 			// 	});
 			// }
-			if ([5, 23, 34, 54].indexOf(row.affected_id) == -1) {
+			if ([5, 25, 36, 58].indexOf(row.affected_id) == -1) {
 				const resUpdate = await Http.post(`/api/status/${details.id}`, [
 					status[status.findIndex((element) => element.affected_id == row.affected_id)],
 					status[
@@ -724,7 +316,7 @@ const Henkou = ({ title, ...rest }) => {
 			status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
 			status[
 				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = userInfo.EmployeeCode;
+			].updated_by = user.EmployeeCode;
 
 			if (
 				status[status.findIndex((element) => element.affected_id == row.affected_id)]
@@ -760,139 +352,53 @@ const Henkou = ({ title, ...rest }) => {
 		// handleEvent(details.customer_code);
 	};
 	const consolidatedHenkouLogs = async (details) => {
-		// const [firstIndex] = details.rev_no.split('-');
-		const [firstDigit, secondDigit] = details ? details.rev_no.split('-') : '';
-		const fetchConsolidatedLogs = await Http.get(
+		const [firstDigit, secondDigit] = details?.rev_no.split('-');
+		const { data: productsLogs, status: statusCode } = await Http.get(
 			`api/henkou/plans/${details.customer_code}/revision/${firstDigit}`
 		);
-		// const fetchConsolidatedPendingDetails = await Http.get(
-		// 	`/api/henkou/plans/pending/${details.customer_code}`
-		// );
-		const productLogs = fetchConsolidatedLogs.data.map((item) => {
-			return {
-				...item,
-				rev_no: item.details ? item.details.rev_no : null,
-				product_name:
-					master.products.length > 0
-						? master.products.find((el) => {
-								const affectedProds = master.affectedProducts.find(
-									(el) => el.id == item.affected_id
-								)
-									? master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-									  ).product_category_id
-									: null;
-								return affectedProds ? el.id == affectedProds : null;
-						  })
-							? master.products.find((el) => {
-									const affectedProds = master.affectedProducts.find(
-										(el) => el.id == item.affected_id
-									)
-										? master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-										  ).product_category_id
-										: null;
-									return affectedProds ? el.id == affectedProds : null;
-							  }).product_name
-							: null
-						: null
-			};
-		});
-		console.log(productLogs);
-
-		const pendingLogs = fetchConsolidatedLogs.data
-			.map((item) => {
-				return item.pendings;
-			})
-			.flat(1)
-			.map((item) => {
+		if (statusCode == 200) {
+			const productLogs = productsLogs.map((item) => {
 				return {
 					...item,
-					product_name:
-						master.products.length > 0
-							? master.products.find((el) => {
-									const affectedProds = master.affectedProducts.find(
-										(el) => el.id == item.affected_id
-									)
-										? master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-										  ).product_category_id
-										: null;
-									return affectedProds ? el.id == affectedProds : null;
-							  })
-								? master.products.find((el) => {
-										const affectedProds = master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-										)
-											? master.affectedProducts.find(
-													(el) => el.id == item.affected_id
-											  ).product_category_id
-											: null;
-										return affectedProds ? el.id == affectedProds : null;
-								  }).product_name
-								: null
-							: null
+					logs: item.log,
+					rev_no: item?.details?.rev_no
 				};
 			});
+			const detailsLogs = productLogs
+				.filter(
+					(val, id, arr) =>
+						arr.findIndex(
+							(item) =>
+								item.plan.logs === val.plan.logs &&
+								item.plan.rev_no === val.plan.rev_no
+						) === id
+				)
+				.map((val) => val.plan);
 
-		// console.log(pendingLogs);
-		// const productPendingLogs = fetchConsolidatedPendingDetails.data.map((item) => {
-		// 	return {
-		// 		...item,
-		// 		product_name:
-		// 			master.products.length > 0
-		// 				? master.products.find((el) => {
-		// 						const affectedProds = master.affectedProducts.find(
-		// 							(el) => el.id == item.affected_id
-		// 						)
-		// 							? master.affectedProducts.find(
-		// 									(el) => el.id == item.affected_id
-		// 							  ).product_category_id
-		// 							: null;
-		// 						return affectedProds ? el.id == affectedProds : null;
-		// 				  })
-		// 					? master.products.find((el) => {
-		// 							const affectedProds = master.affectedProducts.find(
-		// 								(el) => el.id == item.affected_id
-		// 							)
-		// 								? master.affectedProducts.find(
-		// 										(el) => el.id == item.affected_id
-		// 								  ).product_category_id
-		// 								: null;
-		// 							return affectedProds ? el.id == affectedProds : null;
-		// 					  }).product_name
-		// 					: null
-		// 				: null
-		// 	};
-		// });
-		const henkouLogs = [
-			{
-				log: details.logs,
-				updated_by: details.updated_by,
-				created_at: details.created_at,
-				rev_no: details.rev_no
-			},
-			...productLogs
-		];
-		console.log(henkouLogs);
-		// console.log(henkouLogs);
-		const mergeLogs = [...henkouLogs, ...pendingLogs];
-		setLogs(
-			mergeLogs
+			const pendingLogs = productLogs
 				.map((item) => {
-					return {
-						...item,
-						id: item.id,
-						borrow_details: item.borrow_details,
-						rev_no: item.rev_no,
-						product_name: item.product_name,
-						updated_by: item.updated_by,
-						log: item.log,
-						created_at: item.created_at
-					};
+					return item?.pendings;
 				})
-				.sort((a, b) => moment(a.created_at).diff(b.created_at))
-		);
+				.flat(1);
+			const henkouLogs = [...detailsLogs, ...productLogs];
+			const mergeLogs = [...henkouLogs, ...pendingLogs];
+			setLogs(
+				mergeLogs
+					.map((item) => {
+						return {
+							...item,
+							id: item.id,
+							borrow_details: item.borrow_details,
+							rev_no: item?.rev_no ? item.rev_no : item?.details?.rev_no,
+							product_name: item?.affected_product?.product?.product_name,
+							updated_by: item.updated_by,
+							log: item.logs,
+							created_at: item.created_at
+						};
+					})
+					.sort((a, b) => moment(a.created_at).diff(b.created_at))
+			);
+		}
 	};
 	return (
 		<HenkouContainer
@@ -905,19 +411,14 @@ const Henkou = ({ title, ...rest }) => {
 				consolidatedHenkouLogs,
 				handleUpdateWithDetails
 			}}
-			plandetail={planDetail}
-			status={status}
-			details={details}
-			assessment={assessment}
-			logs={logs}
+			props={state}
 			// product={master.products}
 		></HenkouContainer>
 	);
 };
 
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo,
-	master: state.auth.master
+	user: state.auth.user
 });
 
 export default connect(mapStateToProps)(Henkou);

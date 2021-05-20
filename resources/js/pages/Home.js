@@ -10,29 +10,39 @@ import { Plans } from '../utils/HenkouPlans';
 import { Table, Spin, Typography } from 'antd';
 
 const dateFormat = 'YYYY/MM/DD';
-const Home = ({ title, ...rest }) => {
-	const [selectedState, setSelectedState] = useState({
-		sections: [],
-		teams: []
-	});
+const Home = ({ title, user }) => {
 	const [state, setState] = useState({
 		plans: [],
+		departments: [],
+		sections: [],
+		teams: [],
+		planType: [],
+		planStatus: [],
 		loading: false
 	});
 
+	// useEffect(() => {
+	// 	// Update the document title using the browser API
+	// 	// const products = await Http.get(`/api/master/products`);
+	// 	// const affectedProducts = await Http.get('/api/master/products/planstatus');
+	// 	// const thAssessments = await Http.get('/api/master/THassessments');
+	// 	// const thActions = await Http.get('/api/master/actions');
+	// 	// const reasons = await Http.get(`/api/master/reasons`);
+	// }, []);
+
 	const { plans, loading } = state;
-	const { master, userInfo } = rest;
 	useEffect(() => {
 		let mounted = true;
 		(async () => {
 			try {
-				setState({
-					...state,
-					loading: true
+				setState((prevState) => {
+					return {
+						...prevState,
+						loading: true
+					};
 				});
-				const plans = await Plans.get(
-					'api/henkou/plans',
-					{
+				const { data, status } = await Http.get('api/henkou/plans', {
+					params: {
 						from: moment
 							.utc()
 							.local()
@@ -43,45 +53,59 @@ const Home = ({ title, ...rest }) => {
 							.local()
 							.endOf('d')
 							.format(),
-						// department_id: rest.userInfo.DepartmentCode,
-						// section_id: rest.userInfo.SectionCode,
-						// team_id: rest.userInfo.TeamCode,
+						// department_id: rest.user.DepartmentCode,
+						// section_id: rest.user.SectionCode,
+						// team_id: rest.user.TeamCode,
 						customer_code: null,
-						department_id: userInfo.DepartmentCode,
-						section_id: '00469',
-						team_id: '00230',
+						department_id: user.DepartmentCode,
+						section_id: user.SectionCode,
+						team_id: user.TeamCode,
 						status_type_id: 2,
 						method: null,
 						henkou_type_id: null,
 						plan_status_id: null
-					},
-					master
-				);
-				const sections = await Http.get('api/department/{dep_id}/sections', {
-					params: { dep_id: userInfo.DepartmentCode }
-				});
-				const teams = await Http.get('api/department/{dep_id}/section/{sec_id}/teams', {
-					params: {
-						dep_id: userInfo.DepartmentCode,
-						sec_id: userInfo.SectionCode
 					}
 				});
-				if (mounted) {
-					setSelectedState({
-						sections: sections.data,
-						teams: teams.data
-					});
+				const plans = Plans.mapAPI(data);
+				const { data: departments } = await Http.get('/api/master/departments');
+				// const sections = await Http.get('/api/master/sections');
+				// const teams = await Http.get('/api/master/teams');
+				const { data: planStatus } = await Http.get('/api/master/planstatuses');
+				const { data: planType } = await Http.get(`/api/master/types`);
 
-					setState({
-						plans,
-						loading: false
+				const { data: sections } = await Http.get('/api/department/{dep_id}/sections', {
+					params: { dep_id: user.DepartmentCode }
+				});
+				const { data: teams } = await Http.get(
+					'/api/department/{dep_id}/section/{sec_id}/teams',
+					{
+						params: {
+							dep_id: user.DepartmentCode,
+							sec_id: user.SectionCode
+						}
+					}
+				);
+				if (mounted) {
+					setState((prevState) => {
+						return {
+							...prevState,
+							plans,
+							departments,
+							sections,
+							teams,
+							planType,
+							planStatus,
+							loading: false
+						};
 					});
 				}
 			} catch (err) {
 				console.error(err);
-				setState({
-					...state,
-					loading: false
+				setState((prevState) => {
+					return {
+						...prevState,
+						loading: false
+					};
 				});
 			}
 		})();
@@ -90,13 +114,14 @@ const Home = ({ title, ...rest }) => {
 		};
 	}, []);
 	const handleFetchPlans = async (form) => {
-		setState({
-			...state,
-			loading: true
-		});
-		const plans = await Plans.get(
-			'api/henkou/plans',
-			{
+		// setState((prevState) => {
+		// 	return {
+		// 		...prevState,
+		// 		loading: true
+		// 	};
+		// });
+		const { data, status } = await Http.get('api/henkou/plans', {
+			params: {
 				from: form
 					.getFieldValue('DateToFilter')[0]
 					.utc()
@@ -117,12 +142,15 @@ const Home = ({ title, ...rest }) => {
 				method: form.getFieldValue('house_type'),
 				henkou_type_id: form.getFieldValue('type_name'),
 				plan_status_id: form.getFieldValue('plan_status_name')
-			},
-			master
-		);
-		setState({
-			plans,
-			loading: false
+			}
+		});
+		const plans = Plans.mapAPI(data);
+		setState((prevState) => {
+			return {
+				...prevState,
+				plans,
+				loading: false
+			};
 		});
 	};
 	const handleSelectOnChange = async (title, form) => {
@@ -135,30 +163,40 @@ const Home = ({ title, ...rest }) => {
 					SectionName: null,
 					TeamName: null
 				});
-				const sections = await Http.get('api/department/{dep_id}/sections', {
+				const { data: sections } = await Http.get('api/department/{dep_id}/sections', {
 					params: { dep_id: form.getFieldValue('DepartmentName') }
 				});
-				setSelectedState({
-					...selectedState,
-					sections: sections.data
+				setState((prevState) => {
+					return {
+						...prevState,
+						sections,
+						loading: false
+					};
 				});
 				break;
 			case 'Section':
 				form.setFieldsValue({
 					TeamName: null
 				});
-				const teams = await Http.get('api/department/{dep_id}/section/{sec_id}/teams', {
-					params: {
-						dep_id: form.getFieldValue('DepartmentName'),
-						sec_id: form.getFieldValue('SectionName')
+				const { data: teams } = await Http.get(
+					'api/department/{dep_id}/section/{sec_id}/teams',
+					{
+						params: {
+							dep_id: form.getFieldValue('DepartmentName'),
+							sec_id: form.getFieldValue('SectionName')
+						}
 					}
-				});
-				setSelectedState({
-					...selectedState,
-					teams: teams.data
+				);
+				setState((prevState) => {
+					return {
+						...prevState,
+						teams,
+						loading: false
+					};
 				});
 				break;
 			case 'Team':
+				break;
 				break;
 			case 'House Type':
 				break;
@@ -172,13 +210,12 @@ const Home = ({ title, ...rest }) => {
 		// console.log(value);
 	};
 	const handleOnEnterCustomerCode = async (form) => {
-		setState({
-			...state,
-			loading: true
-		});
-		const plans = await Plans.get(
-			'api/henkou/plans',
-			{
+		// setState({
+		// 	...state,
+		// 	loading: true
+		// });
+		const { data } = await Http.get('api/henkou/plans', {
+			params: {
 				from: form.DateToFilter[0]
 					.utc()
 					.startOf('d')
@@ -195,32 +232,36 @@ const Home = ({ title, ...rest }) => {
 				method: form.house_type,
 				henkou_type_id: form.type_name,
 				plan_status_id: form.plan_status_name
-			},
-			master
-		);
-		setState({
-			plans,
-			loading: false
+			}
+		});
+		const plans = Plans.mapAPI(data);
+		setState((prevState) => {
+			return {
+				...prevState,
+				plans,
+				loading: false
+			};
 		});
 	};
 	useEffect(() => {
 		document.title = title || null;
 	}, [title]);
-
+	console.log(process.env.MIX_ASSET_URL);
 	return (
 		<>
 			<Spin tip="Loading..." wrapperClassName="ant-advanced-search-form" spinning={loading}>
-				<FilterContainer
-					events={{
-						handleSelectOnChange,
-						handleOnEnterCustomerCode,
-						handleFetchPlans,
-						selectedState
-					}}>
-					<div style={{ padding: 5 }}>
-						<div style={{ display: 'flex', justifyContent: 'space-between' }}>
-							<div className="title-page">Henkou Plans</div>
-							{/* <Typography.Title
+				{!loading && (
+					<FilterContainer
+						props={state}
+						events={{
+							handleSelectOnChange,
+							handleOnEnterCustomerCode,
+							handleFetchPlans
+						}}>
+						<div style={{ padding: 5 }}>
+							<div style={{ display: 'flex', justifyContent: 'space-between' }}>
+								<div className="title-page">Henkou Plans</div>
+								{/* <Typography.Title
 								level={4}
 								style={{
 									margin: 0,
@@ -229,58 +270,58 @@ const Home = ({ title, ...rest }) => {
 								}}>
 								Henkou Plans
 							</Typography.Title> */}
-							<div
-								style={{
-									display: 'inline-block',
-									verticalAlign: 'right',
-									margin: '10px 0px 0px 0px'
-									// textAlign: 'right'
-								}}>
-								<Legend
-									hideSomeLegends={false}
-									title1={'Not yet started'}
-									title2={'On Going'}
-									title3={'Finished'}
-									title4={'Pending'}></Legend>
+								<div
+									style={{
+										display: 'inline-block',
+										verticalAlign: 'right',
+										margin: '10px 0px 0px 0px'
+										// textAlign: 'right'
+									}}>
+									<Legend
+										hideSomeLegends={false}
+										title1={'Not yet started'}
+										title2={'On Going'}
+										title3={'Finished'}
+										title4={'Pending'}></Legend>
+								</div>
 							</div>
+							{/* <HomeTable /> */}
+							<Table
+								rowClassName={(record, index) => {
+									if (record.start_date && record.finished_date) {
+										return 'table-row-finished';
+									} else if (
+										record.start_date &&
+										!record.finished_date &&
+										record.pending_reason == '-'
+									) {
+										return 'table-row-on-going';
+									} else if (
+										record.pendings.length > 0 &&
+										record.start_date &&
+										!record.finished_date
+									) {
+										return 'table-row-pending';
+									} else {
+										return 'table-row-not-yet-started';
+									}
+								}}
+								columns={HomeColumn()}
+								rowKey={(row) => row.id}
+								bordered
+								dataSource={plans.length > 0 ? plans : []}
+								scroll={{ x: 'max-content' }}
+							/>
 						</div>
-						{/* <HomeTable /> */}
-						<Table
-							rowClassName={(record, index) => {
-								if (record.start_date && record.finished_date) {
-									return 'table-row-finished';
-								} else if (
-									record.start_date &&
-									!record.finished_date &&
-									record.pending_reason == '-'
-								) {
-									return 'table-row-on-going';
-								} else if (
-									record.pendings.length > 0 &&
-									record.start_date &&
-									!record.finished_date
-								) {
-									return 'table-row-pending';
-								} else {
-									return 'table-row-not-yet-started';
-								}
-							}}
-							columns={HomeColumn()}
-							rowKey={(row) => row.id}
-							bordered
-							dataSource={plans}
-							scroll={{ x: 'max-content' }}
-						/>
-					</div>
-				</FilterContainer>
+					</FilterContainer>
+				)}
 			</Spin>
 		</>
 	);
 };
 
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo,
-	master: state.auth.master
+	user: state.auth.user
 });
 
 export default connect(mapStateToProps)(Home);

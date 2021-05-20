@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pending;
+use App\Models\PendingProduct;
+
 use Illuminate\Http\Request;
 
 class PendingController extends Controller
@@ -10,6 +11,7 @@ class PendingController extends Controller
     public function store(Request $request)
     {
         date_default_timezone_set('Asia/Manila');
+        info($request);
         // function pending($item)
         // {
         //     return array(
@@ -24,7 +26,7 @@ class PendingController extends Controller
         $existingPendings = array();
         $newPendings = array();
         for ($i = 0; $i < count($request->all()); $i++) {
-            // Pending::firstOrCreate(array(
+            // PendingProduct::firstOrCreate(array(
             //     'product_key' => $request[$i]['product_key'],
             //     'status_id' =>  $request[$i]['id'],
             //     'rev_no' =>  $request[$i]['rev_no'],
@@ -65,31 +67,31 @@ class PendingController extends Controller
             }
         }
         if (count($existingPendings) > 0) {
-            Pending::upsert(
+            PendingProduct::upsert(
                 $existingPendings,
                 ['id', 'status_id'],
                 [
-                    'resume_date', 'duration', 'reason', 'borrow_details', 'remarks'
+                    'resume_date', 'duration', 'reason', 'borrow_details', 'remarks', 'updated_by'
                 ]
             );
         }
         if (count($newPendings) > 0) {
-            Pending::upsert(
+            PendingProduct::upsert(
                 $newPendings,
                 ['id', 'status_id'],
                 [
-                    'resume_date', 'duration', 'reason', 'borrow_details', 'remarks'
+                    'resume_date', 'duration', 'reason', 'borrow_details', 'remarks', 'updated_by'
                 ]
             );
         }
     }
     public function showByCustomerCodeAffectedID($customer_code, $affected_id)
     {
-        return Pending::select()->where('customer_code', $customer_code)->where('affected_id', $affected_id)->get();
+        return PendingProduct::with('employee')->where(['customer_code' => $customer_code, 'affected_id' => $affected_id])->get();
     }
 
     public function showByCustomerCode($customer_code)
     {
-        return Pending::select()->where('customer_code', $customer_code)->get();
+        return PendingProduct::select()->where('customer_code', $customer_code)->get();
     }
 }

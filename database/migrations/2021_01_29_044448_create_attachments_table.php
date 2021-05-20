@@ -15,12 +15,14 @@ class CreateAttachmentsTable extends Migration
     {
         Schema::create('attachments', function (Blueprint $table) {
             $table->id();
+            $table->string('customer_code', 12);
             $table->string('name');
             $table->string('path');
             $table->timestamps();
         });
         Schema::table('attachments', function (Blueprint $table) {
-            $table->foreignId('detail_id')->constrained('details');
+            // $table->foreignId('detail_id')->constrained('details');
+            $table->foreign('customer_code')->references('customer_code')->on('plans');
         });
     }
 

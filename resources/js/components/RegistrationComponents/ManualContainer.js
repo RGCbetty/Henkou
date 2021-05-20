@@ -18,6 +18,7 @@ import {
 } from 'antd';
 import { DownOutlined, UpOutlined, UploadOutlined, SnippetsOutlined } from '@ant-design/icons';
 import PendingHeaders from '../HenkouComponents/PendingHeaders';
+import RecheckHeader from '../RegistrationComponents/RecheckHeader';
 import PlanDetails from '../RegistrationComponents/PlanDetails';
 import moment from 'moment';
 import Http from '../../Http';
@@ -27,16 +28,15 @@ const dateFormat = 'YYYY/MM/DD';
 const { Option } = Select;
 const ManualContainer = ({
 	handleSpecs,
-	details,
 	handleOnChange,
 	handleRegister,
 	handleClearDetails,
-	status,
 	pending,
 	logs,
+	props,
 	...rest
 }) => {
-	const { master } = rest;
+	const { planDetails, departments, types, reasons } = props;
 	const [henkouLoading, setHenkouLoading] = useState(false);
 	const [expand, setExpand] = useState(false);
 	const [showDetails, setDetails] = useState(false);
@@ -44,10 +44,14 @@ const ManualContainer = ({
 		fileList: [],
 		status: false
 	});
+	const [recheck, setRecheck] = useState({
+		selectedRowKeys: [],
+		modalVisible: false,
+		products: []
+	});
 	const [existState, setExistState] = useState({
 		showDetails: false,
 		showDepartments: false,
-		span: 12,
 		toggleBorrowBtn: true,
 		message: '',
 		description: '',
@@ -65,24 +69,35 @@ const ManualContainer = ({
 				description: result.msg
 			});
 		} else if (result.status == 'ongoing') {
-			setExistState({
-				...existState,
+			setExistState((prevState) => ({
+				...prevState,
 				showDetails: false,
 				message: 'Ongoing!',
 				description: result.msg,
 				department: result.dept,
 				showAlert: true,
 				toggleBorrowBtn: false
-			});
+			}));
 		} else if (result.status == 'notyetstarted') {
-			setExistState({
-				...existState,
+			setExistState((prevState) => ({
+				...prevState,
 				message: 'Not yet started!',
 				description: result.msg,
 				department: result.dept,
 				showAlert: true,
 				showDetails: false
-			});
+			}));
+		} else if (result.status == 'notvalid') {
+			setExistState((prevState) => ({
+				...prevState,
+				message: '',
+				message: '',
+				description: '',
+				department: '',
+				showAlert: false,
+				showDetails: false
+			}));
+			message.error(result.msg);
 		} else {
 			notification[type]({
 				message: 'Plan not registered!'
@@ -100,10 +115,10 @@ const ManualContainer = ({
 					result.status == 'found'
 						? (setExpand(true),
 						  setDetails(true),
-						  setExistState({
-								...existState,
+						  setExistState((prevState) => ({
+								...prevState,
 								showDetails: true
-						  }),
+						  })),
 						  openNotificationWithIcon('info', result))
 						: result.status == 'ongoing'
 						? (setExpand(true),
@@ -118,17 +133,15 @@ const ManualContainer = ({
 						  openNotificationWithIcon('info', result));
 				} else {
 					if (keys == 'reason_id') {
-						if (value == 0) {
+						if (value == 1) {
 							setExistState({
 								...existState,
-								showDepartments: true,
-								span: 8
+								showDepartments: true
 							});
 						} else {
 							setExistState({
 								...existState,
-								showDepartments: false,
-								span: 8
+								showDepartments: false
 							});
 						}
 					}
@@ -141,11 +154,10 @@ const ManualContainer = ({
 		}
 		setHenkouLoading(false);
 	};
-	console.log(pending, 'testestsetestes!!!!!!!!!!');
 	const handleRegisterAndUpload = async () => {
-		// await handleRegister(details);
+		// await handleRegister(planDetails);
 		const { status } = await Http.post('api/henkou/register/kouzou', {
-			details
+			details: planDetails
 		});
 		if (status == 200) {
 			message.success('Successfully Registered');
@@ -160,7 +172,7 @@ const ManualContainer = ({
 				status: true
 			});
 			try {
-				const response = await Http.get(`/api/details/${details.customer_code}`);
+				const response = await Http.get(`/api/planDetails/${planDetails.customer_code}`);
 				const uploadResponse = await Http.post(
 					`/api/henkou/attachment/${response.data.id}`,
 					formData
@@ -177,28 +189,6 @@ const ManualContainer = ({
 			}
 		}
 	};
-
-	/* const uploadProps = {
-		name: 'file',
-		multiple: true,
-		action: `/api/henkou/attachment/${details.customer_code}`,
-		headers: {
-			Authorization: `Bearer ${localStorage.getItem('access_token')}`
-		},
-		withCredentials: true,
-		onChange(info) {
-			if (info.file.status !== 'uploading') {
-				console.log(info);
-
-				// console.log(info.file, info.fileList);
-			}
-			if (info.file.status === 'done') {
-				message.success(`${info.file.name} file uploaded successfully`);
-			} else if (info.file.status === 'error') {
-				message.error(`${info.file.name} file upload failed.`);
-			}
-		}
-    }; */
 	const uploadProps = {
 		onRemove: (file) => {
 			setUpload((state) => {
@@ -219,9 +209,100 @@ const ManualContainer = ({
 		fileList: upload.fileList,
 		multiple: true
 	};
+	// RECHECK
+	const handleRecheckModal = async () => {
+		const { data: products, status } = await Http.get(
+			`api/products/planstatus/${planDetails.plan_status_id}`
+		);
+		setRecheck({
+			modalVisible: true,
+			selectedRowKeys: products.map((item) => item.id),
+			products: products.map((item) => {
+				return {
+					...item,
+					assessment: 0
+				};
+			})
+		});
+	};
+	const onSelectChange = (selectedRowKeys) => {
+		setRecheck((prevState) => {
+			return {
+				...prevState,
+				products: prevState.products.map((item) => {
+					return {
+						...item,
+						assessment: selectedRowKeys.some((element) => item.id == element)
+							? false
+							: true
+					};
+				}),
+				selectedRowKeys
+			};
+		});
+	};
+	const onSelectRow = (record, selected, selectedRows, nativeEvent) => {
+		const { products } = recheck;
+		products[products.findIndex((val) => val.id == record.id)].assessment == 0
+			? (products[products.findIndex((val) => val.id == record.id)].assessment = 1)
+			: (products[products.findIndex((val) => val.id == record.id)].assessment = 0);
+		const newProducts = [...products];
+		setRecheck((prevState) => {
+			return {
+				...prevState,
+				products: newProducts
+			};
+		});
+		// console.log(record, selected, selectedRows, nativeEvent);
+	};
+	const handleRecheckCancel = () => {
+		setRecheck({
+			modalVisible: false,
+			selectedRowKeys: [],
+			products: []
+		});
+	};
+	const handleRecheckOk = async () => {
+		const { status } = await Http.post('api/henkou/plans/recheck', {
+			details: planDetails,
+			products: recheck.products
+		});
+		if (status == 200) {
+			message.success('Successfully Registered');
+			setRecheck({
+				modalVisible: false,
+				selectedRowKeys: [],
+				products: []
+			});
+		}
+	};
+	// RECHECK
+	/* const uploadProps = {
+		name: 'file',
+		multiple: true,
+		action: `/api/henkou/attachment/${planDetails.customer_code}`,
+		headers: {
+			Authorization: `Bearer ${localStorage.getItem('access_token')}`
+		},
+		withCredentials: true,
+		onChange(info) {
+			if (info.file.status !== 'uploading') {
+				console.log(info);
+
+				// console.log(info.file, info.fileList);
+			}
+			if (info.file.status === 'done') {
+				message.success(`${info.file.name} file uploaded successfully`);
+			} else if (info.file.status === 'error') {
+				message.error(`${info.file.name} file upload failed.`);
+			}
+		}
+    }; */
+
 	const resetData = () => {
 		form.resetFields();
 		handleClearDetails();
+		setExistState({});
 		setDetails(false);
 		setExpand(false);
 	};
@@ -251,6 +332,11 @@ const ManualContainer = ({
 								<Search
 									placeholder="Enter Code"
 									allowClear
+									onChange={(e) => {
+										if (e.type == 'click') {
+											resetData();
+										}
+									}}
 									onPressEnter={handleEvent}
 									addonBefore="Customer Code"
 									style={{ width: 300, margin: '0 0' }}></Search>
@@ -290,25 +376,14 @@ const ManualContainer = ({
 						</Col>
 
 						{showDetails
-							? PlanDetails(details).map((item, index) => (
+							? PlanDetails(planDetails).map((item, index) => (
 									<Col style={{ textAlign: item.textAlign }} span={8} key={index}>
-										{/* <Form.Item
-											name={item.name}
-											initialValue={item.value}
-											style={{ marginBottom: '0px' }}
-											rules={[
-												{
-													required: true,
-													message: 'Input something!'
-												}
-											]}> */}
 										<Input
 											readOnly
 											value={item.value}
 											addonBefore={item.title}
 											style={{ width: item.width }}
 										/>
-										{/* </Form.Item> */}
 									</Col>
 							  ))
 							: null}
@@ -329,28 +404,28 @@ const ManualContainer = ({
 											<Form.Item
 												name={`Henkou Details`}
 												label={`Henkou Details`}
-												style={{ marginBottom: '0px' }}>
+												style={{ marginBottom: '20px' }}>
 												<TextArea
 													autoSize
-													value={details.logs}
+													value={planDetails.logs}
 													onChange={(value, event) =>
 														handleEvent(value, 'logs')
 													}></TextArea>
 											</Form.Item>
 										</Col>
 									</Row>
-									<Row gutter={[16, 16]} justify="center">
+									<Row gutter={[16, 16]}>
 										<Col span={8}>
 											<Form.Item
 												name={`Henkou Type`}
 												label={`Henkou Type`}
-												style={{ marginBottom: '0px' }}>
+												style={{ marginBottom: '20px' }}>
 												<Select
 													style={{ width: 150 }}
 													onChange={(value, event) =>
 														handleEvent(value, 'type_id')
 													}>
-													{master.types.map((item) => {
+													{types.map((item) => {
 														return (
 															<Option value={item.id} key={item.id}>
 																{item.type_name}
@@ -372,7 +447,7 @@ const ManualContainer = ({
 													onChange={(value, event) =>
 														handleEvent(value, 'reason_id')
 													}>
-													{master.reasons.map((item) => {
+													{reasons.map((item) => {
 														return (
 															<Option value={item.id} key={item.id}>
 																{item.reason_name}
@@ -382,32 +457,31 @@ const ManualContainer = ({
 												</Select>
 											</Form.Item>
 										</Col>
-										{existState.showDepartments && (
-											<Col span={existState.span}>
-												<Form.Item
-													name={`Departments`}
-													label={`Departments`}
-													style={{
-														marginBottom: '0px'
-													}}>
-													<Select
-														style={{ width: 200 }}
-														onChange={(value, event) =>
-															handleEvent(value, 'department_id')
-														}>
-														{master.departments.map((item, index) => {
-															return (
-																<Option
-																	value={item.DepartmentCode}
-																	key={item.DepartmentCode}>
-																	{item.DepartmentName}
-																</Option>
-															);
-														})}
-													</Select>
-												</Form.Item>
-											</Col>
-										)}
+										<Col span={8}>
+											<Form.Item
+												name={`Departments`}
+												label={`Departments`}
+												style={{
+													marginBottom: '0px'
+												}}>
+												<Select
+													disabled={!existState.showDepartments}
+													style={{ width: 200 }}
+													onChange={(value, event) =>
+														handleEvent(value, 'department_id')
+													}>
+													{departments.map((item, index) => {
+														return (
+															<Option
+																value={item.DepartmentCode}
+																key={item.DepartmentCode}>
+																{item.DepartmentName}
+															</Option>
+														);
+													})}
+												</Select>
+											</Form.Item>
+										</Col>
 									</Row>
 									<Row>
 										<Col span={12}>
@@ -435,64 +509,25 @@ const ManualContainer = ({
 
 										<Col span={12} style={{ textAlign: 'right' }}>
 											<Button
-												style={{ margin: '0 8px' }}
 												onClick={() => {
 													resetData();
-													// setShowCollapse(false);
-													// setExpand(false);
 												}}>
 												Clear
 											</Button>
-											{/* <Button
-								type="primary"
-								htmlType="submit"
-								onClick={() => setVisible(true)}>
-								Close
-							</Button> */}
+
+											<Button
+												style={{ margin: '0 8px' }}
+												type="primary"
+												// htmlType="submit"
+												onClick={() => handleRecheckModal()}>
+												Re-check
+											</Button>
 											<Button
 												type="primary"
 												// htmlType="submit"
 												onClick={() => handleRegisterAndUpload()}>
-												Save
+												Register
 											</Button>
-											{/* <Button
-								type="primary"
-								htmlType="button"
-								onClick={() => onClickPlanStatusBtn()}>
-								Plan Status
-							</Button>
-							<Modal
-								title="Plan Status (PCMS)"
-								bodyStyle={{ padding: 10 }}
-								centered
-								visible={visible}
-								onOk={() => setVisible(false)}
-								onCancel={() => setVisible(false)}
-								width={1500}>
-								<Table
-									style={{ marginTop: 10 }}
-									columns={planStatusHeaders}
-									loading={loading}
-									bordered
-									rowKey={(record) => record.id}
-									dataSource={assignedProductCategoriesPCMS.map((item, index) => {
-										if (index == 0) {
-											return {
-												id: index + 1,
-												...item,
-												position: 'center'
-											};
-										} else {
-											return {
-												id: index + 1,
-												...item,
-												position: 'center'
-											};
-										}
-									})}
-									scroll={{ x: 'max-content', y: 'calc(100vh - 23em)' }}
-								/>
-							</Modal> */}
 										</Col>
 									</Row>
 								</>
@@ -517,9 +552,10 @@ const ManualContainer = ({
 																			.utc(stat.created_at)
 																			.format(
 																				'YYYY-MM-DD, h:mm:ss a'
-																			)}  ${
-																			stat.product_name
-																		}(${stat.rev_no}):  ${
+																			)} Registered By:${
+																			stat?.employee
+																				?.EmployeeName
+																		}(${stat.rev_no}):   ${
 																			stat.log
 																		}`;
 																	} else {
@@ -529,7 +565,7 @@ const ManualContainer = ({
 																				'YYYY-MM-DD, h:mm:ss a'
 																			)}  ${
 																			stat.product_name
-																		}(${stat.rev_no}):  ${
+																		}(${stat.rev_no}):   ${
 																			stat.log
 																		}`;
 																	}
@@ -579,7 +615,7 @@ const ManualContainer = ({
 												// htmlType="submit"
 												disabled={existState.toggleBorrowBtn}
 												onClick={() =>
-													pending.actions.handlePendingModal(details)
+													pending.actions.handlePendingModal(planDetails)
 												}>
 												Borrow
 											</Button>
@@ -590,6 +626,29 @@ const ManualContainer = ({
 						</>
 					) : null}
 				</Form>
+				<Modal
+					className={'recheck-modal'}
+					title={`Recheck`}
+					onOk={handleRecheckOk}
+					okText="Save"
+					onCancel={handleRecheckCancel}
+					width={650}
+					visible={recheck.modalVisible}>
+					<Table
+						className={'recheck-table'}
+						pagination={false}
+						rowSelection={{
+							selectedRowKeys: recheck.selectedRowKeys,
+							onChange: onSelectChange,
+							onSelect: onSelectRow
+						}}
+						rowKey={(record) => record.id}
+						bordered
+						columns={RecheckHeader}
+						dataSource={recheck.products}
+						size="small"
+					/>
+				</Modal>
 				<Modal
 					title={`Pending ${pending.state.row.product_name}`}
 					onOk={pending.actions.handlePendingOk}
@@ -603,7 +662,7 @@ const ManualContainer = ({
 						columns={PendingHeaders(
 							pending.actions.handlePendingStatus,
 							pending.actions.handleReasonInput,
-							rest.userInfo,
+							rest.user,
 							{
 								data: pending.state.options,
 								onFocus: pending.actions.onFocus,
@@ -631,7 +690,6 @@ const ManualContainer = ({
 	);
 };
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo,
-	master: state.auth.master
+	user: state.auth.user
 });
 export default connect(mapStateToProps)(ManualContainer);

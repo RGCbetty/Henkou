@@ -8,9 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class ConstructionSchedule extends Model
 {
     use HasFactory;
+    protected $primaryKey = 'customer_code';
+    protected $keyType = 'string';
+    public $incrementing = 'false';
     protected $hidden = ['created_at', 'updated_at'];
     protected $fillable = [
         'customer_code',
+        'plan_no',
         'joutou_date',
         'days_before_joutou',
         'kiso_start',

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\ProductCategory;
+use App\Models\ProductDesignation;
 use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -33,18 +34,39 @@ class ProductCategorySeeder extends Seeder
             // }
             $products = array();
             for ($i = 0; $i < count($product_category); $i++) {
-                array_push($products, array(
-                    'product_key' => $product_category[$i]->ProductID,
-                    'product_name' => $product_category[$i]->ProductName == 'KAKOU IRAI' ? 'TH RELEASING' : $product_category[$i]->ProductName,
-                    "department_id" => $product_category[$i]->DepartmentCode,
-                    "section_id" => $product_category[$i]->SectionCode,
-                    "team_id" => $product_category[$i]->TeamCode,
-                    "waku_sequence" => $product_category[$i]->SeqWaku,
-                    "jiku_sequence" => $product_category[$i]->SeqJiku,
-                    "house_type" => $product_category[$i]->HouseType,
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s')
-                ));
+                if (count($products) > 0) {
+                    if (!array_reduce($products, function ($found, $property) use ($product_category, $i) {
+                        // info($property);
+                        // $product = $product_category[$i]->ProductName == 'KAKOU IRAI' ? 'TH RELEASING' : $product_category[$i]->ProductName;
+                        return $found || $property['product_key'] ==  $product_category[$i]->ProductID;
+                    })) {
+                        array_push($products, array(
+                            'product_key' => $product_category[$i]->ProductID,
+                            'product_name' => $product_category[$i]->ProductName == 'KAKOU IRAI' ? 'TH RELEASING' : $product_category[$i]->ProductName,
+                            // "department_id" => $product_category[$i]->DepartmentCode,
+                            // "section_id" => $product_category[$i]->SectionCode,
+                            // "team_id" => $product_category[$i]->TeamCode,
+                            // "waku_sequence" => $product_category[$i]->SeqWaku,
+                            // "jiku_sequence" => $product_category[$i]->SeqJiku,
+                            // "house_type" => $product_category[$i]->HouseType,
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ));
+                    }
+                } else {
+                    array_push($products, array(
+                        'product_key' => $product_category[$i]->ProductID,
+                        'product_name' => $product_category[$i]->ProductName == 'KAKOU IRAI' ? 'TH RELEASING' : $product_category[$i]->ProductName,
+                        // "department_id" => $product_category[$i]->DepartmentCode,
+                        // "section_id" => $product_category[$i]->SectionCode,
+                        // "team_id" => $product_category[$i]->TeamCode,
+                        // "waku_sequence" => $product_category[$i]->SeqWaku,
+                        // "jiku_sequence" => $product_category[$i]->SeqJiku,
+                        // "house_type" => $product_category[$i]->HouseType,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ));
+                }
             }
             ProductCategory::insert($products);
         } catch (Exception $e) {

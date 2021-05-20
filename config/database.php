@@ -81,7 +81,7 @@ return [
         'sqlsrv' => [
             'driver' => env('DB_SQLSRV_CONNECTION', 'sqlsrv'),
             // 'url' => env('DATABASE_URL'),
-            'host' => env('DB_MSSQL_HOST', ''),
+            'host' => env('DB_MIS_SQL_HOST', ''),
             'port' => env('DB_SQLSRV_PORT', ''),
             'database' => env('DB_DATABASE', ''),
             'username' => env('DB_SQLSRV_RW_USERNAME', ''),
@@ -119,7 +119,7 @@ return [
             // 'url' => env('DATABASE_URL'),
             'host' => env('DB_HRDSQL2_HOST', ''),
             'port' => env('DB_SQLSRV_PORT', ''),
-            'database' => env('DB_MSSQL_PORT', ''),
+            'database' => env('DB_HRDSQL2_DATABASE', ''),
             'username' => env('DB_SQLSRV_READONLY_USERNAME', ''),
             'password' => env('DB_SQLSRV_READONLY_PASSWORD', ''),
             'charset' => 'utf8',

@@ -17,27 +17,40 @@ const ActionHeaders = (
 		dataIndex: 'status_index',
 		key: '1',
 		width: 30,
+		align: 'center'
+	},
+
+	{
+		title: 'Updated By',
+		key: '2',
+		dataIndex: ['employee', 'EmployeeName'],
 		align: 'center',
-		fixed: 'left'
+		width: 130
+	},
+	{
+		title: 'Department',
+		dataIndex: ['employee', 'department', 'DepartmentName'],
+		key: '3',
+		align: 'center',
+		width: 130
 	},
 	{
 		title: 'Section',
-		dataIndex: 'section',
-		key: '2',
+		dataIndex: ['employee', 'section', 'SectionName'],
+		key: '3',
 		align: 'center',
-		width: 130,
-		fixed: 'left'
+		width: 130
 	},
 	{
 		title: 'Team',
-		key: '3',
-		dataIndex: 'team',
+		key: '4',
+		dataIndex: ['employee', 'team', 'TeamName'],
 		align: 'center',
 		width: 130
 	},
 	{
 		title: 'Start',
-		key: '8',
+		key: '5',
 		dataIndex: 'start_date',
 		align: 'center',
 		width: 120,
@@ -64,7 +77,7 @@ const ActionHeaders = (
 
 	{
 		title: 'Pending',
-		key: '9',
+		key: '6',
 		dataIndex: 'pending',
 		align: 'center',
 		width: 70,
@@ -72,12 +85,12 @@ const ActionHeaders = (
 			<Tooltip placement="top" title={'Assess Pending'}>
 				<Button
 					type="primary"
-					disabled={
-						!row.received_date ||
-						!row.start_date ||
-						row.finished_date ||
-						row.disableHistory
-					}
+					// disabled={
+					// 	!row.received_date ||
+					// 	!row.start_date ||
+					// 	row.finished_date ||
+					// 	row.disableHistory
+					// }
 					onClick={() => handleActionPending(row)}
 					shape="circle"
 					icon={<ClockCircleOutlined />}
@@ -87,7 +100,7 @@ const ActionHeaders = (
 	},
 	{
 		title: 'Finish',
-		key: '10',
+		key: '7',
 		dataIndex: 'finished_date',
 		align: 'center',
 
@@ -116,14 +129,14 @@ const ActionHeaders = (
 
 	{
 		title: 'Duration',
-		key: '6',
+		key: '8',
 		dataIndex: 'days_in_process',
 		align: 'center',
 		width: 70
 	},
 	{
 		title: 'Henkou Details',
-		key: '7',
+		key: '9',
 		dataIndex: 'log',
 		align: 'center',
 		width: 150,

@@ -8,24 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 class Detail extends Model
 {
     use HasFactory;
-
+    protected $primaryKey = 'customer_code';
+    protected $keyType = 'string';
+    public $incrementing = 'false';
     protected $fillable = [
         'customer_code',
         'plan_no',
-        'rev_no',
-        'plan_specification',
         'house_code',
         'house_type',
         'method',
-        'logs',
-        'th_no',
         'floors',
-        'department_id',
-        'reason_id',
-        'type_id',
         'invoice_id',
-        'plan_status_id',
         'construction_schedule_id',
+        'plan_specs_id',
         'created_at',
         'updated_at',
         'updated_by'
@@ -35,30 +30,10 @@ class Detail extends Model
     // protected $primaryKey = 'details_id';
     public function construction_schedule()
     {
-        return $this->belongsTo(ConstructionSchedule::class);
-    }
-    public function reason()
-    {
-        return $this->belongsTo(Reason::class);
-    }
-    public function type()
-    {
-        return $this->belongsTo(Type::class);
+        return $this->belongsTo(ConstructionSchedule::class, 'customer_code', 'customer_code');
     }
     public function invoice()
     {
         return $this->belongsTo(Invoice::class);
-    }
-    public function planStatus()
-    {
-        return $this->belongsTo(PlanStatus::class, 'plan_status_id');
-    }
-    public function attachment()
-    {
-        return $this->hasMany(Attachment::class);
-    }
-    public function statuses()
-    {
-        return $this->hasMany(Status::class);
     }
 }

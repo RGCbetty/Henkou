@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attachment;
 use App\Models\Detail;
+use App\Models\Product;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +20,7 @@ class AttachmentController extends Controller
             'files.*' => 'mimes:csv,ods,xls,xlsx,pdf,txt'
         ]);
         try {
-            $henkou = Detail::find($id);
+            $henkou = Product::find($id);
             if ($request->hasfile('files')) {
                 $attachment = array();
                 foreach ($request->file('files') as $file) {

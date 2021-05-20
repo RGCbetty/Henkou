@@ -72,9 +72,9 @@ const { TextArea } = Input;
 export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pendingItems) => [
 	{
 		title: 'Sequence',
-		dataIndex: 'sequence',
+		dataIndex: ['affected_product', 'sequence_no'],
 		key: '1',
-		width: 70,
+		width: 60,
 		align: 'center',
 		fixed: 'left'
 	},
@@ -83,14 +83,14 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 		dataIndex: 'received_date',
 		key: '2',
 		align: 'center',
-		width: 130,
+		width: 80,
 		fixed: 'left'
 	},
 	{
 		title: 'Product / Process',
 		key: '3',
-		width: 300,
-		dataIndex: 'product_name',
+		width: 80,
+		dataIndex: ['affected_product', 'product_category', 'product_name'],
 		render: (text, row, index) => (
 			<b>
 				{checkIfOwner(row) ? (
@@ -104,26 +104,77 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 		fixed: 'left'
 	},
 
+	,
 	{
 		title: 'Department',
-		dataIndex: 'department',
-		key: '4',
+		width: 60,
 		align: 'center',
-		width: 150
+		dataIndex: ['affected_product', 'product_category', 'designations'],
+		render: (designations) => (
+			<>
+				{[
+					...new Map(
+						designations
+							.map(({ department }) => ({
+								id: department.DepartmentCode,
+								name: department.DepartmentName
+							}))
+							.map((item) => [item['id'], item])
+					).values()
+				].map((department) => (
+					<Tag key={department.id}>{department.name}</Tag>
+				))}
+			</>
+		),
+		key: '6'
+	},
+	{
+		title: 'Section',
+		width: 60,
+		align: 'center',
+		dataIndex: ['affected_product', 'product_category', 'designations'],
+		render: (designations) => (
+			<>
+				{[
+					...new Map(
+						designations
+							.map(({ section }) => ({
+								id: section.SectionCode,
+								name: section.SectionName
+							}))
+							.map((item) => [item['id'], item])
+					).values()
+				].map((section) => (
+					<Tag key={section.id}>{section.name}</Tag>
+				))}
+			</>
+		),
+		key: '7'
 	},
 	// {
-	// 	title: 'Section',
-	// 	dataIndex: 'section',
-	// 	key: '5',
-	// 	align: 'center',
-	// 	width: 170
-	// },
-	// {
 	// 	title: 'Team',
-	// 	dataIndex: 'team',
-	// 	key: '6',
+	// 	width: 60,
 	// 	align: 'center',
-	// 	width: 150
+	// 	dataIndex: ['affected_product', 'product_category', 'designations'],
+	// 	render: (designations) => (
+	// 		<>
+	// 			{[
+	// 				...new Map(
+	// 					designations
+	// 						.map(({ team }) => ({
+	// 							id: team.TeamCode,
+	// 							name: team.TeamName
+	// 						}))
+	// 						.map((item) => [item['id'], item])
+	// 				).values()
+	// 			].map((team) => (
+	// 				<Tag color="blue" key={team.id}>
+	// 					{team.name}
+	// 				</Tag>
+	// 			))}
+	// 		</>
+	// 	),
+	// 	key: '8'
 	// },
 
 	{
@@ -141,25 +192,55 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 						!row.received_date ||
 						row.start_date ||
 						row.finished_date ||
-						row.assessment_id == 2 ||
-						row.assessment_id == 3 ||
+						row.assessment_id ||
+						// row.assessment_id == 3 ||
 						checkIfOwner(row) ||
 						(status.findIndex((el) => el.sequence == row.sequence) == 0
-							? !status[status.findIndex((el) => el.sequence == row.sequence)]
-									.received_date &&
-							  status[status.findIndex((el) => el.sequence == row.sequence)]
-									.assessment_id !== 1
+							? !status[
+									status.findIndex(
+										(el) =>
+											el.affected_product.sequence_no ==
+											row.affected_product.sequence_no
+									)
+							  ].received_date &&
+							  status[
+									status.findIndex(
+										(el) =>
+											el.affected_product.sequence_no ==
+											row.affected_product.sequence_no
+									)
+							  ].assessment_id !== 1
 							: //  !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
 							// 		.received_date ||
-							status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-									.assessment_id == 1
-							? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-									.finished_date
-							: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-									.assessment_id
+							status[
+									status.findIndex(
+										(el) =>
+											el.affected_product.sequence_no ==
+											row.affected_product.sequence_no
+									) - 1
+							  ].assessment_id == 1
+							? !status[
+									status.findIndex(
+										(el) =>
+											el.affected_product.sequence_no ==
+											row.affected_product.sequence_no
+									) - 1
+							  ].finished_date
+							: !status[
+									status.findIndex(
+										(el) =>
+											el.affected_product.sequence_no ==
+											row.affected_product.sequence_no
+									) - 1
+							  ].assessment_id
 							? true
-							: !status[status.findIndex((el) => el.sequence == row.sequence)]
-									.received_date)
+							: !status[
+									status.findIndex(
+										(el) =>
+											el.affected_product.sequence_no ==
+											row.affected_product.sequence_no
+									)
+							  ].received_date)
 					}
 					onChange={(value) => actions.handleEventStatus(value, 'assessment_id', row)}
 					style={{ width: 130 }}>
@@ -193,43 +274,6 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 	// 	)
 	// },
 
-	{
-		title: 'Action',
-		key: '6',
-		align: 'center',
-		width: 50,
-		dataIndex: 'action',
-		render: (text, row) => (
-			<Button
-				type="primary"
-				// disabled={
-				// row.assessment_id !== 1 ||
-				// !row.received_date ||
-				// row.finished_date
-				// ||
-				// (status.findIndex((el) => el.sequence == row.sequence) == 0
-				// 	? !status[status.findIndex((el) => el.sequence == row.sequence)]
-				// 			.received_date ||
-				// 	  status[status.findIndex((el) => el.sequence == row.sequence)]
-				// 			.assessment_id !== 1
-				// 	: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-				// 			.received_date ||
-				// 	  status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-				// 			.assessment_id == 1
-				// 	? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-				// 			.finished_date
-				// 	: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-				// 			.assessment_id
-				// 	? true
-				// 	: !status[status.findIndex((el) => el.sequence == row.sequence)]
-				// 			.received_date)
-				// }
-				onClick={() => actions.handleAction(row)}
-				shape="circle"
-				icon={<FieldTimeOutlined />}
-			/>
-		)
-	},
 	// {
 	// 	title: 'Start',
 	// 	key: '7',
@@ -336,5 +380,43 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 		align: 'center',
 		width: 100,
 		dataIndex: 'days_in_process'
+	},
+	{
+		title: 'Action',
+		key: '6',
+		align: 'center',
+		fixed: 'right',
+		width: 50,
+		dataIndex: 'action',
+		render: (text, row) => (
+			<Button
+				type="primary"
+				// disabled={
+				// row.assessment_id !== 1 ||
+				// !row.received_date ||
+				// row.finished_date
+				// ||
+				// (status.findIndex((el) => el.sequence == row.sequence) == 0
+				// 	? !status[status.findIndex((el) => el.sequence == row.sequence)]
+				// 			.received_date ||
+				// 	  status[status.findIndex((el) => el.sequence == row.sequence)]
+				// 			.assessment_id !== 1
+				// 	: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+				// 			.received_date ||
+				// 	  status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+				// 			.assessment_id == 1
+				// 	? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+				// 			.finished_date
+				// 	: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
+				// 			.assessment_id
+				// 	? true
+				// 	: !status[status.findIndex((el) => el.sequence == row.sequence)]
+				// 			.received_date)
+				// }
+				onClick={() => actions.handleAction(row)}
+				shape="circle"
+				icon={<FieldTimeOutlined />}
+			/>
+		)
 	}
 ];

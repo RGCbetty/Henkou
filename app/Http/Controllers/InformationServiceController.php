@@ -2,11 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Detail;
+use App\Models\Assessment;
+use App\Models\Department;
+use App\Models\Plan;
 use App\Models\PlanStatus;
+use App\Models\PlanTypes;
+use App\Models\Product;
+use App\Models\Reason;
+use App\Models\ThAction;
+use App\Models\ThAssessment;
+use App\Models\ThPlanTemporary;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Action;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -80,22 +89,10 @@ class InformationServiceController extends Controller
             ]);
         }
     }
-    public function table(Request $request, $sort_by = null, $order = 'asc')
+    public function table()
     {
         try {
-            // $assocConstructionCode = $request->only('ConstructionCode');
-            // $assocNameCode = $request->only('NameCode');
-            // $constructionCodeVal = $request->query('ConstructionCode');
-            // $nameCodeVal = $request->query('NameCode');
-
-            // $constructionCodeKey = array_key_first($assocConstructionCode);
-            // $nameCodeKey = array_key_first($assocNameCode);
-            // info($input[$key]);
-            // $conditionalQueryConstructionCode = count($assocConstructionCode) > 0 ? "AND {$constructionCodeKey} = '{$constructionCodeVal}'" : null;
-            // $conditionalQueryNameCode = count($assocNameCode) > 0 ? "B.{$nameCodeKey} = '{$nameCodeVal}' AND" : null;
-            // $paramsKey = array_key_first($request->query());
-
-            $pagination = DB::connection('information_service')->select(DB::raw("SELECT A.*,B.NameCode,B.PlanNo,D.ConstructionTypeName,D.Method,E.StoppedProcessingDate,E.ResumedProcessingDate FROM
+            $THshiyousho = DB::connection('information_service')->select(DB::raw("SELECT A.*,B.NameCode,B.PlanNo,D.ConstructionTypeName,D.Method,CONVERT(VARCHAR(10),E.StoppedProcessingDate,120) AS StoppedProcessingDate,CONVERT(VARCHAR(10),E.ResumedProcessingDate,120) AS ResumedProcessingDate  FROM
             (
             SELECT ConstructionCode,CONVERT(VARCHAR(10),RequestAcceptedDate,120) as RequestAcceptedDate, RequestNo FROM SpecificationChangingDetails
             WHERE  RequestAcceptedDate BETWEEN CONVERT(VARCHAR(15),dateadd(day,-1,GETDATE()),111) AND CONVERT(VARCHAR(15),GETDATE(),111)
@@ -116,9 +113,19 @@ class InformationServiceController extends Controller
             ON A.ConstructionCode =E.ConstructionCode
             WHERE E.StoppedProcessingDate IS NULL OR E.ResumedProcessingDate IS NOT NULL
             ORDER BY A.RequestAcceptedDate ASC"));
-
-            $collection = collect($pagination);
-            return json_encode($collection);
+            $THtemp = ThPlanTemporary::select()->whereDate('received_date', '=', Carbon::today()->subDay())->orWhere('received_date', '=', Carbon::today())->get();
+            $PlanStatus = PlanStatus::all();
+            $HenkouReason = Reason::all();
+            $THAction = ThAction::all();
+            $THAssessment = ThAssessment::all();
+            return response()->json([
+                'THtemp' =>  $THtemp,
+                'THshiyousho' => $THshiyousho,
+                'PlanStatus' => $PlanStatus,
+                'HenkouReason' =>  $HenkouReason,
+                'THAction' => $THAction,
+                'THAssessment' => $THAssessment
+            ]);
         } catch (Exception $error) {
             info($error);
             return response()->json([
@@ -127,7 +134,7 @@ class InformationServiceController extends Controller
             ]);
         }
     }
-    public function specs($id)
+    public function specs($customer_code)
     {
         try {
             // $construction_schedule = DB::connection('information_service')->select(DB::raw("SELECT datediff(day,getdate(),StartedFoundationWorkDate) AS before_kiso_start,
@@ -146,9 +153,11 @@ class InformationServiceController extends Controller
             //     LEFT JOIN Constructions C
             //     ON A.ConstructionCode = C.ConstructionCode
             //    WHERE A.ConstructionCode = :constructioncode"), array('constructioncode' => $id));
-            $plan_details = DB::connection('information_service')->select(DB::raw("SELECT TOP 1 A.*,
-            B.NameCode AS house_code,
-            B.PlanNo AS plan_no,
+            $plan_details = DB::connection('information_service')->select(DB::raw("SELECT    A.NameCode AS house_code,
+            A.PlanNo AS plan_no,
+            A.ConstructionCode AS construction_code,
+            B.received_date,
+            B.th_no,
             C.Floors AS floors,
             D.ConstructionTypeName AS house_type,
             D.Method AS method,
@@ -156,31 +165,30 @@ class InformationServiceController extends Controller
             E.StartedFoundationWorkDate AS kiso_start,
                datediff(day,getdate(),E.ExpectedHouseRaisingDate) AS days_before_joutou,
                datediff(day,getdate(),E.StartedFoundationWorkDate)AS before_kiso_start
-          FROM
-                    (
-                   SELECT  ConstructionCode AS construction_code,
+            FROM
+            Constructions A
+                    LEFT JOIN (
+                    SELECT  ConstructionCode AS construction_code,
                     CONVERT(VARCHAR(10),RequestAcceptedDate,120)AS received_date,
                     RequestNo AS th_no
                                 FROM SpecificationChangingDetails
                                --	WHERE ConstructionCode = '4510289-2019'
                                 GROUP BY ConstructionCode,RequestNo, RequestAcceptedDate
                                 HAVING MAX(SequentialNo) > 0
-                    ) A
-
-                    LEFT JOIN Constructions B
-                    ON A.construction_code = B.ConstructionCode
+                    ) B
+                    ON A.ConstructionCode = B.construction_code
 
                     LEFT JOIN Houses C
-                    ON A.construction_code = C.ConstructionCode
+                    ON A.ConstructionCode = C.ConstructionCode
 
                     LEFT JOIN ConstructionTypes D
                     ON C.ConstructionTypeCode =D.ConstructionTypeCode
 
                     LEFT JOIN ConstructionSchedule E
-                    ON A.construction_code =E.ConstructionCode
+                    ON A.ConstructionCode =E.ConstructionCode
 
-                    WHERE A.construction_code = '$id' AND (E.StoppedProcessingDate IS NULL OR E.ResumedProcessingDate IS NOT NULL)
-                    ORDER BY A.received_date DESC"))[0];
+                    WHERE A.ConstructionCode = '{$customer_code}' AND (E.StoppedProcessingDate IS NULL OR E.ResumedProcessingDate IS NOT NULL)
+                    ORDER BY B.received_date DESC"))[0];
             $invoice = DB::connection('sqlsrv')->select(DB::raw("SELECT A.InvoiceID,A.DepartmentCode,B.InvoiceName,B.Invoice  FROM M_InvoiceList A
             INNER JOIN
                 (
@@ -191,7 +199,7 @@ class InformationServiceController extends Controller
                         ON A.ConstructionMaterialCode = B.ConstructionMaterialCode
                         AND A.ConstructionMaterialDetailCode = B.ConstructionMaterialDetailCode
                         AND A.Floor = B.Floor
-                        AND  B.ConstructionCode ='$id'
+                        AND  B.ConstructionCode ='$customer_code'
 
                         AND A.DeletedDate IS NULL)
                     ) B
@@ -208,14 +216,49 @@ class InformationServiceController extends Controller
                     INNER JOIN hrdsql.hrdinformationservice.dbo.BasicSpecificationDetails B
                         ON A.BasicSpecificationCode = B.BasicSpecificationCode
                         AND A.SpecificationDetailCode = B.SpecificationDetailCode
-                        AND  B.ConstructionCode = '$id'
+                        AND  B.ConstructionCode = '$customer_code'
                         AND A.DeletedDate IS NULL)
                     ) B
             ON A.SpecsID=B.SpecsID
             AND A.DeletedDate IS NULL
             GROUP BY A.SpecsID,A.SpecificationName"));
-            $latest_revision = Detail::where('customer_code', $id)->max('rev_no');
-            $latest_plan = Detail::select()->where(['customer_code' => $id, 'rev_no' => $latest_revision])->first();
+            $latest_revision =  Plan::where('customer_code', $customer_code)->max('rev_no');
+            $latest_plan = Plan::with('planStatus')->where(['customer_code' => $customer_code, 'rev_no' => $latest_revision])->first();
+            $plan_status = PlanStatus::all();
+            $departments = Department::all(['DepartmentCode', 'DepartmentName']);
+            $types = PlanTypes::all();
+            $reason = Reason::all();
+            if ($latest_revision) {
+                $revision_index = explode('-', $latest_revision);
+                $productsLogs = Product::with(['plan.employee', 'employee', 'affectedProduct.productCategory.designations', 'pendings.products' => function ($query) use ($customer_code, $revision_index) {
+                    $query->where('customer_code', $customer_code)->whereRaw("SUBSTRING_INDEX(rev_no, '-',1) = ?", $revision_index);
+                }, 'pendings.employee'])->where('customer_code', $customer_code)->whereRaw("SUBSTRING_INDEX(rev_no, '-',1) = ?", $revision_index[0])->get();
+                $products = Product::with(['affectedProduct', 'employee', 'affectedProduct.pendings', 'pendings', 'affectedProduct.productCategory.designations'])->where(['plan_id' => $latest_plan->id, 'customer_code' => $customer_code])->get();
+                return response()->json([
+                    'invoice' => $invoice,
+                    'details' => $plan_details,
+                    'specification' => $plan_specification,
+                    'latest' => $latest_plan,
+                    'productslogs' => $productsLogs,
+                    'products' => $products,
+                    'process' => $plan_status,
+                    'departments' => $departments,
+                    'types' => $types,
+                    'reasons' => $reason
+                ]);
+            } else {
+                return response()->json([
+                    'invoice' => $invoice,
+                    'details' => $plan_details,
+                    'specification' => $plan_specification,
+                    'latest' => $latest_plan,
+                    'process' => $plan_status,
+                    'departments' => $departments,
+                    'types' => $types,
+                    'reasons' => $reason
+                ]);
+            }
+            // Product::with()
             // DB::connection('mysql')->select(DB::raw("SELECT A.*,B.*, C.* FROM henkou.details as A
             // INNER JOIN henkou.construction_schedules as B
             //     ON A.customer_code = B.customer_code
@@ -226,16 +269,11 @@ class InformationServiceController extends Controller
             // $max = Detail::where('customer_code', $customer_code)->max('rev_no');
             // $found = (empty($max)) ? null :  Detail::where('customer_code', $customer_code)->where('rev_no', $max)->first()->invoice()->where('customer_code', $customer_code)->first();
             //  return $result;
-            return response()->json([
-                'invoice' => $invoice,
-                'details' => $plan_details,
-                'specification' => $plan_specification,
-                'latest' => $latest_plan
-            ]);
+
         } catch (Exception $error) {
             return response()->json([
                 'status_code' => 500,
-                'error' => $error,
+                'error' => $error->getMessage(),
             ]);
         }
     }

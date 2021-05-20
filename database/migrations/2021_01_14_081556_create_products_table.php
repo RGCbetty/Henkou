@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateStatusesTable extends Migration
+class CreateProductsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateStatusesTable extends Migration
      */
     public function up()
     {
-        Schema::create('statuses', function (Blueprint $table) {
+        Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('customer_code', 12);
             $table->string('rev_no', 8);
@@ -22,14 +22,20 @@ class CreateStatusesTable extends Migration
             $table->timestamp('start_date')->nullable();
             $table->timestamp('finished_date')->nullable();
             $table->timestamp('received_date')->nullable();
+            $table->boolean('is_rechecking')->default(0);
             $table->timestamps();
         });
-        Schema::table('statuses', function (Blueprint $table) {
+        Schema::table('products', function (Blueprint $table) {
             $table->foreignId('assessment_id')->nullable()->constrained('assessments');
-            $table->foreignId('detail_id')->constrained('details');
+            $table->foreignId('plan_id')->constrained('plans');
+            // $table->foreignId('customer_code')->references('customer_code')->on('plans');
             // $table->foreignId('product_id')->constrained('product_categories');
             $table->foreignId('affected_id')->constrained('affected_products');
         });
+        // Schema::create('products', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->timestamps();
+        // });
     }
 
     /**
@@ -39,6 +45,6 @@ class CreateStatusesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('statuses');
+        Schema::dropIfExists('products');
     }
 }

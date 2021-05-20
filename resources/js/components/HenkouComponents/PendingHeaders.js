@@ -5,26 +5,31 @@ const { Option } = Select;
 
 const { TextArea } = Input;
 
-const PendingHeaders = (handleStatus, handleReasonInput, userInfo, options) => [
+const PendingHeaders = (handleStatus, handleReasonInput, user, options) => [
 	{
 		title: 'No.',
 		dataIndex: 'pending_index',
 		key: '1',
 		width: 70,
+		align: 'center'
+	},
+	{
+		title: 'Updated By',
+		key: '2',
+		dataIndex: ['employee', 'EmployeeName'],
 		align: 'center',
-		fixed: 'left'
+		width: 130
 	},
 	{
 		title: 'Revision No.',
 		dataIndex: 'rev_no',
-		key: '2',
+		key: '3',
 		align: 'center',
-		width: 120,
-		fixed: 'left'
+		width: 120
 	},
 	{
 		title: 'Start',
-		key: '3',
+		key: '4',
 		dataIndex: 'start',
 		align: 'center',
 		width: 150,
@@ -35,6 +40,7 @@ const PendingHeaders = (handleStatus, handleReasonInput, userInfo, options) => [
 				<>
 					<Button
 						type="primary"
+						disabled={!row.start_date || row.finished_date}
 						onClick={() => handleStatus(row, 'start', true)}
 						shape="circle"
 						icon={<PlayCircleOutlined />}
@@ -44,7 +50,7 @@ const PendingHeaders = (handleStatus, handleReasonInput, userInfo, options) => [
 	},
 	{
 		title: 'Reason',
-		key: '4',
+		key: '5',
 		dataIndex: 'reason',
 		align: 'center',
 		render: (text, row) => (
@@ -70,11 +76,10 @@ const PendingHeaders = (handleStatus, handleReasonInput, userInfo, options) => [
 	},
 	{
 		title: 'Borrow Details',
-		key: '4',
+		key: '6',
 		dataIndex: 'borrow_details',
 		align: 'center',
 		render: (text, row) => {
-			console.log(row);
 			return (
 				<TextArea
 					value={text}
@@ -93,7 +98,7 @@ const PendingHeaders = (handleStatus, handleReasonInput, userInfo, options) => [
 	},
 	{
 		title: 'Resume',
-		key: '5',
+		key: '7',
 		dataIndex: 'resume',
 		align: 'center',
 		width: 150,
@@ -104,7 +109,12 @@ const PendingHeaders = (handleStatus, handleReasonInput, userInfo, options) => [
 				<>
 					<Button
 						type="primary"
-						disabled={!row.start || row.updated_by !== userInfo.EmployeeCode}
+						disabled={
+							!row.start ||
+							row.updated_by !== user.EmployeeCode ||
+							!row.start_date ||
+							row.finished_date
+						}
 						onClick={() => handleStatus(row, 'resume', true)}
 						shape="circle"
 						icon={<PauseCircleOutlined />}
@@ -114,14 +124,14 @@ const PendingHeaders = (handleStatus, handleReasonInput, userInfo, options) => [
 	},
 	{
 		title: 'Duration',
-		key: '6',
+		key: '8',
 		dataIndex: 'duration',
 		align: 'center',
 		width: 70
 	},
 	{
 		title: 'Remarks',
-		key: '4',
+		key: '9',
 		dataIndex: 'remarks',
 		align: 'center',
 		render: (text, row) => (

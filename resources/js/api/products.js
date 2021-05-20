@@ -27,21 +27,51 @@ export const useAffectedProductsRetriever = () => {
 	}, []);
 	return [affectedProducts, setAffectedProducts];
 };
-export const useProductsRetriever = () => {
-	const [products, setProducts] = useState({ loading: true, data: [], planstatus: [] });
+export const useMasterState = (user) => {
+	const [state, setState] = useState({
+		loading: true,
+		products: [],
+		affectedProducts: [],
+		planstatus: [],
+		selectedPlanStatus: 0,
+		departments: [],
+		selectedDepartments: [],
+		sections: [],
+		selectedSections: [],
+		teams: [],
+		selectedTeams: []
+	});
 	useEffect(() => {
 		let mounted = true;
 		(async () => {
 			try {
-				const products = await Http.get(`/api/master/products`);
-				const planstatus = await Http.get(`/api/master/planstatuses`);
-
-				if (mounted) {
-					setProducts({
+				const { data, status } = await Http.get(`/api/henkou/master/products`);
+				const { products, planstatus, departments } = data;
+				const { data: sections } = await Http.get('/api/department/{dep_id}/sections', {
+					params: { dep_id: user.DepartmentCode }
+				});
+				const { data: teams } = await Http.get(
+					'/api/department/{dep_id}/section/{sec_id}/teams',
+					{
+						params: {
+							dep_id: user.DepartmentCode,
+							sec_id: user.SectionCode
+						}
+					}
+				);
+				if (mounted && status == 200) {
+					setState((prevState) => ({
+						...prevState,
 						loading: false,
-						data: products.data,
-						planstatus: planstatus.data
-					});
+						products,
+						planstatus,
+						departments,
+						sections,
+						teams,
+						selectedDepartments: [user.DepartmentCode],
+						selectedSections: [user.SectionCode],
+						selectedTeams: [user.TeamCode]
+					}));
 				}
 			} catch (error) {
 				if (Http.isCancel(error)) {
@@ -55,7 +85,7 @@ export const useProductsRetriever = () => {
 			mounted = false;
 		};
 	}, []);
-	return [products, setProducts];
+	return [state, setState];
 };
 
 /* BACK UPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP */

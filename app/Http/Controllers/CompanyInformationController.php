@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,9 +14,7 @@ class CompanyInformationController extends Controller
     public function departments()
     {
         try {
-            $departments = DB::connection('company_information')->select(
-                DB::raw('SELECT DepartmentCode,DepartmentName FROM Departments WHERE DeletedDate IS NULL')
-            );
+            $departments = Department::all(['DepartmentCode', 'DepartmentName']);
             return response()->json($departments);
         } catch (Exception $error) {
             return response()->json(['message' => $error->getMessage()], 404);

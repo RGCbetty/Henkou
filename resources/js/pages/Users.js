@@ -187,6 +187,6 @@ const Users = ({ title, ...rest }) => {
 	);
 };
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo
+	user: state.auth.user
 });
 export default connect(mapStateToProps)(Users);

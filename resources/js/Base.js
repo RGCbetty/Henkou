@@ -35,7 +35,7 @@ const Base = ({ children, dispatch, ...rest }) => {
 	];
 	const menu = (
 		<Menu>
-			{rest.userInfo.access_level == 1 && (
+			{rest.user.access_level == 1 && (
 				<Menu.ItemGroup title="Settings">
 					<Menu.Item key="0">
 						<Link to="/master">
@@ -86,23 +86,23 @@ const Base = ({ children, dispatch, ...rest }) => {
 				<div className="logo" />
 				<div className="avatar">
 					{/* <Avatar
-						src={`http://adminsql1/photos/${rest.userInfo.EmployeeCode}.jpg`}
+						src={`http://adminsql1/photos/${rest.user.EmployeeCode}.jpg`}
 						size="large"
 						style={{ verticalAlign: 'center' }}
 					/>
-					<p>{rest.userInfo.EmployeeName} Encoder</p> */}
+					<p>{rest.user.EmployeeName} Encoder</p> */}
 					<span>Department</span>
-					<p style={{ verticalAlign: 'top' }}>{rest.userInfo.DepartmentName}</p>
-					{rest.userInfo.SectionName ? (
+					<p style={{ verticalAlign: 'top' }}>{rest.user.DepartmentName}</p>
+					{rest.user?.SectionName ? (
 						<>
 							<span>Section</span>
-							<p style={{ verticalAlign: 'middle' }}>{rest.userInfo.SectionName}</p>
+							<p style={{ verticalAlign: 'middle' }}>{rest.user?.SectionName}</p>
 						</>
 					) : null}
-					{rest.userInfo.TeamName ? (
+					{rest.user?.TeamName ? (
 						<>
 							<span>Team</span>
-							<p style={{ verticalAlign: 'bottom' }}>{rest.userInfo.TeamName}</p>
+							<p style={{ verticalAlign: 'bottom' }}>{rest.user?.TeamName}</p>
 						</>
 					) : null}
 				</div>
@@ -113,7 +113,7 @@ const Base = ({ children, dispatch, ...rest }) => {
 					selectedKeys={[pathname]}>
 					{drawerItems
 						.filter((item) => {
-							if (rest.userInfo.access_level == 2) {
+							if (rest.user.access_level == 2) {
 								if (item.title == 'Registration') {
 									return false;
 								}
@@ -154,17 +154,17 @@ const Base = ({ children, dispatch, ...rest }) => {
 													style={{ margin: '-5px 0px 0px 0px' }}
 													// http://asd_sql/photos/38610.jpg
 
-													src={`http://asd_sql/photos/${rest.userInfo.EmployeeCode}.jpg`}
-													// src={`http://hrdapps68:3001/ftp/employee_pictures/${rest.userInfo.EmployeeCode}.jpg`}
+													src={`http://asd_sql/photos/${rest.user.EmployeeCode}.jpg`}
+													// src={`http://hrdapps68:3001/ftp/employee_pictures/${rest.user.EmployeeCode}.jpg`}
 												></Avatar>
 												// <img
-												// 	src={`http://adminsql1/photos/${rest.userInfo.EmployeeCode}.jpg`}
+												// 	src={`http://adminsql1/photos/${rest.user.EmployeeCode}.jpg`}
 												// />
 											)}
 										/>
 									}
 									size="middle">
-									{rest.userInfo.EmployeeName}
+									{rest.user.EmployeeName}
 								</Button>
 								{/* <Avatar
                                     size={{ xs: 35, sm: 38, md: 39, lg: 42, xl: 45, xxl: 55 }}
@@ -187,7 +187,7 @@ const Base = ({ children, dispatch, ...rest }) => {
 };
 const mapStateToProps = (state) => ({
 	isAuthenticated: state.auth.isAuthenticated,
-	userInfo: state.auth.userInfo
+	user: state.auth.user
 });
 
 export default connect(mapStateToProps)(React.memo(Base));

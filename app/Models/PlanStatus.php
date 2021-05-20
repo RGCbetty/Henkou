@@ -11,6 +11,10 @@ class PlanStatus extends Model
     public $primaryKey  = 'id';
     public function products()
     {
-        return $this->belongsToMany(ProductCategory::class, 'affected_products', 'plan_status_id', 'product_category_id')->withPivot('sequence_no', 'updated_by')->orderBy('affected_products.sequence_no');
+        return $this->belongsToMany(ProductCategory::class, 'affected_products', 'plan_status_id', 'product_key')->withPivot('sequence_no', 'updated_by')->orderBy('affected_products.sequence_no');
+    }
+    public function affectedProducts()
+    {
+        return $this->hasMany(AffectedProduct::class, 'plan_status_id');
     }
 }

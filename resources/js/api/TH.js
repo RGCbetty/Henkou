@@ -3,222 +3,116 @@ import moment from 'moment';
 import Http from '../Http';
 import durationAsString from '../utils/diffDate';
 
-export const THplansWithPlanStatus = async (user) => {
-	const response = await fetchThPlans();
-	const tempTHplans = await fetchThTemp();
-	const planstatus = await Http.get('/api/master/planstatuses');
-	const instance = Http.create({
-		baseURL: 'http://hrdapps68:8070/api',
-		withCredentials: false
-	});
-	const { THplans } = response;
-	const THplansWithPlanStatus = await instance.post('/pcms/planstatus', {
-		plans: THplans
-	});
-	// if (THplansWithPlanStatus.data.length > 0) {
-	const data = THplansWithPlanStatus.data
-		.map((item) => {
+export const fetchRegistrationData = async () => {
+	const { data, status } = await Http.get('api/henkou/registration');
+	if (status == 200) {
+		const { THtemp, THshiyousho, PlanStatus, HenkouReason, THAction, THAssessment } = data;
+		const instance = Http.create({
+			baseURL: 'http://hrdapps68:8070/api',
+			withCredentials: false
+		});
+		const { data: TH } = await instance.post('/pcms/planstatus', {
+			plans: THshiyousho
+		});
+		const THplans = TH.map((item, key) => {
 			return {
 				...item,
-				remarks: tempTHplans.find(
+				key,
+				remarks: THtemp.find(
 					(el) =>
 						el.customer_code == item.ConstructionCode &&
 						el.plan_no == item.PlanNo &&
 						el.th_no == item.RequestNo
-				)
-					? tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-					  ).remarks
-					: null,
-				th_assessment_id: tempTHplans.find(
+				)?.remarks,
+				th_assessment_id: THtemp.find(
 					(el) =>
 						el.customer_code == item.ConstructionCode &&
 						el.plan_no == item.PlanNo &&
 						el.th_no == item.RequestNo
-				)
-					? tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-					  ).th_assessment_id
-					: null,
-				reason_id: tempTHplans.find(
+				)?.th_assessment_id,
+				reason_id: THtemp.find(
 					(el) =>
 						el.customer_code == item.ConstructionCode &&
 						el.plan_no == item.PlanNo &&
 						el.th_no == item.RequestNo
-				)
-					? tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-					  ).reason_id
-					: null,
-				th_action_id: tempTHplans.find(
+				)?.reason_id,
+				th_action_id: THtemp.find(
 					(el) =>
 						el.customer_code == item.ConstructionCode &&
 						el.plan_no == item.PlanNo &&
 						el.th_no == item.RequestNo
-				)
-					? tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-					  ).th_action_id
-					: null,
-				start_date: tempTHplans.find(
+				)?.th_action_id,
+				start_date: THtemp.find(
 					(el) =>
 						el.customer_code == item.ConstructionCode &&
 						el.plan_no == item.PlanNo &&
 						el.th_no == item.RequestNo
-				)
-					? tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-					  ).start_date
-					: null,
-				finished_date: tempTHplans.find(
+				)?.start_date,
+				finished_date: THtemp.find(
 					(el) =>
 						el.customer_code == item.ConstructionCode &&
 						el.plan_no == item.PlanNo &&
 						el.th_no == item.RequestNo
-				)
-					? tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-					  ).finished_date
-					: null,
-				pending_start_date: tempTHplans.find(
+				)?.finished_date,
+				pending_start_date: THtemp.find(
 					(el) =>
 						el.customer_code == item.ConstructionCode &&
 						el.plan_no == item.PlanNo &&
 						el.th_no == item.RequestNo
-				)
-					? tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-					  ).pending_start_date
-					: null,
-				pending_resume_date: tempTHplans.find(
+				)?.pending_start_date,
+				pending_resume_date: THtemp.find(
 					(el) =>
 						el.customer_code == item.ConstructionCode &&
 						el.plan_no == item.PlanNo &&
 						el.th_no == item.RequestNo
-				)
-					? tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-					  ).pending_resume_date
-					: null,
-				daysinprocess: isNaN(
-					moment(
-						tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? tempTHplans.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).start_date
-							: null
-					).diff(
-						tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-						)
-							? tempTHplans.find(
-									(el) =>
-										el.customer_code == item.ConstructionCode &&
-										el.plan_no == item.PlanNo &&
-										el.th_no == item.RequestNo
-							  ).finished_date
-							: null
-					)
-				)
-					? ''
-					: durationAsString(
-							tempTHplans.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? tempTHplans.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).start_date
-								: null,
-							tempTHplans.find(
-								(el) =>
-									el.customer_code == item.ConstructionCode &&
-									el.plan_no == item.PlanNo &&
-									el.th_no == item.RequestNo
-							)
-								? tempTHplans.find(
-										(el) =>
-											el.customer_code == item.ConstructionCode &&
-											el.plan_no == item.PlanNo &&
-											el.th_no == item.RequestNo
-								  ).finished_date
-								: null
-					  ),
-				remarks: tempTHplans.find(
+				)?.pending_resume_date,
+				remarks: THtemp.find(
 					(el) =>
 						el.customer_code == item.ConstructionCode &&
 						el.plan_no == item.PlanNo &&
 						el.th_no == item.RequestNo
-				)
-					? tempTHplans.find(
-							(el) =>
-								el.customer_code == item.ConstructionCode &&
-								el.plan_no == item.PlanNo &&
-								el.th_no == item.RequestNo
-					  ).remarks
-					: null,
-				plan_status: planstatus.data.find((el) => el.id == item.plan_status)
+				)?.remarks,
+				plan_status: PlanStatus.find((el) => el.id == item.plan_status)
 			};
-		})
-		.filter((item) => !item.finished_date);
-	// if (mounted) {
-	return { data };
-	// setTable({
-	// 	loading: false,
-	// 	plans: THplans.length > 0 ? THplans : [],
-	// 	pagination: {
-	// 		...pagination,
-	// 		total: total,
-	// 		showTotal: (total) => `Total ${total} items`
-	// 		// 200 is mock data, you should read it from server
-	// 		// total: data.totalCount,
-	// 	}
-	// });
-	// }
-	// }
+		}).filter((item) => !item.finished_date);
+
+		return {
+			THplans,
+			PlanStatus,
+			HenkouReason,
+			THAction,
+			THAssessment
+		};
+	}
 };
-export const useThPlansRetriever = (user) => {
-	const [tableState, setTable] = useState({
+export const useRegistrationState = (user) => {
+	const planDetails = {
+		customer_code: '',
+		house_code: '',
+		house_type: '',
+		method: '',
+		plan_no: '',
+		floors: '',
+		plan_specification: '',
+		joutou_date: '',
+		days_before_joutou: '',
+		kiso_start: '',
+		before_kiso_start: '',
+		dodai_invoice: '',
+		['1F_panel_invoice']: '',
+		['1F_hari_invoice']: '',
+		['1F_iq_invoice']: '',
+		rev_no: '',
+		type_id: '',
+		reason_id: '',
+		logs: '',
+		department_id: '',
+		section_id: '',
+		team_id: '',
+		updated_by: ''
+	};
+	const [state, setState] = useState({
+		// TH
 		plans: [],
 		filterplans: [],
 		pagination: {
@@ -226,29 +120,57 @@ export const useThPlansRetriever = (user) => {
 			pageSize: 10,
 			showTotal: ''
 		},
-		loading: true
+		loading: true,
+
+		/* MODAL */
+		thModalVisibility: false,
+		thSelectedPlan: [],
+		/* MODAL */
+		// TH
+		planDetails,
+		// MASTER
+		reason: [],
+		THAction: [],
+		THAssessment: [],
+		PlanStatus: [],
+		types: [],
+		departments: [],
+		// MASTER
+		products: []
 	});
-	const { plans, pagination, loading } = tableState;
+	const { pagination } = state;
 
 	useEffect(() => {
 		let mounted = true;
 		(async () => {
 			try {
 				if (user.SectionCode == '00465' && user.TeamCode == '00133') {
-					const THplans = await THplansWithPlanStatus(user);
-					const { data } = THplans;
+					const {
+						THplans,
+						PlanStatus,
+						HenkouReason,
+						THAction,
+						THAssessment
+					} = await fetchRegistrationData();
 					if (mounted) {
-						setTable({
-							loading: false,
-							plans: data.length > 0 ? data : [],
-							pagination: {
-								...pagination,
-								total: data.length,
-								showTotal: (total) => `Total ${total} items`
-								// 200 is mock data, you should read it from server
-								// total: data.totalCount,
-							},
-							filterplans: []
+						setState((prevState) => {
+							return {
+								...prevState,
+								loading: false,
+								plans: THplans.length > 0 ? THplans : [],
+								pagination: {
+									...pagination,
+									total: THplans.length,
+									showTotal: (total) => `Total ${total} items`
+									// 200 is mock data, you should read it from server
+									// total: data.totalCount,
+								},
+								filterplans: [],
+								reason: HenkouReason,
+								THAction,
+								THAssessment,
+								PlanStatus
+							};
 						});
 					}
 				}
@@ -264,51 +186,5 @@ export const useThPlansRetriever = (user) => {
 			mounted = false;
 		};
 	}, []);
-	return [tableState, setTable];
-};
-
-export const fetchThPlans = async () => {
-	const response = await Http.get(`/api/plans`);
-	const { data } = response;
-	let THplans = data.map((item, index) => {
-		return {
-			key: index,
-			...item,
-			th_assessment_id: '',
-			th_action_id: '',
-			reason_id: '',
-			remarks: ''
-		};
-	});
-	return { THplans };
-};
-
-export const useTempThRetriever = () => {
-	const [tempTh, setTempTh] = useState([]);
-	useEffect(() => {
-		let mounted = true;
-		(async () => {
-			try {
-				const thPlans = await fetchThTemp();
-				if (mounted) {
-					setTempTh(thPlans);
-				}
-			} catch (error) {
-				if (Http.isCancel(error)) {
-					console.error(error);
-				} else {
-					throw error;
-				}
-			}
-		})();
-		return () => {
-			mounted = false;
-		};
-	}, []);
-	return [tempTh, setTempTh];
-};
-
-export const fetchThTemp = async () => {
-	const response = await Http.get(`/api/th/plans`);
-	return response.data;
+	return [state, setState];
 };

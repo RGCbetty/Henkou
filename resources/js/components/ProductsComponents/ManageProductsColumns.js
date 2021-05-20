@@ -1,11 +1,11 @@
 import React from 'react';
-import { Space, Button, Popconfirm, Typography } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
+import { Button, Tag, Popconfirm, Typography } from 'antd';
+import { HighlightOutlined } from '@ant-design/icons';
 
-const headers = (columnSearch, save, cancel, edit, isEditing, editingKey) => [
+const headers = (columnSearch) => [
 	{
 		title: 'Product',
-		width: 300,
+		width: 200,
 		dataIndex: 'product_name',
 		key: 'product_name',
 		align: 'center',
@@ -15,24 +15,78 @@ const headers = (columnSearch, save, cancel, edit, isEditing, editingKey) => [
 	},
 	{
 		title: 'Department',
-		dataIndex: 'department',
-		width: 150,
-		align: 'center'
-		// editable: true
+		width: 120,
+		align: 'center',
+		dataIndex: 'designations',
+		render: (designations) => (
+			<>
+				{[
+					...new Map(
+						designations
+							.map(({ department }) => ({
+								id: department.DepartmentCode,
+								name: department.DepartmentName
+							}))
+							.map((item) => [item['id'], item])
+					).values()
+				].map((department) => (
+					<Tag color="blue" key={department.id}>
+						{department.name}
+					</Tag>
+				))}
+			</>
+		),
+		key: '6'
 	},
 	{
 		title: 'Section',
-		dataIndex: 'section',
-		width: 200,
-		align: 'center'
-		// editable: true
+		width: 120,
+		align: 'center',
+		dataIndex: 'designations',
+		render: (designations) => (
+			<>
+				{[
+					...new Map(
+						designations
+							.map(({ section }) => ({
+								id: section.SectionCode,
+								name: section.SectionName
+							}))
+							.map((item) => [item['id'], item])
+					).values()
+				].map((section) => (
+					<Tag color="blue" key={section.id}>
+						{section.name}
+					</Tag>
+				))}
+			</>
+		),
+		key: '7'
 	},
 	{
 		title: 'Team',
-		dataIndex: 'team',
-		width: 200,
-		align: 'center'
-		// editable: true
+		width: 120,
+		align: 'center',
+		dataIndex: 'designations',
+		render: (designations) => (
+			<>
+				{[
+					...new Map(
+						designations
+							.map(({ team }) => ({
+								id: team.TeamCode,
+								name: team.TeamName
+							}))
+							.map((item) => [item['id'], item])
+					).values()
+				].map((team) => (
+					<Tag color="blue" key={team.id}>
+						{team.name}
+					</Tag>
+				))}
+			</>
+		),
+		key: '8'
 	},
 
 	// {
@@ -55,33 +109,14 @@ const headers = (columnSearch, save, cancel, edit, isEditing, editingKey) => [
 		width: 100,
 		dataIndex: 'action',
 		fixed: 'right',
-		render: (_, record) => {
-			const editable = isEditing(record);
-			return editable ? (
-				<Space size="middle">
-					<a
-						href="#"
-						onClick={() => save(record.key)}
-						style={{
-							marginRight: 8
-						}}>
-						Save
-					</a>
-					<Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-						<a>Cancel</a>
-					</Popconfirm>
-				</Space>
-			) : (
-				<Space size="middle">
-					<Typography.Link disabled={editingKey !== ''} onClick={() => edit(record)}>
-						Edit
-					</Typography.Link>
-					{/* <Button size="small" onClick={() => openModal(record)}>
-						Set supplier
-					</Button> */}
-				</Space>
-			);
-		},
+		render: (_, record) => (
+			<Button
+				type="primary"
+				onClick={() => handleRegistrationModal(record)}
+				shape="circle"
+				icon={<HighlightOutlined />}
+			/>
+		),
 		key: '5',
 		align: 'center'
 	}

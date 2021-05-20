@@ -15,6 +15,7 @@ class CreateAffectedProductsTable extends Migration
     {
         Schema::create('affected_products', function (Blueprint $table) {
             $table->id();
+            $table->string('product_key', 20);
             $table->smallInteger('sequence_no')->nullable();
             $table->string('updated_by', 15)->nullable();
             $table->timestamps();
@@ -22,7 +23,7 @@ class CreateAffectedProductsTable extends Migration
         });
         Schema::table('affected_products', function (Blueprint $table) {
             $table->foreignId('plan_status_id')->nullable()->constrained('plan_statuses');
-            $table->foreignId('product_category_id')->nullable()->constrained('product_categories');
+            $table->foreign('product_key')->references('product_key')->on('product_categories');
         });
     }
 

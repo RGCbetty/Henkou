@@ -16,15 +16,10 @@ mix.react("resources/js/app.js", "public/js")
     .options({
         processCssUrls: false
     })
+    .setPublicPath("public")
     .browserSync({
         proxy: "localhost:8000",
-        files: [
-            "app/**/*",
-            "public/**/*",
-            "resources/views/**/*",
-            "resources/lang/**/*",
-            "routes/**/*"
-        ],
+        files: ["resources/**/*"],
         notify: {
             styles: {
                 top: "auto",

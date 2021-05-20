@@ -9,28 +9,57 @@ import durationAsString from '../utils/diffDate';
 /* Component */
 import PDFLists from '../components/RegistrationComponents/PDFLists';
 import ManualContainer from '../components/RegistrationComponents/ManualContainer';
-import { headers } from '../components/RegistrationComponents/THPlansHeader';
+import { headers, modalHeader } from '../components/RegistrationComponents/THPlansHeader';
+
 import withSearch from '../utils/withSearch.jsx';
 /* Material Design */
-import { Modal, notification, Table, Input, Space, Button, Skeleton, Empty } from 'antd';
+import { Modal, notification, Table, Input, Skeleton, Empty } from 'antd';
 
 /* API */
-import { useThPlansRetriever } from '../api/TH';
+import { useRegistrationState } from '../api/TH';
 // import { useActivePlanStatus, getPlanStatusByCustomerCode } from '../api/planstatus';
 import { fetchDetails } from '../api/details';
+import planDetails from '../components/RegistrationComponents/PlanDetails';
 
 const Registration = ({ props, ...rest }) => {
 	const { getColumnSearchProps } = rest;
-	const { userInfo, master, title } = props;
-	const inputRef = useRef();
+	const { user, title } = props;
 	useEffect(() => {
 		document.title = title || '';
 	}, [title]);
 
-	const [tableState, setTable] = useThPlansRetriever(userInfo);
-	const { plans, filterplans, pagination, loading } = tableState;
+	const [state, setState] = useRegistrationState(user);
+	const {
+		plans,
+		filterplans,
+		pagination,
+		loading,
+		thSelectedPlan,
+		planDetails,
+		products
+	} = state;
+	// useEffect(() => {
+	// 	// if(){
+	// 	const details = { ...state.planDetails };
+	// 	// console.log(details);
+	// 	// console.log(state);
+	// 	// console.log(state);
+	// 	setState((prevState) => {
+	// 		// console.log(JSON.stringify(state.planDetails));
+	// 		// console.log(JSON.stringify(details));
+	// 		// if (JSON.stringify(prevState.planDetails) !== JSON.stringify(details)) {
+	// 		// 	// return {
+	// 		// 	// 	...prevState,
+	// 		// 	// 	planDetails: details
+	// 		// 	// };
+	// 		// } else {
+	// 		return {
+	// 			...prevState
+	// 		};
+	// 		// }
+	// 	});
+	// }, [state.planDetails]);
 	/* PENDING */
-	console.log(filterplans);
 	const [pendingState, setPendingState] = useState({
 		items: [],
 		isPendingModalVisible: false,
@@ -45,31 +74,57 @@ const Registration = ({ props, ...rest }) => {
 		modal: false,
 		foundsList: []
 	});
-	const [details, setDetails] = useState({
-		customer_code: '',
-		house_code: '',
-		house_type: '',
-		method: '',
-		plan_no: '',
-		floors: '',
-		plan_specification: '',
-		joutou_date: '',
-		days_before_joutou: '',
-		kiso_start: '',
-		before_kiso_start: '',
-		dodai_invoice: '',
-		['1F_panel_invoice']: '',
-		['1F_hari_invoice']: '',
-		['1F_iq_invoice']: '',
-		rev_no: '',
-		type_id: '',
-		reason_id: '',
-		logs: '',
-		department_id: '',
-		section_id: '',
-		team_id: '',
-		updated_by: ''
-	});
+	const handleRegistrationModal = async (row) => {
+		const thSelectedPlan = [row];
+		setState((prevState) => ({
+			...prevState,
+			planDetails: {
+				...prevState.planDetails,
+				customer_code: row.ConstructionCode,
+				house_type: row.ConstructionTypeName,
+				method: row.Method,
+				house_code: row.NameCode,
+				plan_no: row.PlanNo,
+				// RequestAcceptedDate
+				th_no: row.RequestNo
+			},
+			thSelectedPlan,
+			thModalVisibility: true
+		}));
+		await handlePlanDetails(row.ConstructionCode, row.RequestNo);
+	};
+	const handleRegistrationModalCancel = () => {
+		setState((prevState) => ({
+			...prevState,
+			thModalVisibility: false
+		}));
+	};
+	const handleRegistrationModalOk = async () => {
+		const selectedPlan = [...state.thSelectedPlan];
+		const toUpdatePlans = plans
+			.map((item) => {
+				if (
+					item.ConstructionCode == selectedPlan[0].ConstructionCode &&
+					item.RequestNo == selectedPlan[0].RequestNo
+				) {
+					return selectedPlan[0];
+				}
+				return item;
+			})
+			.filter((item) => !item.finished_date);
+		await handleRegister(selectedPlan[0]);
+		setState((prevState) => ({
+			...prevState,
+			plans: toUpdatePlans,
+			thModalVisibility: false,
+			pagination: {
+				...pagination,
+				total: toUpdatePlans.length
+			}
+		}));
+		await Http.post('/api/th/plan', selectedPlan[0]);
+	};
+	/* TH MODAL */
 	const handleOk = () => {
 		setIsModalVisible({ modal: false, foundsList: [] });
 	};
@@ -115,27 +170,40 @@ const Registration = ({ props, ...rest }) => {
 		}
 	};
 	const handleTableChange = (page, filters, sorter, extra) => {
-		setTable({
-			...tableState,
+		setState((prevState) => ({
+			...prevState,
 			pagination: {
 				...page,
 				total: extra.currentDataSource,
 				showTotal: (total) => `Total ${total} items`
 			}
-		});
+		}));
 	};
 	const handleOnChange = async (value, keys = null) => {
-		if (!keys) {
+		// if (!keys) {
+		// 	const e = value;
+		// 	await handleSpecs(e.target.value);
+		// 	setExpand(true);
+		// } else {
+		console.log(value, keys);
+		if (isObject(value)) {
 			const e = value;
-			await handleSpecs(e.target.value);
-			setExpand(true);
+			setState((prevState) => ({
+				...prevState,
+				planDetails: {
+					...prevState.planDetails,
+					[keys]: e.target.value
+				}
+			}));
 		} else {
-			if (isObject(value)) {
-				const e = value;
-				setDetails({ ...details, [keys]: e.target.value });
-			} else {
-				setDetails({ ...details, [keys]: value });
-			}
+			setState((prevState) => ({
+				...prevState,
+				planDetails: {
+					...prevState.planDetails,
+					[keys]: value
+				}
+			}));
+			// }
 		}
 	};
 	const openNotificationWithIcon = (type) => {
@@ -150,21 +218,22 @@ const Registration = ({ props, ...rest }) => {
 	};
 	const handleRegister = async (row = null) => {
 		if (row) {
-			const response = await Http.post('api/henkou/register/th', {
-				details,
+			// const details = { ...state.planDetails };
+			const { status } = await Http.post('api/henkou/register/th', {
+				details: planDetails,
 				row
 			});
 
-			if (response.status == 200) {
+			if (status == 200) {
 				openNotificationWithIcon('success');
 			}
 			// }
 		} else {
-			const response = await Http.post('api/henkou/register/kouzou', {
-				details
+			const { status } = await Http.post('api/henkou/register/kouzou', {
+				details: planDetails
 			});
 
-			if (response.status == 200) {
+			if (status == 200) {
 				openNotificationWithIcon('success');
 			}
 		}
@@ -174,92 +243,108 @@ const Registration = ({ props, ...rest }) => {
 			.utc()
 			.local()
 			.format('YYYY-MM-DD HH:mm:ss');
-		row.employee_code = userInfo.EmployeeCode;
-		const toUpdatePlans = plans
-			.map((item, index) => {
-				if (
-					item.ConstructionCode == row.ConstructionCode &&
-					item.RequestNo == row.RequestNo
-				) {
-					return row;
-				}
-				return item;
-			})
-			.filter((item) => !item.finished_date);
-		setTable({
-			...tableState,
+		row.employee_code = user.EmployeeCode;
+		const toUpdatePlans = plans.map((item) => {
+			if (item.ConstructionCode == row.ConstructionCode && item.RequestNo == row.RequestNo) {
+				return row;
+			}
+			return item;
+		});
+		setState((prevState) => ({
+			...prevState,
 			loading: false,
 			plans: toUpdatePlans,
 			pagination: {
-				...pagination
+				...pagination,
+				total: toUpdatePlans.length
 			}
-		});
-		if (key == 'finished_date') {
-			row.daysinprocess = moment(row.start_date).diff(row.finished_date, 'days');
-			await handleSpecs(row.ConstructionCode);
-			await handleRegister(row);
-		}
-		const response = await Http.post('/api/th/plan', row);
+		}));
+		// if (key == 'finished_date') {
+		// 	// row.daysinprocess = moment(row.start_date).diff(row.finished_date, 'days');
+		// }
+		// const response = await Http.post('/api/th/plan', row);
 	};
 	const handleInputText = (event, key, row) => {
 		row[key] = event.target.value;
-		setDetails({ ...details, [key]: row[key] });
 		const toUpdatePlans = plans.map((item, index) => {
 			if (item.ConstructionCode == row.ConstructionCode && item.RequestNo == row.RequestNo) {
 				return row;
 			}
 			return item;
 		});
-		setTable({
-			...tableState,
+		setState((prevState) => ({
+			...prevState,
+			planDetails: {
+				...prevState.planDetails,
+				[key]: row[key]
+			},
 			loading: false,
 			plans: toUpdatePlans,
 			pagination: {
-				...pagination
+				...pagination,
+				total: toUpdatePlans.length
 			}
-		});
+		}));
 	};
 	const handleSelectOption = async (val, key, row) => {
 		row[key] = val;
-		row.employee_code = userInfo.EmployeeCode;
+		row.employee_code = user.EmployeeCode;
 		const toUpdatePlans = plans.map((item, index) => {
 			if (item.ConstructionCode == row.ConstructionCode && item.RequestNo == row.RequestNo) {
 				return row;
 			}
 			return item;
 		});
-		setTable({
-			...tableState,
+		setState((prevState) => ({
+			...prevState,
 			loading: false,
 			plans: toUpdatePlans,
-			pagination: {
-				...pagination
+			planDetails: {
+				...prevState.planDetails,
+				[key]: row[key]
 			}
-		});
-		await handlePlanDetails(row.ConstructionCode, row.RequestNo);
-		const response = await Http.post('/api/th/plan', row);
+		}));
+		// await handlePlanDetails(row.ConstructionCode, row.RequestNo);
+		// const response = await Http.post('/api/th/plan', row);
 	};
 	/* TH Actions */
-	const handlePlanDetails = async (constructionCode, th_no = null) => {
+	console.info(state);
+	const handlePlanDetails = async (customerCode, th_no = null) => {
 		try {
 			const instance = Http.create({
 				baseURL: 'http://hrdapps68:8070/api',
 				withCredentials: false
 			});
-			const { data: plan, status } = await Http.get(`/api/plandetails/${constructionCode}`);
-			const [firstDigit, secondDigit] = plan.latest ? plan.latest.rev_no.split('-') : '';
-			const planstatus = await instance.get(
-				`pcms/planstatus/${constructionCode}/${plan.details.method}`
-			);
-			// const { data: henkou } = await Http.get(`/api/details/${constructionCode}`);
-			// let splitRevision = henkou ? henkou.rev_no.split('-') : '';
-			// let secondaryRevision = toInteger(splitRevision[1]);
-			if (status == 200) {
-				console.log(details);
-				setDetails((prevState) => {
-					return {
-						...prevState,
-						customer_code: constructionCode,
+			const { data: plan, status } = await Http.get(`/api/plan/details/${customerCode}`);
+			const { process, types, departments, reasons, status_code } = plan;
+			if (status == 200 && !status_code) {
+				const [firstDigit, secondDigit] = plan.latest
+					? plan.latest?.rev_no.split('-')
+					: '1-0'.split('-');
+				const { data: plan_status } = await instance.get(
+					`pcms/planstatus/${customerCode}/${plan.details.method}`
+				);
+
+				// const { data: henkou } = await Http.get(`/api/details/${constructionCode}`);
+				// let splitRevision = henkou ? henkou.rev_no.split('-') : '';
+				// let secondaryRevision = toInteger(splitRevision[1]);
+				// setState(prevState=> {
+				//     return {
+				//         ...prevState,
+				//         planDetails['id']: plan?.latest?.id,
+
+				//     }
+				// })
+				setState((prevState) => ({
+					...prevState,
+					products: plan?.products,
+					types,
+					departments,
+					reasons,
+					planDetails: {
+						...prevState.planDetails,
+						id: plan?.latest?.id,
+						customer_code: customerCode,
 						house_code: plan.details.house_code,
 						house_type: plan.details.house_type,
 						method: plan.details.method,
@@ -269,295 +354,195 @@ const Registration = ({ props, ...rest }) => {
 						days_before_joutou: plan.details.days_before_joutou,
 						kiso_start: plan.details.kiso_start,
 						before_kiso_start: plan.details.before_kiso_start,
-						dodai_invoice:
-							plan.invoice.length > 0
-								? plan.invoice.find((item) => item.InvoiceName.match(/DODAI/gi))
-									? plan.invoice.find((item) => item.InvoiceName.match(/DODAI/gi))
-											.Invoice
-									: null
-								: null,
-						['1F_panel_invoice']:
-							plan.invoice.length > 0
-								? plan.invoice.find((item) => item.InvoiceName.match(/PANEL/gi))
-									? plan.invoice.find((item) => item.InvoiceName.match(/PANEL/gi))
-											.Invoice
-									: null
-								: null,
-						['1F_hari_invoice']:
-							plan.invoice.length > 0
-								? plan.invoice.find((item) => item.InvoiceName.match(/HARI/gi))
-									? plan.invoice.find((item) => item.InvoiceName.match(/HARI/gi))
-											.Invoice
-									: null
-								: null,
-						['1F_iq_invoice']:
-							plan.invoice.length > 0
-								? plan.invoice.find((item) => item.InvoiceName.match(/IQ/gi))
-									? plan.invoice.find((item) => item.InvoiceName.match(/IQ/gi))
-											.Invoice
-									: null
-								: null,
+						dodai_invoice: plan.invoice.find((item) =>
+							item.InvoiceName.match(/DODAI/gi)
+						)?.Invoice,
+						['1F_panel_invoice']: plan.invoice.find((item) =>
+							item.InvoiceName.match(/PANEL/gi)
+						)?.Invoice,
+						['1F_hari_invoice']: plan.invoice.find((item) =>
+							item.InvoiceName.match(/HARI/gi)
+						)?.Invoice,
+						['1F_iq_invoice']: plan.invoice.find((item) =>
+							item.InvoiceName.match(/IQ/gi)
+						)?.Invoice,
 						plan_specification: plan.specification
-							.map((item) => item.SpecificationName)
+							.map((item) => item?.SpecificationName)
 							.join(', '),
 						existing_rev_no: plan.latest ? plan.latest.rev_no : null,
 						rev_no: plan.latest ? `${firstDigit}-${toInteger(secondDigit) + 1}` : '1-0',
-						type_id: '',
-						reason_id: '',
-						logs: '',
-						plan_status: master.planstatus.find(
-							(plan) => plan.id == planstatus.data.plan_status
-						).plan_status_name,
-						plan_status_id: planstatus.data.plan_status,
+						type_id: th_no ? 2 : 1,
+						// reason_id: '',
+						// logs: '',
+						plan_status:
+							'Not found' &&
+							process.find((plan) => plan.id == plan_status?.id)?.plan_status_name,
+						plan_status_id: 'Not found' && plan_status?.id,
 						th_no: th_no ? th_no : null,
-						department_id: '',
-						section_id: userInfo.SectionCode,
-						team_id: userInfo.TeamCode,
-						updated_by: userInfo.EmployeeCode
-					};
-				});
-				return plan;
+						// department_id: '',
+						section_id: user.SectionCode,
+						team_id: user.TeamCode,
+						updated_by: user.EmployeeCode
+					}
+				}));
 			}
+			return plan;
 		} catch (err) {
 			console.error(err);
 		}
 	};
-	const consolidatedHenkouLogs = async (planDetails) => {
-		const [firstDigit, secondDigit] = planDetails ? planDetails.rev_no.split('-') : '';
-		// const [firstIndex] = planDetails.rev_no.split('-');
-		const fetchConsolidatedLogs = await Http.get(
-			`api/henkou/plans/${planDetails.customer_code}/revision/${firstDigit}`
-		);
-		const fetchConsolidatedPendingDetails = await Http.get(
-			`/api/henkou/plans/pending/${planDetails.customer_code}`
-		);
-		const productLogs = fetchConsolidatedLogs.data.map((item) => {
-			return {
-				...item,
-				rev_no: item.details ? item.details.rev_no : null,
-				product_name:
-					master.products.length > 0
-						? master.products.find((el) => {
-								const affectedProds = master.affectedProducts.find(
-									(el) => el.id == item.affected_id
-								)
-									? master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-									  ).product_category_id
-									: null;
-								return affectedProds ? el.id == affectedProds : null;
-						  })
-							? master.products.find((el) => {
-									const affectedProds = master.affectedProducts.find(
-										(el) => el.id == item.affected_id
-									)
-										? master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-										  ).product_category_id
-										: null;
-									return affectedProds ? el.id == affectedProds : null;
-							  }).product_name
-							: null
-						: null
-			};
-		});
-		const productPendingLogs = fetchConsolidatedPendingDetails.data.map((item) => {
-			return {
-				...item,
-				product_name:
-					master.products.length > 0
-						? master.products.find((el) => {
-								const affectedProds = master.affectedProducts.find(
-									(el) => el.id == item.affected_id
-								)
-									? master.affectedProducts.find(
-											(el) => el.id == item.affected_id
-									  ).product_category_id
-									: null;
-								return affectedProds ? el.id == affectedProds : null;
-						  })
-							? master.products.find((el) => {
-									const affectedProds = master.affectedProducts.find(
-										(el) => el.id == item.affected_id
-									)
-										? master.affectedProducts.find(
-												(el) => el.id == item.affected_id
-										  ).product_category_id
-										: null;
-									return affectedProds ? el.id == affectedProds : null;
-							  }).product_name
-							: null
-						: null
-			};
-		});
-		const henkouLogs = [
-			{
-				log: details.logs,
-				updated_by: details.updated_by,
-				created_at: details.created_at,
-				rev_no: details.rev_no
-			},
-			...productLogs
-		];
-		const mergeLogs = [...productLogs, ...productPendingLogs];
+	const consolidatedHenkouLogs = async (products) => {
+		// const [firstIndex] = details.rev_no.split('-');
+		// const [firstDigit, secondDigit] = planDetails?.rev_no.split('-');
+		// const fetchConsolidatedLogs = await Http.get(
+		// 	`api/henkou/plans/${planDetails.customer_code}/revision/${firstDigit}`
+		// );
+		// const fetchConsolidatedPendingDetails = await Http.get(
+		// 	`/api/henkou/plans/pending/${details.customer_code}`
+		// );
+		const THreleasing = [1, 6, 26, 37];
+		const productLogs = products
+			.map(({ pendings, ...rest }) => ({ ...rest }))
+			.filter(({ affected_id }) => THreleasing.indexOf(affected_id) == -1);
+		const detailsLogs = products
+			.filter(
+				(val, id, arr) =>
+					arr.findIndex(
+						(item) =>
+							item.plan.logs === val.plan.logs && item.plan.rev_no === val.plan.rev_no
+					) === id
+			)
+			.map((val) => val.plan);
+
+		const pendingLogs = products
+			.map((item) => {
+				return item.pendings;
+			})
+			.flat(1);
+
+		// console.log(pendingLogs);
+		// const productPendingLogs = fetchConsolidatedPendingDetails.data.map((item) => {
+		// 	return {
+		// 		...item,
+		// 		product_name:
+		// 			master.products.length > 0
+		// 				? master.products.find((el) => {
+		// 						const affectedProds = master.affectedProducts.find(
+		// 							(el) => el.id == item.affected_id
+		// 						)
+		// 							? master.affectedProducts.find(
+		// 									(el) => el.id == item.affected_id
+		// 							  ).product_category_id
+		// 							: null;
+		// 						return affectedProds ? el.id == affectedProds : null;
+		// 				  })
+		// 					? master.products.find((el) => {
+		// 							const affectedProds = master.affectedProducts.find(
+		// 								(el) => el.id == item.affected_id
+		// 							)
+		// 								? master.affectedProducts.find(
+		// 										(el) => el.id == item.affected_id
+		// 								  ).product_category_id
+		// 								: null;
+		// 							return affectedProds ? el.id == affectedProds : null;
+		// 					  }).product_name
+		// 					: null
+		// 				: null
+		// 	};
+		// });
+		const henkouLogs = [...detailsLogs, ...productLogs];
+		// console.log(henkouLogs);
+		const mergeLogs = [...henkouLogs, ...pendingLogs];
+		console.log(mergeLogs);
 		setLogs(
-			henkouLogs
+			mergeLogs
 				.map((item) => {
 					return {
+						...item,
 						id: item.id,
 						borrow_details: item.borrow_details,
 						rev_no: item.rev_no,
 						product_name: item.product_name,
 						updated_by: item.updated_by,
-						log: item.log,
+						log: item.logs,
 						created_at: item.created_at
 					};
 				})
 				.sort((a, b) => moment(a.created_at).diff(b.created_at))
 		);
 	};
-	const handleSpecs = async (constructionCode, th_no = null) => {
+	const handleSpecs = async (customerCode, th_no = null) => {
 		try {
-			const plan = await handlePlanDetails(constructionCode);
-			if (plan.latest) {
-				const fetchStatus = await Http.get(
-					`/api/henkou/plans/${plan.latest.customer_code}/products/${plan.latest.id}`
+			clearDetails();
+			const plan = await handlePlanDetails(customerCode, th_no);
+			if (plan?.status_code == 500) {
+				return { status: 'notvalid', msg: 'Enter valid customer code!' };
+			} else if (plan?.latest) {
+				const { productslogs, latest, products } = plan;
+				// const fetchStatus = await Http.get(
+				// 	`/api/henkou/plans/${plan.latest.customer_code}/products/${plan.latest.id}`
+				// );
+				await consolidatedHenkouLogs(productslogs);
+				const ongoingProduct = products.find(
+					(item) =>
+						(!item.assessment_id || item.assessment_id == 1) &&
+						item.received_date &&
+						item.start_date &&
+						!item.finished_date
 				);
-				await consolidatedHenkouLogs(plan.latest);
-				setStatus(fetchStatus.data);
-				const stats = fetchStatus.data.find(
+
+				const notyetStartedProduct = products.find(
+					(item) =>
+						(!item.assessment_id || item.assessment_id == 1) &&
+						item.received_date &&
+						!item.start_date &&
+						!item.finished_date
+				);
+				const finalCheckingFinished = products.find(
 					(el) =>
 						(!el.assessment_id || el.assessment_id == 1) &&
 						(el.affected_id == 5 ||
-							el.affected_id == 23 ||
-							el.affected_id == 34 ||
-							el.affected_id == 54) &&
+							el.affected_id == 25 ||
+							el.affected_id == 36 ||
+							el.affected_id == 58) &&
 						el.received_date &&
 						el.start_date &&
 						el.finished_date
 				);
-				setDetails((prevState) => {
-					return {
+				if (finalCheckingFinished) {
+					const [firstIndex] = finalCheckingFinished.rev_no.split('-');
+					setState((prevState) => ({
 						...prevState,
-						rev_no: stats ? '2-0' : prevState.rev_no
-					};
-				});
-				const onGoingProductRow =
-					master.products.length > 0
-						? master.products.find((mp) => {
-								const affectedProds = master.affectedProducts.find((ap) => {
-									const stats = fetchStatus.data.find(
-										(el) =>
-											(!el.assessment_id || el.assessment_id == 1) &&
-											el.received_date &&
-											el.start_date &&
-											!el.finished_date
-									)
-										? fetchStatus.data.find(
-												(el) =>
-													(!el.assessment_id || el.assessment_id == 1) &&
-													el.received_date &&
-													el.start_date &&
-													!el.finished_date
-										  ).affected_id
-										: null;
-									return stats ? ap.id == stats : null;
-								})
-									? master.affectedProducts.find((ap) => {
-											const stats = fetchStatus.data.find(
-												(el) =>
-													(!el.assessment_id || el.assessment_id == 1) &&
-													el.received_date &&
-													el.start_date &&
-													!el.finished_date
-											)
-												? fetchStatus.data.find(
-														(el) =>
-															(!el.assessment_id ||
-																el.assessment_id == 1) &&
-															el.received_date &&
-															el.start_date &&
-															!el.finished_date
-												  ).affected_id
-												: null;
-											return stats ? ap.id == stats : null;
-									  }).product_category_id
-									: null;
-								return affectedProds ? mp.id == affectedProds : null;
-						  })
-						: null;
+						planDetails: {
+							...prevState.planDetails,
+							rev_no: `${firstIndex}-0`
+						}
+					}));
+				}
 
-				const notYetStartedProductRow =
-					master.products.length > 0
-						? master.products.find((mp) => {
-								const affectedProds = master.affectedProducts.find((ap) => {
-									const stats = fetchStatus.data.find(
-										(el) =>
-											(!el.assessment_id || el.assessment_id == 1) &&
-											el.received_date &&
-											!el.start_date &&
-											!el.finished_date
-									)
-										? fetchStatus.data.find(
-												(el) =>
-													(!el.assessment_id || el.assessment_id == 1) &&
-													el.received_date &&
-													!el.start_date &&
-													!el.finished_date
-										  ).affected_id
-										: null;
-									return stats ? ap.id == stats : null;
-								})
-									? master.affectedProducts.find(
-											(ap) =>
-												ap.id ==
-												fetchStatus.data.find(
-													(el) =>
-														(!el.assessment_id ||
-															el.assessment_id == 1) &&
-														el.received_date &&
-														!el.start_date &&
-														!el.finished_date
-												).affected_id
-									  ).product_category_id
-									: null;
-								return affectedProds ? mp.id == affectedProds : null;
-						  })
-						: null;
-
-				const affectedProds = master.affectedProducts.find((ap) => {
-					const stats = fetchStatus.data.find(
-						(el) =>
-							(!el.assessment_id || el.assessment_id == 1) &&
-							el.received_date &&
-							el.start_date &&
-							!el.finished_date
-					)
-						? fetchStatus.data.find(
-								(el) =>
-									(!el.assessment_id || el.assessment_id == 1) &&
-									el.received_date &&
-									el.start_date &&
-									!el.finished_date
-						  ).affected_id
-						: null;
-					return stats ? ap.id == stats : null;
-				});
-				if (notYetStartedProductRow) {
-					const affectedDepartment = master.departments.find((attr) => {
-						return attr.DepartmentCode == notYetStartedProductRow.department_id;
-					});
-					console.log(affectedDepartment);
+				if (notyetStartedProduct) {
+					console.log(notyetStartedProduct);
 					return {
 						status: 'notyetstarted',
-						msg: notYetStartedProductRow.product_name,
-						dept: affectedDepartment.DepartmentName
+						msg: notyetStartedProduct.affected_product.product_category.product_name,
+						dept: [
+							...new Map(
+								notyetStartedProduct.affected_product.product_category.designations
+									.map(({ department }) => ({
+										id: department.DepartmentCode,
+										name: department.DepartmentName
+									}))
+									.map((item) => [item['id'], item])
+							).values()
+						]
+							.map((department) => department.name)
+							.toString()
 					};
-				} else if (onGoingProductRow) {
-					const pendingResource = await Http.get(
-						`api/henkou/plans/pending/${plan.latest.customer_code}/${affectedProds.id}`
-					);
-					if (pendingResource.data.length == 0) {
+				} else if (ongoingProduct) {
+					// const pendingResource = await Http.get(
+					// 	`api/henkou/plans/pending/${plan.latest.customer_code}/${findOngoingProduct.affected_id}`
+					// );
+					if (ongoingProduct.pendings.length == 0) {
 						if (pendingState.items.length == 0) {
 							let pending = [];
 							for (let i = 0; i < 1; i++) {
@@ -569,28 +554,20 @@ const Registration = ({ props, ...rest }) => {
 									reason: '',
 									resume: '',
 									duration: '',
-									product_key: master.affectedProducts.find(
-										(ap) =>
-											ap.id ==
-											fetchStatus.data.find(
-												(el) =>
-													(!el.assessment_id || el.assessment_id == 1) &&
-													el.received_date &&
-													!el.finished_date
-											).affected_id
-									).product_category_id
+									remarks: '',
+									updated_by: user.EmployeeCode
 								});
 							}
 							setPendingState({
 								...pendingState,
 								items: pending,
-								row: { ...onGoingProductRow, affected_id: affectedProds.id }
+								row: { ...ongoingProduct, affected_id: ongoingProduct.affected_id }
 							});
 						}
 					} else if (pendingState.items.length == 0) {
 						setPendingState({
 							...pendingState,
-							row: { ...onGoingProductRow, affected_id: affectedProds.id },
+							row: { ...ongoingProduct, affected_id: ongoingProduct.affected_id },
 							items: pendingResource.data.map((item, index) => {
 								return {
 									pending_id: item.id,
@@ -603,25 +580,25 @@ const Registration = ({ props, ...rest }) => {
 							})
 						});
 					}
-					const affectedDepartment = master.departments.find((attr) => {
-						return attr.DepartmentCode == onGoingProductRow.department_id;
-					});
+
 					return {
 						status: 'ongoing',
-						msg: onGoingProductRow.product_name,
-						dept: affectedDepartment.DepartmentName
+						msg: ongoingProduct.product_name,
+						dept: ongoingProduct.employee.department.DepartmentName
 					};
 				}
+			} else {
+				return { status: 'found', msg: 'No existing henkou!' };
 			}
-			return { status: 'found', msg: 'No existing henkou!' };
 		} catch (error) {
 			console.error(error);
 		}
 	};
 
 	const clearDetails = () => {
-		setDetails((prevState) => {
-			return {
+		setState((prevState) => ({
+			...prevState,
+			planDetails: {
 				customer_code: '',
 				house_code: '',
 				house_type: '',
@@ -645,8 +622,8 @@ const Registration = ({ props, ...rest }) => {
 				section_id: '',
 				team_id: '',
 				updated_by: ''
-			};
-		});
+			}
+		}));
 	};
 	const handlePendingModal = () => {
 		setPendingState({
@@ -721,9 +698,9 @@ const Registration = ({ props, ...rest }) => {
 				pendingState.items.some((row) => row.reason.match(/borrow/gi) && !row.pending_id)
 			) {
 				const resCreate = await Http.post(`/api/status/${details.id}`, {
-					status: henkouStatus,
-					updated_by: userInfo.EmployeeCode,
-					sectionCode: userInfo.SectionCode,
+					status: products,
+					updated_by: user.EmployeeCode,
+					sectionCode: user.SectionCode,
 					details,
 					row: pendingState.row
 				});
@@ -736,15 +713,8 @@ const Registration = ({ props, ...rest }) => {
 						el.received_date &&
 						el.start_date &&
 						!el.finished_date
-				)
-					? henkouStatus.find(
-							(el) =>
-								(!el.assessment_id || el.assessment_id == 1) &&
-								el.received_date &&
-								el.start_date &&
-								!el.finished_date
-					  )
-					: null;
+				);
+
 				const filteredPendingItems = pendingState.items
 					.filter((item) => {
 						return item.start || item.resume || item.reason;
@@ -752,6 +722,7 @@ const Registration = ({ props, ...rest }) => {
 					.map((item) => {
 						return {
 							...item,
+							updated_by: user.employee_no,
 							customer_code: details.customer_code,
 							affected_id: pendingState.row.affected_id,
 							id: stats.id
@@ -792,9 +763,11 @@ const Registration = ({ props, ...rest }) => {
 			pending_index: getMaxPendingID() + 1,
 			rev_no: details.rev_no,
 			customer_code: details.customer_code,
+			updated_by: user.EmployeeCode,
 			start: '',
 			reason: '',
 			resume: '',
+			remarks: '',
 			duration: ''
 		});
 		let cloneItems = [...pendingState.items];
@@ -805,20 +778,10 @@ const Registration = ({ props, ...rest }) => {
 	};
 	return (
 		<>
-			{userInfo.SectionCode == '00465' && userInfo.TeamCode == '00133' ? (
+			{user.SectionCode == '00465' && user.TeamCode == '00133' ? (
 				<>
 					<div style={{ display: 'flex', justifyContent: 'space-between' }}>
 						<div className="title-page">Register TH Plans</div>
-
-						{/* <Title
-									level={4}
-									style={{
-										margin: 0,
-										display: 'inline-block',
-										verticalAlign: 'top'
-									}}>
-									Henkou Status
-								</Title> */}
 						<div
 							style={{
 								display: 'inline-block',
@@ -832,15 +795,15 @@ const Registration = ({ props, ...rest }) => {
 								placeholder="Enter Customer Code/House Code"
 								allowClear
 								onSearch={(nameSearch) =>
-									setTable({
-										...tableState,
+									setState((prevState) => ({
+										...prevState,
 										filterplans: nameSearch
 											? plans.filter(
 													(person) =>
-														person.ConstructionCode.includes(
+														person?.ConstructionCode?.includes(
 															nameSearch
 														) ||
-														person.NameCode.match(
+														person?.NameCode?.match(
 															new RegExp(`${nameSearch}`, 'gi')
 														)
 											  )
@@ -849,31 +812,41 @@ const Registration = ({ props, ...rest }) => {
 											...pagination,
 											total: nameSearch ? filterplans.length : plans.length
 										}
-									})
+									}))
 								}></Input.Search>
 						</div>
 					</div>
-
-					<Table
-						style={{ margin: '0 10px' }}
-						size="small"
-						columns={headers(
-							getColumnSearchProps,
-							master,
-							handleClickPDF,
-							handleSelectOption,
-							handleOnClickEvent,
-							handleInputText
+					<div style={{ margin: '0 10px' }}>
+						{loading && plans.length == 0 ? (
+							<Skeleton active />
+						) : plans.length !== 0 ? (
+							<Table
+								size="small"
+								columns={headers(getColumnSearchProps, state, {
+									handleClickPDF,
+									handleSelectOption,
+									handleOnClickEvent,
+									handleInputText,
+									handleRegistrationModal
+								})}
+								bordered
+								// locale={{
+								// 	emptyText: loading ? <Skeleton active={true} /> : <Empty />
+								// }}
+								// rowKey={(record) => record.PlanNo}
+								dataSource={
+									loading ? [] : filterplans.length > 0 ? filterplans : plans
+								}
+								pagination={pagination}
+								rowClassName={'antd-cell-no-padding'}
+								scroll={{ x: 'max-content', y: 'calc(100vh - 23em)' }}
+								onChange={handleTableChange}
+							/>
+						) : (
+							<Empty />
 						)}
-						bordered
-						locale={{
-							emptyText: loading ? <Skeleton active={true} /> : <Empty />
-						}}
-						dataSource={loading ? [] : filterplans.length > 0 ? filterplans : plans}
-						pagination={pagination}
-						scroll={{ x: 'max-content', y: 'calc(100vh - 20em)' }}
-						onChange={handleTableChange}
-					/>
+					</div>
+
 					<Modal
 						title="PDF Lists"
 						onOk={handleOk}
@@ -881,6 +854,32 @@ const Registration = ({ props, ...rest }) => {
 						bodyStyle={{ padding: 0 }}
 						visible={isModalVisible.modal}>
 						<PDFLists pdfLists={isModalVisible.foundsList}></PDFLists>
+					</Modal>
+					<Modal
+						title={`${state.planDetails.customer_code}/${state.planDetails.house_code}/${state.planDetails.th_no}`}
+						onOk={handleRegistrationModalOk}
+						okText="Register"
+						onCancel={handleRegistrationModalCancel}
+						bodyStyle={{ padding: 10 }}
+						width={1000}
+						okButtonProps={{
+							disabled: state.thSelectedPlan.some((item) => !item.finished_date)
+						}}
+						// confirmLoading={confirmLoading}
+						visible={state.thModalVisibility}>
+						{/* <HenkouTable headers={PendingHeaders()} data={pendingItems} /> */}
+						<Table
+							columns={modalHeader(getColumnSearchProps, state, {
+								handleClickPDF,
+								handleSelectOption,
+								handleOnClickEvent,
+								handleInputText,
+								handleRegistrationModal
+							})}
+							dataSource={thSelectedPlan}
+							pagination={false}
+							bordered
+						/>
 					</Modal>
 				</>
 			) : (
@@ -891,7 +890,7 @@ const Registration = ({ props, ...rest }) => {
 						handleOnChange={handleOnChange}
 						handleRegister={handleRegister}
 						logs={logs}
-						status={henkouStatus}
+						props={state}
 						pending={{
 							state: { ...pendingState, options },
 							actions: {
@@ -904,8 +903,7 @@ const Registration = ({ props, ...rest }) => {
 								handlePendingCancel,
 								handlePendingModal
 							}
-						}}
-						details={details}></ManualContainer>
+						}}></ManualContainer>
 				</>
 			)}
 		</>
@@ -913,8 +911,7 @@ const Registration = ({ props, ...rest }) => {
 };
 
 const mapStateToProps = (state) => ({
-	userInfo: state.auth.userInfo,
-	master: state.auth.master
+	user: state.auth.user
 });
 
 export default connect(mapStateToProps)(withSearch(Registration));

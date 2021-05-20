@@ -14,12 +14,14 @@ class CreateConstructionSchedulesTable extends Migration
     public function up()
     {
         Schema::create('construction_schedules', function (Blueprint $table) {
-            $table->id();
-            $table->string('customer_code', 12)->unique();
+            $table->string('customer_code', 12);
+            $table->string('plan_no', 8);
             $table->timestamp('joutou_date')->nullable();
             $table->integer('days_before_joutou')->nullable();
             $table->timestamp('kiso_start')->nullable();
             $table->integer('days_before_kiso_start')->nullable();
+            $table->primary(['customer_code', 'plan_no']);
+            $table->unique(['customer_code', 'plan_no']);
             $table->timestamps();
         });
         // Schema::table('construction_schedules', function (Blueprint $table) {

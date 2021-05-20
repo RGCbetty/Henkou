@@ -28,7 +28,7 @@ AdminRoute.propTypes = {
 
 const mapStateToProps = (state) => ({
 	isAuthenticated: state.auth.isAuthenticated,
-	access_level: state.auth.userInfo.access_level
+	access_level: state.auth.user.access_level
 });
 
 export default connect(mapStateToProps)(AdminRoute);

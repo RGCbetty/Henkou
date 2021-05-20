@@ -9,14 +9,15 @@ class AffectedProduct extends Model
 {
     use HasFactory;
     protected $hidden = ['created_at', 'updated_at', 'deleted_at'];
-    public function product()
+    public function productCategory()
     {
-        return $this->belongsTo(ProductCategory::class, 'product_category_id');
+        return $this->belongsTo(ProductCategory::class, 'product_key');
     }
     public function pendings()
     {
-        return $this->hasMany(Pending::class, 'affected_id');
+        return $this->hasMany(PendingProduct::class, 'affected_id');
     }
+
     // public function planStatus()
     // {
     //     return $this->belongsTo(PlanStatus::class, 'plan_status_id');

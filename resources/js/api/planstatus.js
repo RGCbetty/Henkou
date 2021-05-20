@@ -7,7 +7,6 @@ export const useActivePlanStatus = () => {
 		let mounted = true;
 		try {
 			(async () => {
-				console.log('planstatus');
 				const instance = Http.create({
 					baseURL: 'http://hrdapps71:4900/',
 
