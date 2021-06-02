@@ -230,9 +230,9 @@ class InformationServiceController extends Controller
             $reason = Reason::all();
             if ($latest_revision) {
                 $revision_index = explode('-', $latest_revision);
-                $productsLogs = Product::with(['plan.employee', 'employee', 'affectedProduct.productCategory.designations', 'pendings.products' => function ($query) use ($customer_code, $revision_index) {
+                $productsLogs = Product::with(['plan.employee', 'employee', 'affectedProduct.productCategory.designations', 'pendings.employee', 'pendings.products' => function ($query) use ($customer_code, $revision_index) {
                     $query->where('customer_code', $customer_code)->whereRaw("SUBSTRING_INDEX(rev_no, '-',1) = ?", $revision_index);
-                }, 'pendings.employee'])->where('customer_code', $customer_code)->whereRaw("SUBSTRING_INDEX(rev_no, '-',1) = ?", $revision_index[0])->get();
+                }])->where('customer_code', $customer_code)->whereRaw("SUBSTRING_INDEX(rev_no, '-',1) = ?", $revision_index[0])->get();
                 $products = Product::with(['affectedProduct', 'employee', 'affectedProduct.pendings', 'pendings', 'affectedProduct.productCategory.designations'])->where(['plan_id' => $latest_plan->id, 'customer_code' => $customer_code])->get();
                 return response()->json([
                     'invoice' => $invoice,

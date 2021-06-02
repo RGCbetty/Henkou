@@ -20,6 +20,27 @@ const PendingHeaders = (handleStatus, handleReasonInput, user, options) => [
 		align: 'center',
 		width: 130
 	},
+	// {
+	// 	title: 'Department',
+	// 	dataIndex: ['employee', 'department', 'DepartmentName'],
+	// 	key: '3',
+	// 	align: 'center',
+	// 	width: 130
+	// },
+	// {
+	// 	title: 'Section',
+	// 	dataIndex: ['employee', 'section', 'SectionName'],
+	// 	key: '3',
+	// 	align: 'center',
+	// 	width: 130
+	// },
+	// {
+	// 	title: 'Team',
+	// 	key: '4',
+	// 	dataIndex: ['employee', 'team', 'TeamName'],
+	// 	align: 'center',
+	// 	width: 130
+	// },
 	{
 		title: 'Revision No.',
 		dataIndex: 'rev_no',
@@ -38,6 +59,7 @@ const PendingHeaders = (handleStatus, handleReasonInput, user, options) => [
 				<b>{text}</b>
 			) : (
 				<>
+					{console.log(row)}
 					<Button
 						type="primary"
 						disabled={!row.start_date || row.finished_date}
@@ -87,7 +109,7 @@ const PendingHeaders = (handleStatus, handleReasonInput, user, options) => [
 					disabled={
 						row.resume ||
 						!row.start ||
-						(row.reason.match(/borrow form/gi) ? false : true)
+						(row.reason?.match(/borrow form/gi) ? false : true)
 					}
 					onChange={(value) => handleReasonInput(row, 'borrow_details', value)}
 					autoSize={{ minRows: 1, maxRows: 4 }}
@@ -110,10 +132,9 @@ const PendingHeaders = (handleStatus, handleReasonInput, user, options) => [
 					<Button
 						type="primary"
 						disabled={
-							!row.start ||
-							row.updated_by !== user.EmployeeCode ||
-							!row.start_date ||
-							row.finished_date
+							!row.start || row.updated_by
+								? row.updated_by !== user.EmployeeCode
+								: null || !row.start_date || row.finished_date
 						}
 						onClick={() => handleStatus(row, 'resume', true)}
 						shape="circle"

@@ -24,6 +24,7 @@ class CreateAffectedProductsTable extends Migration
         Schema::table('affected_products', function (Blueprint $table) {
             $table->foreignId('plan_status_id')->nullable()->constrained('plan_statuses');
             $table->foreign('product_key')->references('product_key')->on('product_categories');
+            $table->unique(['product_key', 'plan_status_id']);
         });
     }
 

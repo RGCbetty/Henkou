@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { saveAs } from 'file-saver';
 import { connect } from 'react-redux';
 import {
 	Form,
@@ -56,6 +57,7 @@ const ManualContainer = ({
 		message: '',
 		description: '',
 		department: '',
+		section: '',
 		showAlert: false
 	});
 	const [form] = Form.useForm();
@@ -75,6 +77,7 @@ const ManualContainer = ({
 				message: 'Ongoing!',
 				description: result.msg,
 				department: result.dept,
+				section: result.sect,
 				showAlert: true,
 				toggleBorrowBtn: false
 			}));
@@ -84,6 +87,7 @@ const ManualContainer = ({
 				message: 'Not yet started!',
 				description: result.msg,
 				department: result.dept,
+				section: result.sect,
 				showAlert: true,
 				showDetails: false
 			}));
@@ -211,12 +215,22 @@ const ManualContainer = ({
 	};
 	// RECHECK
 	const handleRecheckModal = async () => {
+		const planStatusID = planDetails.plan_status_id;
 		const { data: products, status } = await Http.get(
-			`api/products/planstatus/${planDetails.plan_status_id}`
+			`api/products/planstatus/${planStatusID}`
 		);
+		console.log(products);
 		setRecheck({
 			modalVisible: true,
-			selectedRowKeys: products.map((item) => item.id),
+			selectedRowKeys: products
+				.filter(
+					({ affected_id }) =>
+						affected_id !== 5 ||
+						affected_id !== 25 ||
+						affected_id !== 36 ||
+						affected_id !== 58
+				)
+				.map((item) => item.id),
 			products: products.map((item) => {
 				return {
 					...item,
@@ -306,6 +320,34 @@ const ManualContainer = ({
 		setDetails(false);
 		setExpand(false);
 	};
+
+	const generateHenkouForm = async () => {
+		const instance = Http.create({
+			baseURL: 'http://10.169.141.101:8070/',
+			withCredentials: false
+		});
+		const { data } = await instance.get('api/xlsx/henkou/form', {
+			params: planDetails,
+			responseType: 'arraybuffer'
+		});
+
+		// console.log(data);
+		// function s2ab(s) {
+		// 	var buf = new ArrayBuffer(s.length);
+		// 	var view = new Uint8Array(buf);
+		// 	for (var i = 0; i != s.length; ++i) view[i] = s.charCodeAt(i) & 0xff;
+		// 	return buf;
+		// }
+		// let blob = new Blob([s2ab(data)], {
+		// 	type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+		// });
+		const blob = new Blob([data], {
+			type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+		});
+		saveAs(blob, 'HenkoForm.xlsx');
+		// const henkou = XLSX.read(data);
+		// const wbout = XLSX.write(henkou, { bookType: 'xlsx', bookSST: false, type: 'binary' });
+	};
 	return (
 		<>
 			<Spin
@@ -352,6 +394,8 @@ const ManualContainer = ({
 											{existState.description}
 											<br />
 											{existState.department}
+											<br />
+											{existState.section}
 										</span>
 									}
 								/>
@@ -488,9 +532,10 @@ const ManualContainer = ({
 											<Button
 												type="primary"
 												onClick={() => {
-													window.open(
-														'http://localhost:3000/storage/HenkouForm.xls'
-													);
+													// window.open(
+													// 	'http://10.169.141.101:3000/storage/HenkouForm.xls'
+													// );
+													generateHenkouForm();
 												}}
 												style={{ margin: '0 8px' }}
 												icon={<SnippetsOutlined />}
@@ -650,7 +695,7 @@ const ManualContainer = ({
 					/>
 				</Modal>
 				<Modal
-					title={`Pending ${pending.state.row.product_name}`}
+					title={`Pending ${pending?.state.row?.affected_product?.product_category?.product_name}`}
 					onOk={pending.actions.handlePendingOk}
 					okText="Save"
 					onCancel={pending.actions.handlePendingCancel}

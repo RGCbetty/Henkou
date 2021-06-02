@@ -12,7 +12,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    protected $with = ['employee'];
 
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_no', 'EmployeeCode');
+    }
     /**
      * The attributes that are mass assignable.
      *

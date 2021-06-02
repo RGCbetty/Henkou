@@ -9,6 +9,8 @@ class ProductDesignation extends Model
 {
     use HasFactory;
     protected $with = ['department:DepartmentCode,DepartmentName', 'section:SectionCode,SectionName', 'team:TeamCode,TeamName'];
+    protected $fillable = ['product_key', 'department_id', 'section_id', 'team_id', 'created_at', 'updated_at', 'updated_by'];
+    protected $guarded = [];
     public function department()
     {
         return $this->belongsTo(Department::class, 'department_id', 'DepartmentCode');

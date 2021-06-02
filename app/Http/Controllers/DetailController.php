@@ -21,20 +21,13 @@ class DetailController extends Controller
     {
         return Detail::all();
     }
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function latest($customer_code)
+    public function plan($customer_code)
     {
-        try {
-            $latest_revision = Plan::where('customer_code', $customer_code)->max('rev_no');
-            $latest_plan = Plan::with(['details', 'planStatus', 'details.construction_schedule'])->where('customer_code', $customer_code)->where('rev_no', $latest_revision)->first();
-            info($latest_plan);
-            if ($latest_plan) {
-                $invoice = DB::connection('sqlsrv')->select(DB::raw("SELECT A.InvoiceID,A.DepartmentCode,B.InvoiceName,B.Invoice  FROM M_InvoiceList A
+        $latest_revision = Plan::where('customer_code', $customer_code)->max('rev_no');
+        $latest_plan = Plan::with(['details', 'planStatus', 'details.construction_schedule'])->where('customer_code', $customer_code)->where('rev_no', $latest_revision)->first();
+        // info($latest_plan);
+        if ($latest_plan) {
+            $invoice = DB::connection('sqlsrv')->select(DB::raw("SELECT A.InvoiceID,A.DepartmentCode,B.InvoiceName,B.Invoice  FROM M_InvoiceList A
             INNER JOIN
                 (
                   (SELECT A.InvoiceID,A.InvoiceName,
@@ -52,9 +45,9 @@ class DetailController extends Controller
             AND (A.DepartmentCode='0' OR A.DepartmentCode='0123')
             AND A.DeletedDate IS NULL
             "));
-                // $invoice = DB::connection('sqlsrv')->select(DB::raw("SELECT * FROM getInvoice ('$id')"));
-                // $plan_specs = DB::connection('sqlsrv')->select(DB::raw("SELECT * FROM getPlanSpecs ('$id')"));
-                $plan_specification = DB::connection('sqlsrv')->select(DB::raw("SELECT A.SpecsID,A.SpecificationName,Count(*) AS 'No.of Link'  FROM M_PlanSpecification A
+            // $invoice = DB::connection('sqlsrv')->select(DB::raw("SELECT * FROM getInvoice ('$id')"));
+            // $plan_specs = DB::connection('sqlsrv')->select(DB::raw("SELECT * FROM getPlanSpecs ('$id')"));
+            $plan_specification = DB::connection('sqlsrv')->select(DB::raw("SELECT A.SpecsID,A.SpecificationName,Count(*) AS 'No.of Link'  FROM M_PlanSpecification A
             INNER JOIN
                 (
                   (SELECT A.* FROM M_PlanSpecificationCondition A
@@ -67,42 +60,62 @@ class DetailController extends Controller
             ON A.SpecsID=B.SpecsID
             AND A.DeletedDate IS NULL
             GROUP BY A.SpecsID,A.SpecificationName"));
-                $InvoiceMapped = array();
-                $latest_plan['specification'] = implode(', ', array_map(function ($entry) {
-                    return $entry['SpecificationName'];
-                }, json_decode(json_encode($plan_specification), true)));
-                foreach (json_decode(json_encode($invoice), true)  as $value) {
-                    $InvoiceMapped["{$value['InvoiceName']}"] = $value['Invoice'];
-                    // $PlanSpecsMapped =
-                }
-                $plan = array_merge($InvoiceMapped, json_decode(json_encode($latest_plan), true));
-                $assessment = Assessment::all();
-                // LATEST PRODUCTS
-                info($latest_plan);
-                $products = Product::with(['affectedProduct', 'employee', 'affectedProduct.pendings', 'pendings', 'affectedProduct.productCategory.designations'])->where(['plan_id' => $latest_plan->id, 'customer_code' => $customer_code])->get();
-                $sorted = $products->sortByDesc('id');
-                $tempArr = array_unique(array_column($sorted->values()->all(), 'affected_id'));
-                $tempCollection = collect(array_intersect_key($sorted->values()->all(), $tempArr));
-                $sortedByAffectedId = $tempCollection->sortBy('affected_id');
-                $sorted_products = $sortedByAffectedId->values()->all();
-
-                // PRODUCTS BY REVISION FIRST INDEX
-                $revision_index = explode('-', $latest_revision);
-                $products_by_revision = Product::with(['employee', 'plan', 'affectedProduct',  'affectedProduct.productCategory.designations', 'pendings' => function ($query) use ($customer_code, $revision_index) {
-                    $query->where('customer_code', $customer_code)->whereRaw("SUBSTRING_INDEX(rev_no, '-',1) = ?", $revision_index[0]);
-                }])->where('customer_code', $customer_code)->whereRaw("SUBSTRING_INDEX(rev_no, '-',1) = ?", $revision_index[0])->get();
-                // return $products;
-                return response()->json([
-                    'HenkouPlan' =>  $plan,
-                    // 'PlanSpecification' =>  $plan_specification,
-                    // 'Invoice' => $invoice,
-                    'Assessment' => $assessment,
-                    'LatestProducts' =>  $sorted_products,
-                    "ProductsByFirstIndexRevision" => $products_by_revision
-                ]);
-            } else {
-                throw new Exception("Henkou plan not found!");
+            $InvoiceMapped = array();
+            $latest_plan['specification'] = implode(', ', array_map(function ($entry) {
+                return $entry['SpecificationName'];
+            }, json_decode(json_encode($plan_specification), true)));
+            foreach (json_decode(json_encode($invoice), true)  as $value) {
+                $InvoiceMapped["{$value['InvoiceName']}"] = $value['Invoice'];
+                // $PlanSpecsMapped =
             }
+            $plan = array_merge($InvoiceMapped, json_decode(json_encode($latest_plan), true));
+            $revision_index = explode('-', $latest_revision);
+
+            return [
+                'details' => $plan,
+                'products' => $this->products($customer_code, $revision_index)
+            ];
+        } else {
+            throw new Exception("Henkou plan not found!");
+        }
+    }
+    public function products($customer_code, $revision_index)
+    {
+        $products_by_revision = Product::with(['plan.employee', 'employee', 'affectedProduct.productCategory.designations', 'affectedProduct.pendings.employee', 'pendings.products' => function ($query) use ($customer_code, $revision_index) {
+            $query->where('customer_code', $customer_code)->whereRaw("SUBSTRING_INDEX(rev_no, '-',1) = ?", $revision_index);
+        }])->where('customer_code', $customer_code)->whereRaw("SUBSTRING_INDEX(rev_no, '-',1) = ?", $revision_index[0])->get();
+        return $products_by_revision;
+    }
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function latest($customer_code)
+    {
+        try {
+            $assessment = Assessment::all();
+            // LATEST PRODUCTS
+            // info($latest_plan);
+            // $products = Product::with(['affectedProduct', 'employee', 'affectedProduct.pendings', 'pendings', 'affectedProduct.productCategory.designations'])->where(['plan_id' => $latest_plan->id, 'customer_code' => $customer_code])->get();
+            // $sorted = $products->sortByDesc('id');
+            // $tempArr = array_unique(array_column($sorted->values()->all(), 'affected_id'));
+            // $tempCollection = collect(array_intersect_key($sorted->values()->all(), $tempArr));
+            // $sortedByAffectedId = $tempCollection->sortBy('affected_id');
+            // $sorted_products = $sortedByAffectedId->values()->all();
+
+            // PRODUCTS BY REVISION FIRST INDEX
+
+            // return $products;
+            return response()->json([
+                'HenkouPlan' =>  $this->plan($customer_code)['details'],
+                "ProductsByFirstIndexRevision" => $this->plan($customer_code)['products'],
+                // 'PlanSpecification' =>  $plan_specification,
+                // 'Invoice' => $invoice,
+                'Assessment' => $assessment
+                // 'LatestProducts' =>  $sorted_products,
+            ]);
         } catch (Exception $e) {
             return response($e->getMessage(), 204);
             Log::error($e->getMessage());

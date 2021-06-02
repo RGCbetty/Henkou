@@ -1,75 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Select, Tag, Tooltip, Input, AutoComplete } from 'antd';
-import Http from '../../Http';
-import {
-	PlayCircleOutlined,
-	PauseCircleOutlined,
-	FieldTimeOutlined,
-	ClockCircleOutlined
-} from '@ant-design/icons';
+import React from 'react';
+import { Button, Select, Tag } from 'antd';
+import { FieldTimeOutlined } from '@ant-design/icons';
+import durationAsString from '../../utils/diffDate';
+import moment from 'moment';
 const { Option } = Select;
-const { TextArea } = Input;
-// const FinishCol = ({ text, row, actions, status, pendingItems }) => {
-// 	const [pending, setPending] = useState([]);
-// 	useEffect(() => {
-// 		let mounted = true;
-// 		(async () => {
-// 			try {
-// 				const response = await Http.get(
-// 					`/api/pending/detail_id/${row.detail_id}/affected_id/${row.affected_id}`
-// 				);
-// 				const { data } = response;
-// 				if (mounted) {
-// 					setPending(data);
-// 				}
-// 			} catch (error) {
-// 				if (Http.isCancel(error)) {
-// 					console.error(error);
-// 				} else {
-// 					throw error;
-// 				}
-// 			}
-// 		})();
-// 		return () => {
-// 			mounted = false;
-// 		};
-// 	}, [pendingItems]);
-// 	return (
-// 		<Button
-// 			type="primary"
-// 			disabled={
-// 				!row.start_date ||
-// 				!row.received_date ||
-// 				row.assessment_id !== 1 ||
-// 				// !status[
-// 				// 	status.findIndex((el) => el.sequence == row.sequence) == 0
-// 				// 		? status.findIndex((el) => el.sequence == row.sequence)
-// 				// 		: status.findIndex((el) => el.sequence == row.sequence) - 1
-// 				// ].start_date ||
-// 				pending.some((item) => !item.resume_date) ||
-// 				(status.findIndex((el) => el.sequence == row.sequence) == 0
-// 					? !status[status.findIndex((el) => el.sequence == row.sequence)]
-// 							.received_date &&
-// 					  status[status.findIndex((el) => el.sequence == row.sequence)]
-// 							.assessment_id !== 1
-// 					: // !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-// 					// 		.received_date ||
-// 					status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-// 							.assessment_id == 1
-// 					? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-// 							.finished_date
-// 					: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-// 							.assessment_id
-// 					? true
-// 					: !status[status.findIndex((el) => el.sequence == row.sequence)].received_date)
-// 			}
-// 			onClick={() => actions.handleEventStatus(null, 'finished_date', row)}
-// 			shape="circle"
-// 			icon={<PauseCircleOutlined />}
-// 		/>
-// 	);
-// };
-export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pendingItems) => [
+export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, fetchingProducts) => [
 	{
 		title: 'Sequence',
 		dataIndex: ['affected_product', 'sequence_no'],
@@ -242,7 +177,9 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 									)
 							  ].received_date)
 					}
-					onChange={(value) => actions.handleEventStatus(value, 'assessment_id', row)}
+					onChange={(value) =>
+						actions.handleOnChangeAssessment(value, 'assessment_id', row)
+					}
 					style={{ width: 130 }}>
 					{assessment.map((item, index) => {
 						return (
@@ -255,131 +192,15 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 			);
 		}
 	},
-	// {
-	// 	title: 'Pending',
-	// 	key: '9',
-	// 	dataIndex: 'pending',
-	// 	align: 'center',
-	// 	width: 70,
-	// 	render: (text, row) => (
-	// 		<Tooltip placement="top" title={'Assess Pending'}>
-	// 			<Button
-	// 				type="primary"
-	// 				disabled={(row.toggleSelect, !row.received_date)}
-	// 				onClick={() => actions.handlePending(row)}
-	// 				shape="circle"
-	// 				icon={<ClockCircleOutlined />}
-	// 			/>
-	// 		</Tooltip>
-	// 	)
-	// },
-
-	// {
-	// 	title: 'Start',
-	// 	key: '7',
-	// 	dataIndex: 'start_date',
-	// 	align: 'center',
-	// 	width: 150,
-	// 	render: (text, row, index) =>
-	// 		text ? (
-	// 			<b>{text}</b>
-	// 		) : (
-	// 			<>
-	// 				<Button
-	// 					type="primary"
-	// 					disabled={
-	// 						row.assessment_id !== 1 ||
-	// 						!row.received_date ||
-	// 						(status.findIndex((el) => el.sequence == row.sequence) == 0
-	// 							? !status[status.findIndex((el) => el.sequence == row.sequence)]
-	// 									.received_date ||
-	// 							  status[status.findIndex((el) => el.sequence == row.sequence)]
-	// 									.assessment_id !== 1
-	// 							: //  !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-	// 							// 		.received_date ||
-	// 							status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-	// 									.assessment_id == 1
-	// 							? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-	// 									.finished_date
-	// 							: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-	// 									.assessment_id
-	// 							? true
-	// 							: !status[status.findIndex((el) => el.sequence == row.sequence)]
-	// 									.received_date)
-	// 					}
-	// 					// disabled={row.assessment_id !== 1}
-	// 					onClick={() => actions.handleEventStatus(null, 'start_date', row)}
-	// 					shape="circle"
-	// 					icon={<PlayCircleOutlined />}
-	// 				/>
-	// 			</>
-	// 		)
-	// },
-	// {
-	// 	title: 'Henkou Details',
-	// 	key: '8',
-	// 	dataIndex: 'logs',
-	// 	align: 'center',
-	// 	width: 150,
-	// 	render: (text, row) => (
-	// 		<TextArea
-	// 			value={text}
-	// 			bordered={false}
-	// 			disabled={
-	// 				row.resume && row.start
-	// 					? true
-	// 					: false || row.finished_date || row.assessment_id !== 1
-	// 			}
-	// 			onChange={(value) => actions.handleEventStatus(value, 'log', row)}
-	// 			autoSize={{ minRows: 1, maxRows: 4 }}
-	// 		/>
-	// 	)
-	// },
-	// {
-	// 	title: 'Finish',
-	// 	key: '9',
-	// 	dataIndex: 'finished_date',
-	// 	align: 'center',
-
-	// 	width: 150,
-	// 	render: (text, row, index) =>
-	// 		text ? (
-	// 			<b>{text}</b>
-	// 		) : (
-	// 			<>
-	// 				<FinishCol
-	// 					text={text}
-	// 					row={row}
-	// 					actions={actions}
-	// 					status={status}
-	// 					pendingItems={pendingItems}
-	// 				/>
-	// 				{/* <Button
-	// 					type="primary"
-	// 					disabled={
-	// 						!row.start_date ||
-	// 						!row.received_date ||
-	// 						row.assessment_id !== 1 ||
-	// 						!status[
-	// 							status.findIndex((el) => el.sequence == row.sequence) == 0
-	// 								? status.findIndex((el) => el.sequence == row.sequence)
-	// 								: status.findIndex((el) => el.sequence == row.sequence) - 1
-	// 						].start_date ||
-	// 						checkPendingOngoing(row)
-	// 					}
-	// 					onClick={() => actions.handleEventStatus(null, 'finished_date', row)}
-	// 					shape="circle"
-	// 					icon={<PauseCircleOutlined />}
-	// 				/>*/}
-	// 			</>
-	// 		)
-	// },
 	{
-		title: 'Days in Process',
-		key: '10',
+		title: 'Duration',
+		key: '8',
 		align: 'center',
-		width: 100,
-		dataIndex: 'days_in_process'
+		width: 70,
+		render: (_, row) =>
+			isNaN(moment(row.start_date).diff(row.finished_date))
+				? ''
+				: durationAsString(row.start_date, row.finished_date)
 	},
 	{
 		title: 'Action',
@@ -391,28 +212,7 @@ export const henkouStatusHeader = (assessment, actions, checkIfOwner, status, pe
 		render: (text, row) => (
 			<Button
 				type="primary"
-				// disabled={
-				// row.assessment_id !== 1 ||
-				// !row.received_date ||
-				// row.finished_date
-				// ||
-				// (status.findIndex((el) => el.sequence == row.sequence) == 0
-				// 	? !status[status.findIndex((el) => el.sequence == row.sequence)]
-				// 			.received_date ||
-				// 	  status[status.findIndex((el) => el.sequence == row.sequence)]
-				// 			.assessment_id !== 1
-				// 	: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-				// 			.received_date ||
-				// 	  status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-				// 			.assessment_id == 1
-				// 	? !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-				// 			.finished_date
-				// 	: !status[status.findIndex((el) => el.sequence == row.sequence) - 1]
-				// 			.assessment_id
-				// 	? true
-				// 	: !status[status.findIndex((el) => el.sequence == row.sequence)]
-				// 			.received_date)
-				// }
+				disabled={fetchingProducts}
 				onClick={() => actions.handleAction(row)}
 				shape="circle"
 				icon={<FieldTimeOutlined />}

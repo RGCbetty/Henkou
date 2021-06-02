@@ -18,7 +18,11 @@ const FilterContainer = ({ user, props, events, children }) => {
 		const items = [];
 		for (let i = 0; i < count; i++) {
 			items.push(
-				<Col style={{ float: planDetails[i].textAlign }} span={8} key={i}>
+				<Col
+					style={{ float: planDetails[i].textAlign }}
+					xs={{ span: planDetails[i].span + 4, offset: planDetails[i].offset }}
+					md={{ span: planDetails[i].span }}
+					key={i}>
 					<Form.Item
 						shouldUpdate
 						name={planDetails[i].name}
@@ -73,6 +77,7 @@ const FilterContainer = ({ user, props, events, children }) => {
 					title: 'Department',
 					textAlign: 'left',
 					showSearch: true,
+					span: 8,
 					items: departments,
 					code: 'DepartmentCode',
 					name: 'DepartmentName'
@@ -81,6 +86,7 @@ const FilterContainer = ({ user, props, events, children }) => {
 					title: 'Section',
 					textAlign: 'center',
 					showSearch: true,
+					span: 8,
 					items: sections,
 					code: 'SectionCode',
 					name: 'SectionName'
@@ -89,6 +95,7 @@ const FilterContainer = ({ user, props, events, children }) => {
 					title: 'Team',
 					textAlign: 'right',
 					showSearch: true,
+					span: 8,
 					items: teams,
 					code: 'TeamCode',
 					name: 'TeamName'
@@ -96,6 +103,7 @@ const FilterContainer = ({ user, props, events, children }) => {
 				{
 					title: 'House Type',
 					width: 200,
+					span: 8,
 					textAlign: 'left',
 					items: [
 						{ id: 0, house_type: 'All' },
@@ -108,6 +116,7 @@ const FilterContainer = ({ user, props, events, children }) => {
 				{
 					title: 'Henkou Type',
 					width: 200,
+					span: 8,
 					textAlign: 'center',
 					items: [{ id: 0, type_name: 'All' }, ...planType],
 					code: 'id',
@@ -116,6 +125,7 @@ const FilterContainer = ({ user, props, events, children }) => {
 				{
 					title: 'Henkou Status',
 					width: 200,
+					span: 8,
 					textAlign: 'right',
 					items: [
 						{ id: 1, status_type: 'All' },
@@ -131,6 +141,7 @@ const FilterContainer = ({ user, props, events, children }) => {
 				{
 					title: 'Plan Status',
 					width: 250,
+					span: 12,
 					textAlign: 'right',
 					items: [{ id: 0, plan_status_name: 'All' }, ...planStatus],
 					code: 'id',
@@ -222,7 +233,7 @@ const FilterContainer = ({ user, props, events, children }) => {
 			</Row>
 			<Row>
 				<Col span={16} offset={8} style={{ textAlign: 'right' }}>
-					<Button type="primary" htmlType="submit">
+					<Button type="primary" onClick={events.handleOnClickReports}>
 						Reports
 					</Button>
 					<Button

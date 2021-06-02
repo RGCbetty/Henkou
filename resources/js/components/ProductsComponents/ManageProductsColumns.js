@@ -1,8 +1,7 @@
 import React from 'react';
-import { Button, Tag, Popconfirm, Typography } from 'antd';
-import { HighlightOutlined } from '@ant-design/icons';
-
-const headers = (columnSearch) => [
+import { Button, Tag, Popconfirm } from 'antd';
+import { HighlightOutlined, DeleteOutlined } from '@ant-design/icons';
+const headers = (columnSearch, events, visiblePopConfirm, isDeleting) => [
 	{
 		title: 'Product',
 		width: 200,
@@ -24,8 +23,8 @@ const headers = (columnSearch) => [
 					...new Map(
 						designations
 							.map(({ department }) => ({
-								id: department.DepartmentCode,
-								name: department.DepartmentName
+								id: department?.DepartmentCode,
+								name: department?.DepartmentName
 							}))
 							.map((item) => [item['id'], item])
 					).values()
@@ -49,8 +48,8 @@ const headers = (columnSearch) => [
 					...new Map(
 						designations
 							.map(({ section }) => ({
-								id: section.SectionCode,
-								name: section.SectionName
+								id: section?.SectionCode,
+								name: section?.SectionName
 							}))
 							.map((item) => [item['id'], item])
 					).values()
@@ -74,13 +73,13 @@ const headers = (columnSearch) => [
 					...new Map(
 						designations
 							.map(({ team }) => ({
-								id: team.TeamCode,
-								name: team.TeamName
+								id: team?.TeamCode,
+								name: team?.TeamName
 							}))
 							.map((item) => [item['id'], item])
 					).values()
-				].map((team) => (
-					<Tag color="blue" key={team.id}>
+				].map((team, index) => (
+					<Tag color="blue" key={team?.id ? team.id : index}>
 						{team.name}
 					</Tag>
 				))}
@@ -109,14 +108,50 @@ const headers = (columnSearch) => [
 		width: 100,
 		dataIndex: 'action',
 		fixed: 'right',
-		render: (_, record) => (
-			<Button
-				type="primary"
-				onClick={() => handleRegistrationModal(record)}
-				shape="circle"
-				icon={<HighlightOutlined />}
-			/>
-		),
+		render: (_, record) => {
+			const deletable = isDeleting(record);
+			return deletable ? (
+				<>
+					{/* <Button
+						type="primary"
+						onClick={() => events.handleEditProduct(record)}
+						style={{ margin: 5 }}
+						shape="circle"
+						icon={<HighlightOutlined />}
+					/> */}
+					<Popconfirm
+						title="Are you sure to delete this product?"
+						onConfirm={() => events.onPopConfirmOk(record)}
+						onCancel={events.onPopConfirmCancel}
+						visible={visiblePopConfirm}
+						okText="Yes"
+						cancelText="No">
+						<Button
+							type="primary"
+							onClick={() => events.handleDeleteProduct(record)}
+							shape="circle"
+							icon={<DeleteOutlined />}
+						/>
+					</Popconfirm>
+				</>
+			) : (
+				<>
+					<Button
+						type="primary"
+						onClick={() => events.handleEditProduct(record)}
+						style={{ margin: 5 }}
+						shape="circle"
+						icon={<HighlightOutlined />}
+					/>
+					<Button
+						type="primary"
+						onClick={() => events.handleDeleteProduct(record)}
+						shape="circle"
+						icon={<DeleteOutlined />}
+					/>
+				</>
+			);
+		},
 		key: '5',
 		align: 'center'
 	}

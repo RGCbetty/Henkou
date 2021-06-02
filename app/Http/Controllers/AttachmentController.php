@@ -57,15 +57,10 @@ class AttachmentController extends Controller
             ]);
         }
     }
-    public function show(Attachment $attachment, $id)
+    public function show($id)
     {
         //
         $attachments = Attachment::select()->where('detail_id', $id)->get();
         return json_encode($attachments);
-    }
-
-    public function destroy(Attachment $attachment)
-    {
-        //
     }
 }

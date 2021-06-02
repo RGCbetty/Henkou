@@ -10,7 +10,11 @@ class Employee extends Model
     use HasFactory;
     protected $connection = 'company_information';
     protected $table = 'Employees';
-    protected $with = ['department:DepartmentCode,DepartmentName', 'section:SectionCode,SectionName', 'team:TeamCode,TeamName'];
+    protected $with = ['department:DepartmentCode,DepartmentName', 'section:SectionCode,SectionName', 'team:TeamCode,TeamName', 'designation:DesignationCode,DesignationName'];
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class, 'DesignationCode', 'DesignationCode');
+    }
     public function department()
     {
         return $this->belongsTo(Department::class, 'DepartmentCode', 'DepartmentCode');

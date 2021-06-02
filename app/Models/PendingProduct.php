@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class PendingProduct extends Model
 {
     use HasFactory;
+    // protected $with = ['products: id, product_name'];
     protected $fillable = [
         'product_key',
         'product_id',
@@ -20,6 +21,9 @@ class PendingProduct extends Model
         'updated_by',
         'updated_at'
     ];
+    // public function product(){
+
+    // }
     public function products()
     {
         return $this->belongsTo(Product::class);

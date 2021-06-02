@@ -1,23 +1,26 @@
 import React from 'react';
 import { Button, Select, Input, Tooltip, AutoComplete } from 'antd';
 import { PlayCircleOutlined, PauseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import durationAsString from '../../utils/diffDate';
+import moment from 'moment';
+
 const { Option } = Select;
 
 const { TextArea } = Input;
 
 const ActionHeaders = (
-	handleActionStatus,
-	handleActionDetails,
-	handleActionPending,
+	handleOnClickProcessTime,
+	handleProcessDetails,
+	showPendingModal,
 	checkIfOwner,
 	pendingItems
 ) => [
 	{
 		title: 'No.',
-		dataIndex: 'status_index',
 		key: '1',
 		width: 30,
-		align: 'center'
+		align: 'center',
+		render: (_, row, index) => index + 1
 	},
 
 	{
@@ -62,12 +65,9 @@ const ActionHeaders = (
 					<Button
 						type="primary"
 						disabled={
-							!row.received_date ||
-							row.disableHistory ||
-							row.assessment_id !== 1 ||
-							checkIfOwner(row)
+							!row.received_date || row.assessment_id !== 1 || checkIfOwner(row)
 						}
-						onClick={() => handleActionStatus(row, 'start_date')}
+						onClick={() => handleOnClickProcessTime(row, 'start_date')}
 						shape="circle"
 						icon={<PlayCircleOutlined />}
 					/>
@@ -91,7 +91,7 @@ const ActionHeaders = (
 					// 	row.finished_date ||
 					// 	row.disableHistory
 					// }
-					onClick={() => handleActionPending(row)}
+					onClick={() => showPendingModal(row)}
 					shape="circle"
 					icon={<ClockCircleOutlined />}
 				/>
@@ -115,11 +115,11 @@ const ActionHeaders = (
 						disabled={
 							!row.start_date ||
 							!row.received_date ||
-							pendingItems.some((item) => !item.start || !item.resume) ||
-							row.disableHistory ||
+							pendingItems?.some((item) => item.start && !item.resume) ||
+							// row.disableHistory ||
 							checkIfOwner(row)
 						}
-						onClick={() => handleActionStatus(row, 'finished_date')}
+						onClick={() => handleOnClickProcessTime(row, 'finished_date')}
 						shape="circle"
 						icon={<PauseCircleOutlined />}
 					/>
@@ -130,9 +130,12 @@ const ActionHeaders = (
 	{
 		title: 'Duration',
 		key: '8',
-		dataIndex: 'days_in_process',
 		align: 'center',
-		width: 70
+		width: 70,
+		render: (_, row) =>
+			isNaN(moment(row.start_date).diff(row.finished_date))
+				? ''
+				: durationAsString(row.start_date, row.finished_date)
 	},
 	{
 		title: 'Henkou Details',
@@ -144,13 +147,9 @@ const ActionHeaders = (
 			return (
 				<TextArea
 					value={text}
-					disabled={
-						row.resume && row.start
-							? true
-							: false || row.disableHistory || checkIfOwner(row)
-					}
+					disabled={row.resume && row.start ? true : false || checkIfOwner(row)}
 					bordered={false}
-					onChange={(value) => handleActionDetails(row, value)}
+					onChange={(value) => handleProcessDetails(row, value)}
 					autoSize={{ minRows: 1, maxRows: 4 }}
 				/>
 			);

@@ -4,38 +4,43 @@ import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined } from '@ant-desi
 export const ManageUserColumns = (confirm) => [
 	{
 		title: 'Employee No.',
-		dataIndex: 'EmployeeCode',
+		dataIndex: ['employee', 'EmployeeCode'],
 		align: 'center',
-		key: 'name',
-		render: (text) => <b>{text}</b>
+		key: 'name'
+		// render: (text) => <b>{text}</b>
 	},
 	{
 		title: 'Employee Name',
-		dataIndex: 'EmployeeName',
+		dataIndex: ['employee', 'EmployeeName'],
+		// dataIndex: 'EmployeeName',
 		align: 'center',
 		key: 'age'
 	},
 	{
 		title: 'Department',
-		dataIndex: 'DepartmentName',
+		dataIndex: ['employee', 'department', 'DepartmentName'],
+		// dataIndex: 'DepartmentName',
 		align: 'center',
 		key: 'address'
 	},
 	{
 		title: 'Section',
-		key: 'SectionName',
-		align: 'center',
-		dataIndex: 'SectionName'
+		dataIndex: ['employee', 'section', 'SectionName'],
+		// key: 'SectionName',
+		align: 'center'
+		// dataIndex: 'SectionName'
 	},
 	{
 		title: 'Team',
-		key: 'TeamName',
-		align: 'center',
-		dataIndex: 'TeamName'
+		dataIndex: ['employee', 'team', 'TeamName'],
+		// key: 'TeamName',
+		align: 'center'
+		// dataIndex: 'TeamName'
 	},
 	{
 		title: 'Designation',
-		dataIndex: 'DesignationName',
+		dataIndex: ['employee', 'designation', 'DesignationName'],
+		// dataIndex: 'DesignationName',
 		align: 'center',
 		key: 'address'
 	},

@@ -3,16 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import moment from 'moment';
 import Http from '../Http';
-/* API */
-import { fetchProducts, useProductsRetriever, useAffectedProductsRetriever } from '../api/products';
-import { fetchDetails } from '../api/details';
 
-// import { useActivePlanStatus } from '../api/planstatus';
 /* Components */
 import HenkouContainer from '../components/HenkouComponents/HenkouContainer';
+import { isEqual } from 'lodash';
+import durationAsString from '../utils/diffDate';
 /* Utilities */
-import LogsUtils from '../utils/HenkouLogs';
-const LogsHelper = new LogsUtils();
+
 const Henkou = ({ title, user }) => {
 	useEffect(() => {
 		document.title = title || '';
@@ -23,396 +20,336 @@ const Henkou = ({ title, user }) => {
 		assessment: [],
 		products: [],
 		logs: [],
-		productsByFirstIndex: []
+		productsByFirstIndex: [],
+		fetchingProducts: false
 	});
+	const { products, plan, productsByFirstIndex, fetchingProducts } = state;
+	console.log(fetchingProducts);
 
 	const handleEvent = async (constructionCode) => {
 		const { data, status } = await Http.get(`/api/henkou/plan/details/${constructionCode}`);
-		const { Assessment, HenkouPlan, LatestProducts, ProductsByFirstIndexRevision } = data;
-		// const assessment = await Http.get('/api/master/assessments');
-		// setState((prevState) => ({
-		//     ...prevState,
-		//     assessment
-		// }))
-		if (status == 200) {
-			// setDetail((prevState) => {
-			// 	return {
-			// 		...prevState,
-			// 		...details
-			// 		// plan_status: master.planstatus.find((plan) => plan.id == details.plan_status_id)
-			// 		// 	.plan_status_name
-			// 	};
-			// });
-			// const { data: products, status } = await Http.get(
-			// 	`/api/henkou/plans/${details.customer_code}/products/${details.id}`
-			// );
-			// await consolidatedHenkouLogs(details);
+		const { Assessment, HenkouPlan, ProductsByFirstIndexRevision } = data;
 
+		if (status == 200) {
 			setState((prevState) => ({
 				...prevState,
 				assessment: Assessment,
 				productsByFirstIndex: ProductsByFirstIndexRevision,
-				logs: LogsHelper.mergeLogs(ProductsByFirstIndexRevision),
+				logs: consolidatedHenkouLogs(ProductsByFirstIndexRevision),
 				plan: {
 					...prevState.plan,
 					...HenkouPlan
-				},
-				products: LatestProducts
+				}
+				// products: LatestProducts
 			}));
 
-			// setStatus(products);
 			return 'found';
 		} else {
 			return 'not found';
 		}
 	};
-	const handleUpdateWithDetails = async (details, row) => {
-		const productsClone = status.filter((item) => item.assessment_id == 1);
-		if (row.finished_date) {
-			status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
-			status[
-				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = user.EmployeeCode;
+	console;
+	const handleUpdateProduct = async (record) => {
+		// console.log(record);
+		setState((prevState) => ({ ...prevState, fetchingProducts: true }));
 
-			!row.is_rechecking
-				? status[status.findIndex((element) => element.affected_id == row.affected_id) + 1]
-						?.received_date
+		const productIndex = productsByFirstIndex.findIndex((item) => item.id == record.id);
+		// console.log(productsByFirstIndex);
+		// console.log(productsByFirstIndex[productIndex]);
+
+		const affectedProducts = productsByFirstIndex.filter((item) => item.assessment_id == 1);
+		const affectedProductIndex = affectedProducts.findIndex((item) => item.id == record.id);
+
+		productsByFirstIndex[productIndex] = record;
+		productsByFirstIndex[productIndex].updated_by = user.EmployeeCode;
+		if (record.finished_date) {
+			// productsByFirstIndex[productIndex] = record;
+			// productsByFirstIndex[productIndex].updated_by = user.EmployeeCode;
+
+			!record.is_rechecking
+				? productsByFirstIndex[productIndex + 1]?.received_date
 					? null
-					: (status[
-							status.findIndex((element) => element.affected_id == row.affected_id) +
-								1
-					  ].received_date = row.finished_date)
-				: productsClone[
-						productsClone.findIndex(
-							(element) => element.affected_id == row.affected_id
-						) + 1
-				  ]
-				? status[
-						status.indexOf(
-							productsClone[
-								productsClone.findIndex(
-									(element) => element.affected_id == row.affected_id
-								) + 1
-							]
-						)
+					: (productsByFirstIndex[productIndex + 1].received_date = record.finished_date)
+				: affectedProducts[affectedProductIndex + 1]
+				? productsByFirstIndex[
+						productsByFirstIndex.indexOf(affectedProducts[affectedProductIndex + 1])
 				  ]?.received_date
 					? null
-					: (status[
-							status.indexOf(
-								productsClone[
-									productsClone.findIndex(
-										(element) => element.affected_id == row.affected_id
-									) + 1
-								]
-							)
-					  ].received_date = row.finished_date)
+					: (productsByFirstIndex[
+							productsByFirstIndex.indexOf(affectedProducts[affectedProductIndex + 1])
+					  ].received_date = record.finished_date)
 				: null;
-			const statusClone = [...status];
-			setStatus(statusClone);
-			if (row.log) {
-				// setLogs((prevState) => {
-				// 	return [
-				// 		...prevState,
-				// 		prevState.find((el) => el.id == row.id)
-				// 			? prevState.find((el) => el.id == row.id).log
-				// 				? false
-				// 				: {
-				// 						id: row.id,
-				// 						log: row.log,
-				// 						created_at: row.created_at
-				// 				  }
-				// 			: {
-				// 					id: row.id,
-				// 					log: row.log,
-				// 					created_at: row.created_at
-				// 			  }
-				// 	];
-				// });
-
-				if (row.sequence > 2) {
-					const { data: newProducts, status: statusCode } = await Http.post(
-						`/api/status/${details.id}`,
+			// console.log(affectedProducts);
+			console.log(affectedProducts[affectedProductIndex + 1]);
+			// console.log(affectedProducts[productIndex]);
+			setState((prevState) => ({ ...prevState, productsByFirstIndex }));
+			if ([5, 25, 36, 58].indexOf(record.affected_id) == -1) {
+				const {
+					data
+				} = await Http.patch(`api/henkou/plan/${record.plan_id}/product/${record.id}`, [
+					productsByFirstIndex[productIndex],
+					record.is_rechecking
+						? affectedProducts[affectedProductIndex + 1]
+						: productsByFirstIndex[productIndex + 1]
+				]);
+				setState((prevState) => ({
+					...prevState,
+					productsByFirstIndex: data,
+					fetchingProducts: false
+				}));
+				// const { status } = await Http.post(`/api/status/${record.plan_id}`, [
+				// 	productsByFirstIndex[productIndex],
+				// 	record.is_rechecking
+				// 		? affectedProducts[productIndex + 1]
+				// 		: productsByFirstIndex[productIndex + 1]
+				// ]);
+				// if (status == 200) {
+				// 	handleEvent(plan.customer_code);
+				// }
+			} else {
+				/* FOR FINAL CHECKING PRODUCT */
+				// const { status } = await Http.post(`/api/status/${record.plan_id}`, [
+				// 	productsByFirstIndex[productIndex + 1]
+				// ]);
+				// console.log(productsByFirstIndex[productIndex]);
+				const {
+					data
+				} = await Http.patch(`api/henkou/plan/${record.plan_id}/product/${record.id}`, [
+					productsByFirstIndex[productIndex]
+				]);
+				setState((prevState) => ({
+					...prevState,
+					productsByFirstIndex: data,
+					fetchingProducts: false
+				}));
+				// if (status == 200) {
+				// 	handleEvent(plan.customer_code);
+				// }
+			}
+			if (record.log) {
+				if (record.affected_product.sequence_no > 2) {
+					const { data: updatedHenkou, status: statusCode } = await Http.post(
+						`/api/status/${record.plan_id}`,
 						{
-							status,
+							products: productsByFirstIndex.filter(
+								(item) => item.rev_no == record.rev_no
+							),
 							updated_by: user.EmployeeCode,
 							sectionCode: user.SectionCode,
-							details,
-							row
+							details: plan,
+							row: record
 						}
 					);
-					console.log(newProducts, 'newwwwwwwwwwwwwwwwwwwwww');
+
 					if (statusCode == 200) {
-						handleEvent(details.customer_code);
-						setStatus(newProducts);
+						setState((prevState) => ({
+							...prevState,
+							productsByFirstIndex: updatedHenkou.products,
+							fetchingProducts: true,
+							logs: consolidatedHenkouLogs(updatedHenkou.products),
+							plan: {
+								...prevState.plan,
+								...updatedHenkou.details
+							}
+						}));
 					}
 				}
 			}
-
-			if ([5, 25, 36, 58].indexOf(row.affected_id) == -1) {
-				const resUpdate = await Http.post(`/api/status/${details.id}`, [
-					statusClone[
-						statusClone.findIndex((element) => element.affected_id == row.affected_id)
-					],
-					row.is_rechecking
-						? productsClone[
-								productsClone.findIndex(
-									(element) => element.affected_id == row.affected_id
-								) + 1
-						  ]
-						: statusClone[
-								statusClone.findIndex(
-									(element) => element.affected_id == row.affected_id
-								) + 1
-						  ]
-				]);
-			} else {
-				/* FOR FINAL CHECKING PRODUCT */
-				const resUpdate = await Http.post(`/api/status/${details.id}`, {
-					products:
-						statusClone[
-							status.findIndex((element) => element.affected_id == row.affected_id)
-						]
-				});
-			}
 		} else {
-			status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
-			status[
-				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = user.EmployeeCode;
-			const statusClone = [...status];
-			setStatus(statusClone);
-			const resUpdate = await Http.post(`/api/status/${details.id}`, {
-				products:
-					statusClone[
-						status.findIndex((element) => element.affected_id == row.affected_id)
-					]
-			});
-		}
-		await consolidatedHenkouLogs(details);
-	};
-	const handleBorrow = async (details, row) => {
-		// console.log(row, 'rowzzzzzzzzzzzz');
-		if (row.finished_date) {
-			// setLogs((prevState) => [
-			// 	...prevState,
-			// 	{
-			// 		log: row.log,
-			// 		created_at: row.created_at
-			// 	}
+			// productsByFirstIndex[productIndex] = record;
+			// productsByFirstIndex[productIndex].updated_by = user.EmployeeCode;
+			const clonedProducts = [...productsByFirstIndex];
+			console.log(clonedProducts, 'huwhaaaaaaaaat');
+			setState((prevState) => ({
+				...prevState,
+				// products,
+				productsByFirstIndex: clonedProducts
+			}));
+			const {
+				data
+			} = await Http.patch(`api/henkou/plan/${record.plan_id}/product/${record.id}`, [
+				clonedProducts[productIndex]
+			]);
+			setState((prevState) => ({
+				...prevState,
+				productsByFirstIndex: data,
+				fetchingProducts: false
+			}));
+			// const { status } = await Http.post(`/api/status/${record.plan_id}`, [
+			// 	clonedProducts[productIndex]
 			// ]);
-			status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
-
-			status[
-				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = user.EmployeeCode;
-			status[status.findIndex((element) => element.affected_id == row.affected_id) + 1]
-				? (status[
-						status.findIndex((element) => element.affected_id == row.affected_id) + 1
-				  ].received_date = row.finished_date)
-				: null;
-			const statusClone = [...status];
-			setStatus(statusClone);
-			if ([5, 25, 36, 58].indexOf(row.affected_id) == -1) {
-				const resUpdate = await Http.post(`/api/status/${details.id}`, [
-					statusClone[
-						status.findIndex((element) => element.affected_id == row.affected_id)
-					],
-					statusClone[
-						status.findIndex((element) => element.affected_id == row.affected_id) + 1
-					]
-				]);
-			} else {
-				const resUpdate = await Http.post(`/api/status/${details.id}`, {
-					products:
-						statusClone[
-							status.findIndex((element) => element.affected_id == row.affected_id)
-						]
-				});
-			}
-		} else {
-			status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
-			status[
-				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = user.EmployeeCode;
-			const statusClone = [...status];
-			setStatus(statusClone);
-			const resUpdate = await Http.post(`/api/status/${details.id}`, {
-				products:
-					statusClone[
-						status.findIndex((element) => element.affected_id == row.affected_id)
-					]
-			});
+			// if (status == 200) {
+			// 	handleEvent(plan.customer_code);
+			// }
 		}
-		const { data: newProducts, status: statusCode } = await Http.post(
-			`/api/status/${details.id}`,
+		// handleEvent(plan.customer_code);
+
+		// await consolidatedHenkouLogs(details);
+	};
+	const handleBorrow = async (record) => {
+		setState((prevState) => ({
+			...prevState,
+			fetchingProducts: true
+		}));
+		// const productIndex = productsByFirstIndex.findIndex((item) => item.id == record.id);
+		// if (record.finished_date) {
+		// 	productsByFirstIndex[productIndex] = record;
+		// 	// productsByFirstIndex[productIndex].updated_by = user.EmployeeCode;
+		// 	productsByFirstIndex[productIndex + 1]
+		// 		? (productsByFirstIndex[productIndex + 1].received_date = record.finished_date)
+		// 		: null;
+		// 	const clonedProducts = [...productsByFirstIndex];
+		// 	setState((prevState) => ({ ...prevState, productsByFirstIndex: clonedProducts }));
+		// 	if ([5, 25, 36, 58].indexOf(record.affected_id) == -1) {
+		// 		// const resUpdate = await Http.post(`/api/status/${record.plan_id}`, [
+		// 		// 	clonedProducts[productIndex],
+		// 		// 	clonedProducts[productIndex + 1]
+		// 		// ]);
+		// 		const {
+		// 			data
+		// 		} = await Http.patch(`api/henkou/plan/${record.plan_id}/product/${record.id}`, [
+		// 			clonedProducts[productIndex],
+		// 			clonedProducts[productIndex + 1]
+		// 		]);
+		// 		setState((prevState) => ({
+		// 			...prevState,
+		// 			productsByFirstIndex: data,
+		// 			fetchingProducts: false
+		// 		}));
+		// 	} else {
+		// 		const {
+		// 			data
+		// 		} = await Http.patch(`api/henkou/plan/${record.plan_id}/product/${record.id}`, [
+		// 			productsByFirstIndex[productIndex]
+		// 		]);
+		// 		setState((prevState) => ({
+		// 			...prevState,
+		// 			productsByFirstIndex: data,
+		// 			fetchingProducts: false
+		// 		}));
+
+		// 		// const resUpdate = await Http.post(`/api/status/${record.plan_id}`, [
+		// 		// 	clonedProducts[productIndex]
+		// 		// ]);
+		// 	}
+		// } else {
+		// 	productsByFirstIndex[productIndex] = record;
+		// 	productsByFirstIndex[productIndex].updated_by = user.EmployeeCode;
+		// 	setState((prevState) => ({ ...prevState, productsByFirstIndex }));
+		// 	// const resUpdate = await Http.post(`/api/status/${record.plan_id}`, [
+		// 	// 	products[productIndex]
+		// 	// ]);
+		// 	const {
+		// 		data
+		// 	} = await Http.patch(`api/henkou/plan/${record.plan_id}/product/${record.id}`, [
+		// 		productsByFirstIndex[productIndex]
+		// 	]);
+		// 	setState((prevState) => ({
+		// 		...prevState,
+		// 		productsByFirstIndex: data,
+		// 		fetchingProducts: false
+		// 	}));
+		// }
+		const { data: updatedHenkou, status: statusCode } = await Http.post(
+			`/api/status/${record.plan_id}`,
 			{
-				status,
+				products: productsByFirstIndex.filter((item) => item.rev_no == record.rev_no),
 				updated_by: user.EmployeeCode,
 				sectionCode: user.SectionCode,
-				details,
-				row
+				details: plan,
+				row: record
 			}
 		);
 		// console.log(newProducts, 'newwwwwwwwwwwwwwwwwwwwww');
 		if (statusCode == 200) {
-			handleEvent(details.customer_code);
-			setStatus(newProducts);
+			// handleEvent(record.customer_code);
+			setState((prevState) => ({
+				...prevState,
+				productsByFirstIndex: updatedHenkou.products,
+				fetchingProducts: false,
+				logs: consolidatedHenkouLogs(updatedHenkou.products),
+				plan: {
+					...prevState.plan,
+					...updatedHenkou.details
+				}
+			}));
 		}
 	};
-	const handleUpdate = async (details, row, key) => {
-		status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
-		status[status.findIndex((element) => element.affected_id == row.affected_id)].updated_by =
-			user.EmployeeCode;
-		const statusClone = [...status];
-		setStatus(statusClone);
-		if (key == 'finished_date') {
-			status[status.findIndex((element) => element.affected_id == row.affected_id) + 1]
-				? status[status.findIndex((element) => element.affected_id == row.affected_id) + 1]
-						.received_date
-					? null
-					: (status[
-							status.findIndex((element) => element.affected_id == row.affected_id) +
-								1
-					  ].received_date = row.finished_date)
-				: null;
-			const statusClone = [...status];
-			setStatus(statusClone);
-			// if (row.log) {
-			// 	setLogs((prevState) => {
-			// 		return [
-			// 			...prevState,
-			// 			prevState.find((el) => el.id == row.id)
-			// 				? prevState.find((el) => el.id == row.id).log
-			// 					? false
-			// 					: {
-			// 							id: row.id,
-			// 							log: row.log,
-			// 							created_at: row.created_at
-			// 					  }
-			// 				: {
-			// 						id: row.id,
-			// 						log: row.log,
-			// 						created_at: row.created_at
-			// 				  }
-			// 		];
-			// 	});
-			// }
-			if ([5, 25, 36, 58].indexOf(row.affected_id) == -1) {
-				const resUpdate = await Http.post(`/api/status/${details.id}`, [
-					status[status.findIndex((element) => element.affected_id == row.affected_id)],
-					status[
-						status.findIndex((element) => element.affected_id == row.affected_id) + 1
-					]
-				]);
-			} else {
-				const resUpdate = await Http.post(`/api/status/${details.id}`, {
-					products:
-						status[
-							status.findIndex((element) => element.affected_id == row.affected_id)
-						]
-				});
-			}
-		} else if (key !== 'log') {
-			status[status.findIndex((element) => element.affected_id == row.affected_id)] = row;
-			status[
-				status.findIndex((element) => element.affected_id == row.affected_id)
-			].updated_by = user.EmployeeCode;
-
-			if (
-				status[status.findIndex((element) => element.affected_id == row.affected_id)]
-					.assessment_id !== 1
-			) {
-				status[
-					status.findIndex((element) => element.affected_id == row.affected_id) + 1
-				].received_date = moment()
-					.utc()
-					.local()
-					.format('YYYY-MM-DD HH:mm:ss');
-
-				const products = [...status];
-				setStatus(products);
-				const resUpdate = await Http.post(`/api/status/${details.id}`, [
-					products[status.findIndex((element) => element.affected_id == row.affected_id)],
-					products[
-						status.findIndex((element) => element.affected_id == row.affected_id) + 1
-					]
-				]);
-			} else {
-				const products = [...status];
-				setStatus(products);
-				const resUpdate = await Http.post(`/api/status/${details.id}`, {
-					products:
-						products[
-							status.findIndex((element) => element.affected_id == row.affected_id)
-						]
-				});
-			}
-		}
-		setDetail(details);
-		// handleEvent(details.customer_code);
-	};
-	const consolidatedHenkouLogs = async (details) => {
-		const [firstDigit, secondDigit] = details?.rev_no.split('-');
-		const { data: productsLogs, status: statusCode } = await Http.get(
-			`api/henkou/plans/${details.customer_code}/revision/${firstDigit}`
+	const handleUpdateAssessment = async (record) => {
+		setState((prevState) => ({ ...prevState, fetchingProducts: true }));
+		const productIndex = productsByFirstIndex.findIndex((item) => item.id == record.id);
+		// console.log(record, 'recorddddddddddddddddddd');
+		// console.log(productsByFirstIndex[productIndex], 'wopppppppppppp');
+		productsByFirstIndex[productIndex] = record;
+		productsByFirstIndex[productIndex].updated_by = user.EmployeeCode;
+		// setState((prevState) => ({ ...prevState, productsByFirstIndex }));
+		const { data } = await Http.patch(
+			`api/henkou/plan/${record.plan_id}/product/${record.id}`,
+			[productsByFirstIndex[productIndex]]
 		);
-		if (statusCode == 200) {
-			const productLogs = productsLogs.map((item) => {
+		setState((prevState) => ({
+			...prevState,
+			productsByFirstIndex: data,
+			fetchingProducts: false
+		}));
+		// setState((prevState) => ({
+		// 	...prevState,
+		// 	productsByFirstIndex: data,
+		// }));
+		// handleEvent(plan.customer_code);
+	};
+	const consolidatedHenkouLogs = (products) => {
+		const THreleasing = [1, 6, 26, 37];
+		const productLogs = products
+			.map(({ pendings, ...rest }) => ({ ...rest }))
+			.filter(({ affected_id }) => THreleasing.indexOf(affected_id) == -1);
+		const detailsLogs = products
+			.filter(
+				(val, id, arr) =>
+					arr.findIndex(
+						(item) =>
+							item.plan.logs === val.plan.logs && item.plan.rev_no === val.plan.rev_no
+					) === id
+			)
+			.map((val) => val.plan);
+		const pendingLogs = products
+			.map((item) => {
+				return item.pendings.map((obj) => ({
+					...obj,
+					product_category: item.affected_product.product_category
+				}));
+			})
+			.flat(1);
+		const henkouLogs = [...detailsLogs, ...productLogs];
+		const mergeLogs = [...henkouLogs, ...pendingLogs];
+		return mergeLogs
+			.map((item) => {
 				return {
 					...item,
-					logs: item.log,
-					rev_no: item?.details?.rev_no
+					id: item.id,
+					borrow_details: item.borrow_details,
+					rev_no: item.rev_no,
+					product_name:
+						item?.affected_product?.product_category.product_name ||
+						item?.product_category?.product_name,
+					updated_by: item.updated_by,
+					log: item.logs || item.log,
+					created_at: item.created_at
 				};
-			});
-			const detailsLogs = productLogs
-				.filter(
-					(val, id, arr) =>
-						arr.findIndex(
-							(item) =>
-								item.plan.logs === val.plan.logs &&
-								item.plan.rev_no === val.plan.rev_no
-						) === id
-				)
-				.map((val) => val.plan);
-
-			const pendingLogs = productLogs
-				.map((item) => {
-					return item?.pendings;
-				})
-				.flat(1);
-			const henkouLogs = [...detailsLogs, ...productLogs];
-			const mergeLogs = [...henkouLogs, ...pendingLogs];
-			setLogs(
-				mergeLogs
-					.map((item) => {
-						return {
-							...item,
-							id: item.id,
-							borrow_details: item.borrow_details,
-							rev_no: item?.rev_no ? item.rev_no : item?.details?.rev_no,
-							product_name: item?.affected_product?.product?.product_name,
-							updated_by: item.updated_by,
-							log: item.logs,
-							created_at: item.created_at
-						};
-					})
-					.sort((a, b) => moment(a.created_at).diff(b.created_at))
-			);
-		}
+			})
+			.sort((a, b) => moment(a.created_at).diff(b.created_at));
 	};
 	return (
 		<HenkouContainer
-			// handleEvent={handleEvent}
-			// handleUpdate={handleUpdate}
 			events={{
 				handleEvent,
-				handleUpdate,
+				handleUpdateAssessment,
 				handleBorrow,
 				consolidatedHenkouLogs,
-				handleUpdateWithDetails
+				handleUpdateProduct
 			}}
 			props={state}
-			// product={master.products}
+			// product={master.products}x
 		></HenkouContainer>
 	);
 };

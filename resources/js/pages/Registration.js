@@ -27,7 +27,6 @@ const Registration = ({ props, ...rest }) => {
 	useEffect(() => {
 		document.title = title || '';
 	}, [title]);
-
 	const [state, setState] = useRegistrationState(user);
 	const {
 		plans,
@@ -38,27 +37,6 @@ const Registration = ({ props, ...rest }) => {
 		planDetails,
 		products
 	} = state;
-	// useEffect(() => {
-	// 	// if(){
-	// 	const details = { ...state.planDetails };
-	// 	// console.log(details);
-	// 	// console.log(state);
-	// 	// console.log(state);
-	// 	setState((prevState) => {
-	// 		// console.log(JSON.stringify(state.planDetails));
-	// 		// console.log(JSON.stringify(details));
-	// 		// if (JSON.stringify(prevState.planDetails) !== JSON.stringify(details)) {
-	// 		// 	// return {
-	// 		// 	// 	...prevState,
-	// 		// 	// 	planDetails: details
-	// 		// 	// };
-	// 		// } else {
-	// 		return {
-	// 			...prevState
-	// 		};
-	// 		// }
-	// 	});
-	// }, [state.planDetails]);
 	/* PENDING */
 	const [pendingState, setPendingState] = useState({
 		items: [],
@@ -67,7 +45,6 @@ const Registration = ({ props, ...rest }) => {
 	});
 	const [options, setOptions] = useState([]);
 	/* PENDING */
-
 	const [henkouStatus, setStatus] = useState([]);
 	const [logs, setLogs] = useState([]);
 	const [isModalVisible, setIsModalVisible] = useState({
@@ -180,12 +157,6 @@ const Registration = ({ props, ...rest }) => {
 		}));
 	};
 	const handleOnChange = async (value, keys = null) => {
-		// if (!keys) {
-		// 	const e = value;
-		// 	await handleSpecs(e.target.value);
-		// 	setExpand(true);
-		// } else {
-		console.log(value, keys);
 		if (isObject(value)) {
 			const e = value;
 			setState((prevState) => ({
@@ -203,7 +174,6 @@ const Registration = ({ props, ...rest }) => {
 					[keys]: value
 				}
 			}));
-			// }
 		}
 	};
 	const openNotificationWithIcon = (type) => {
@@ -218,16 +188,13 @@ const Registration = ({ props, ...rest }) => {
 	};
 	const handleRegister = async (row = null) => {
 		if (row) {
-			// const details = { ...state.planDetails };
 			const { status } = await Http.post('api/henkou/register/th', {
 				details: planDetails,
 				row
 			});
-
 			if (status == 200) {
 				openNotificationWithIcon('success');
 			}
-			// }
 		} else {
 			const { status } = await Http.post('api/henkou/register/kouzou', {
 				details: planDetails
@@ -259,10 +226,6 @@ const Registration = ({ props, ...rest }) => {
 				total: toUpdatePlans.length
 			}
 		}));
-		// if (key == 'finished_date') {
-		// 	// row.daysinprocess = moment(row.start_date).diff(row.finished_date, 'days');
-		// }
-		// const response = await Http.post('/api/th/plan', row);
 	};
 	const handleInputText = (event, key, row) => {
 		row[key] = event.target.value;
@@ -304,11 +267,8 @@ const Registration = ({ props, ...rest }) => {
 				[key]: row[key]
 			}
 		}));
-		// await handlePlanDetails(row.ConstructionCode, row.RequestNo);
-		// const response = await Http.post('/api/th/plan', row);
 	};
 	/* TH Actions */
-	console.info(state);
 	const handlePlanDetails = async (customerCode, th_no = null) => {
 		try {
 			const instance = Http.create({
@@ -324,17 +284,7 @@ const Registration = ({ props, ...rest }) => {
 				const { data: plan_status } = await instance.get(
 					`pcms/planstatus/${customerCode}/${plan.details.method}`
 				);
-
-				// const { data: henkou } = await Http.get(`/api/details/${constructionCode}`);
-				// let splitRevision = henkou ? henkou.rev_no.split('-') : '';
-				// let secondaryRevision = toInteger(splitRevision[1]);
-				// setState(prevState=> {
-				//     return {
-				//         ...prevState,
-				//         planDetails['id']: plan?.latest?.id,
-
-				//     }
-				// })
+				console.log(plan);
 				setState((prevState) => ({
 					...prevState,
 					products: plan?.products,
@@ -391,15 +341,8 @@ const Registration = ({ props, ...rest }) => {
 			console.error(err);
 		}
 	};
+
 	const consolidatedHenkouLogs = async (products) => {
-		// const [firstIndex] = details.rev_no.split('-');
-		// const [firstDigit, secondDigit] = planDetails?.rev_no.split('-');
-		// const fetchConsolidatedLogs = await Http.get(
-		// 	`api/henkou/plans/${planDetails.customer_code}/revision/${firstDigit}`
-		// );
-		// const fetchConsolidatedPendingDetails = await Http.get(
-		// 	`/api/henkou/plans/pending/${details.customer_code}`
-		// );
 		const THreleasing = [1, 6, 26, 37];
 		const productLogs = products
 			.map(({ pendings, ...rest }) => ({ ...rest }))
@@ -416,44 +359,14 @@ const Registration = ({ props, ...rest }) => {
 
 		const pendingLogs = products
 			.map((item) => {
-				return item.pendings;
+				return item.pendings.map((obj) => ({
+					...obj,
+					product_category: item.affected_product.product_category
+				}));
 			})
 			.flat(1);
-
-		// console.log(pendingLogs);
-		// const productPendingLogs = fetchConsolidatedPendingDetails.data.map((item) => {
-		// 	return {
-		// 		...item,
-		// 		product_name:
-		// 			master.products.length > 0
-		// 				? master.products.find((el) => {
-		// 						const affectedProds = master.affectedProducts.find(
-		// 							(el) => el.id == item.affected_id
-		// 						)
-		// 							? master.affectedProducts.find(
-		// 									(el) => el.id == item.affected_id
-		// 							  ).product_category_id
-		// 							: null;
-		// 						return affectedProds ? el.id == affectedProds : null;
-		// 				  })
-		// 					? master.products.find((el) => {
-		// 							const affectedProds = master.affectedProducts.find(
-		// 								(el) => el.id == item.affected_id
-		// 							)
-		// 								? master.affectedProducts.find(
-		// 										(el) => el.id == item.affected_id
-		// 								  ).product_category_id
-		// 								: null;
-		// 							return affectedProds ? el.id == affectedProds : null;
-		// 					  }).product_name
-		// 					: null
-		// 				: null
-		// 	};
-		// });
 		const henkouLogs = [...detailsLogs, ...productLogs];
-		// console.log(henkouLogs);
 		const mergeLogs = [...henkouLogs, ...pendingLogs];
-		console.log(mergeLogs);
 		setLogs(
 			mergeLogs
 				.map((item) => {
@@ -462,9 +375,11 @@ const Registration = ({ props, ...rest }) => {
 						id: item.id,
 						borrow_details: item.borrow_details,
 						rev_no: item.rev_no,
-						product_name: item.product_name,
+						product_name:
+							item?.affected_product?.product_category.product_name ||
+							item?.product_category?.product_name,
 						updated_by: item.updated_by,
-						log: item.logs,
+						log: item.logs || item.log,
 						created_at: item.created_at
 					};
 				})
@@ -479,9 +394,7 @@ const Registration = ({ props, ...rest }) => {
 				return { status: 'notvalid', msg: 'Enter valid customer code!' };
 			} else if (plan?.latest) {
 				const { productslogs, latest, products } = plan;
-				// const fetchStatus = await Http.get(
-				// 	`/api/henkou/plans/${plan.latest.customer_code}/products/${plan.latest.id}`
-				// );
+				console.log(productslogs);
 				await consolidatedHenkouLogs(productslogs);
 				const ongoingProduct = products.find(
 					(item) =>
@@ -536,31 +449,38 @@ const Registration = ({ props, ...rest }) => {
 							).values()
 						]
 							.map((department) => department.name)
-							.toString()
+							.join(', '),
+						sect: [
+							...new Map(
+								notyetStartedProduct.affected_product.product_category.designations
+									.map(({ section }) => ({
+										id: section.DepartmentCode,
+										name: section.DepartmentName
+									}))
+									.map((item) => [item['id'], item])
+							).values()
+						]
+							.map((section) => section.name)
+							.join(', ')
 					};
 				} else if (ongoingProduct) {
-					// const pendingResource = await Http.get(
-					// 	`api/henkou/plans/pending/${plan.latest.customer_code}/${findOngoingProduct.affected_id}`
-					// );
 					if (ongoingProduct.pendings.length == 0) {
 						if (pendingState.items.length == 0) {
-							let pending = [];
-							for (let i = 0; i < 1; i++) {
-								pending.push({
-									pending_id: null,
-									pending_index: i + 1,
-									rev_no: plan.latest.rev_no,
-									start: '',
-									reason: '',
-									resume: '',
-									duration: '',
-									remarks: '',
-									updated_by: user.EmployeeCode
-								});
-							}
 							setPendingState({
 								...pendingState,
-								items: pending,
+								items: [
+									{
+										pending_id: null,
+										pending_index: i + 1,
+										rev_no: plan.latest.rev_no,
+										start: '',
+										reason: '',
+										resume: '',
+										duration: '',
+										remarks: '',
+										updated_by: user.EmployeeCode
+									}
+								],
 								row: { ...ongoingProduct, affected_id: ongoingProduct.affected_id }
 							});
 						}
@@ -583,8 +503,9 @@ const Registration = ({ props, ...rest }) => {
 
 					return {
 						status: 'ongoing',
-						msg: ongoingProduct.product_name,
-						dept: ongoingProduct.employee.department.DepartmentName
+						msg: ongoingProduct.affected_product.product_category.product_name,
+						dept: ongoingProduct.employee.department.DepartmentName,
+						sect: ongoingProduct.employee.section.SectionName
 					};
 				}
 			} else {

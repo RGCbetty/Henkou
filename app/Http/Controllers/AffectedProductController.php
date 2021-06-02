@@ -17,13 +17,13 @@ class AffectedProductController extends Controller
             return response()->json(['message' => $error->getMessage()], 401);
         }
     }
-    public function byPlanStatus($id)
+    public function ByPlanStatus($planstatus_id)
     {
         try {
             $affectedProducts = AffectedProduct::with(['productCategory' => function ($query) {
                 $query->whereNull('deleted_at');
-            }, 'productCategory.designations'])->select()->where('plan_status_id', $id)->get();
-            info($affectedProducts);
+            }, 'productCategory.designations'])->select()->where('plan_status_id', $planstatus_id)->get();
+            // info($affectedProducts);
             return response()->json($affectedProducts);
         } catch (Exception $error) {
             return response()->json(['message' => $error->getMessage()], 401);

@@ -11,7 +11,7 @@ class PendingController extends Controller
     public function store(Request $request)
     {
         date_default_timezone_set('Asia/Manila');
-        info($request);
+        // info($request);
         // function pending($item)
         // {
         //     return array(
@@ -41,7 +41,7 @@ class PendingController extends Controller
                     'customer_code' => $request[$i]['customer_code'],
                     'affected_id' =>  $request[$i]['affected_id'],
                     'updated_by' =>  $request[$i]['updated_by'],
-                    'status_id' => $request[$i]['id'],
+                    'product_id' => $request[$i]['id'],
                     'rev_no' =>  $request[$i]['rev_no'],
                     'start_date' =>  $request[$i]['start'],
                     'reason' => $request[$i]['reason'],
@@ -55,7 +55,7 @@ class PendingController extends Controller
                     'customer_code' => $request[$i]['customer_code'],
                     'affected_id' =>  $request[$i]['affected_id'],
                     'updated_by' =>  $request[$i]['updated_by'],
-                    'status_id' => $request[$i]['id'],
+                    'product_id' => $request[$i]['id'],
                     'rev_no' =>  $request[$i]['rev_no'],
                     'start_date' =>  $request[$i]['start'],
                     'reason' => $request[$i]['reason'],
@@ -69,7 +69,7 @@ class PendingController extends Controller
         if (count($existingPendings) > 0) {
             PendingProduct::upsert(
                 $existingPendings,
-                ['id', 'status_id'],
+                ['id', 'product_id'],
                 [
                     'resume_date', 'duration', 'reason', 'borrow_details', 'remarks', 'updated_by'
                 ]
@@ -78,20 +78,11 @@ class PendingController extends Controller
         if (count($newPendings) > 0) {
             PendingProduct::upsert(
                 $newPendings,
-                ['id', 'status_id'],
+                ['id', 'product_id'],
                 [
                     'resume_date', 'duration', 'reason', 'borrow_details', 'remarks', 'updated_by'
                 ]
             );
         }
-    }
-    public function showByCustomerCodeAffectedID($customer_code, $affected_id)
-    {
-        return PendingProduct::with('employee')->where(['customer_code' => $customer_code, 'affected_id' => $affected_id])->get();
-    }
-
-    public function showByCustomerCode($customer_code)
-    {
-        return PendingProduct::select()->where('customer_code', $customer_code)->get();
     }
 }

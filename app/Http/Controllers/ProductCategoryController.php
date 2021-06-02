@@ -17,10 +17,6 @@ class ProductCategoryController extends Controller
     {
         return ProductCategory::with(['designations'])->get();
     }
-    public function index(Request $request)
-    {
-        return PlanStatus::all()->with('products')->orderBy('id')->get();
-    }
     public function create()
     {
         $product_category = DB::connection('sqlsrv')->select(DB::raw('SELECT * FROM M_ProductCategories'));
@@ -42,10 +38,5 @@ class ProductCategoryController extends Controller
         } catch (Exception $e) {
             error_log($e);
         }
-    }
-    public function show($planstatus_id)
-    {
-        //
-        $planStat = PlanStatus::all()->find(1);
     }
 }

@@ -69,6 +69,7 @@ const DragSortingTable = ({ loading, props }) => {
 		},
 		[affectedProducts]
 	);
+	console.log(affectedProducts);
 	return (
 		<>
 			<DndProvider backend={HTML5Backend}>

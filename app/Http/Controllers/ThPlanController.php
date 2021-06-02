@@ -8,10 +8,7 @@ use Illuminate\Http\Request;
 
 class ThPlanController extends Controller
 {
-    public function index()
-    {
-        return ThPlanTemporary::select()->whereDate('received_date', '=', Carbon::today()->subDay())->orWhere('received_date', '=', Carbon::today())->get();
-    }
+
     public function upsert(Request $request)
     {
         $thplan = array();

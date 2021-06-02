@@ -42,6 +42,9 @@ Route::prefix('master')->group(function () {
 
 
 Route::middleware('auth:sanctum')->group(function () {
+    /* User */
+    Route::get('/henkou/users', 'UserController@index');
+    /* User */
     Route::post('user/role', 'AuthController@role');
     Route::post('user/verify', 'AuthController@verify');
     Route::get('/users/{id}', 'AuthController@users');
@@ -51,33 +54,29 @@ Route::middleware('auth:sanctum')->group(function () {
     /* REGISTRATION */
     Route::get('/henkou/registration', 'InformationServiceController@table');
     Route::get('/plan/details/{customer_code}', 'InformationServiceController@specs');
-    Route::post('/details', 'HenkouController@store');
-    Route::post('/henkou/register/kouzou', 'HenkouController@registerKouzou');
-    Route::post('/henkou/register/th', 'HenkouController@registerTh');
 
+    // Route::post('/details', 'HenkouController@store');
+    Route::post('/henkou/register/kouzou', 'HenkouController@RegisterKouzou');
+    Route::post('/henkou/register/th', 'HenkouController@RegisterTH');
 
-
-
-    // Route::get('/th/plans', 'ThPlanController@index');
     /* TH Plans */
     Route::post('/th/plan', 'ThPlanController@upsert');
     /* Th Plans */
     /* REGISTRATION */
     /* HENKOU PAGE AND REGISTRATION PAGE */
     Route::get('/henkou/plan/details/{customer_code}', 'DetailController@latest');
-    Route::get('/henkou/plans/{customer_code}/products/{detail_id}', 'HenkouController@showStatusByDetailID');
-    Route::get('/henkou/plans/{customer_code}/revision/{revision_index}', 'HenkouController@henkouLogs');
+
+
 
     /* HENKOU PAGE AND REGISTRATION PAGE */
 
-    /* User */
-    Route::get('/henkou/users', 'UserController@index');
-    /* User */
-    // Route::get('/masterlist/{id}', 'AuthController@userinfo');
+
+
     /* Company Information */
 
-    Route::get('/department/{dep_id}/sections', 'CompanyInformationController@sectionsByDepartment');
-    Route::get('/department/{dep_id}/section/{sec_id}/teams', 'CompanyInformationController@teamsByDepartmentAndSections');
+    Route::get('/department/{dep_id}/sections', 'CompanyInformationController@SectionByDepartment');
+    Route::get('/department/{dep_id}/section/{sec_id}/teams', 'CompanyInformationController@TeamByDepartmentAndSection');
+    Route::get('/department/{dep_id}/sections/teams', 'CompanyInformationController@TeamByDepartmentAndSections');
     /* Company Information */
     /* HRD Information Service */
     Route::get('/plan', 'InformationServiceController@filteredplans');
@@ -85,31 +84,22 @@ Route::middleware('auth:sanctum')->group(function () {
     /* Specifications */
     /* Master */
     /* Master */
-    /* Henkou Details Record */
-    Route::get('/henkou/plans/{customer_code}/products/{affected_id}/logs', 'HenkouController@showProductLogsByAffectedID');
-    Route::get('/henkou/plans/{customer_code}/product/id/{affected_id}', 'HenkouController@showStatusByAffectedID');
 
 
-    // Route::get('/product', 'ProductCategoryController@index');
-    Route::post('/productcategories', 'ProductCategoryController@update');
 
-    // Route::get('/products/planstatus/{planstatus_id}', 'ProductCategoryController@show');
-    /* HENKOU PRODUCTS IN HENKOU PAGE */
 
-    // 05-12-2021
-    // Route::get('/henkou/plans/{customer_code}/logs', 'HenkouController@showByCustomerCode');
 
-    Route::get('/henkou/plans/{customer_code}/revision/{revision_index}/product/{affected_id}', 'HenkouController@products');
+
 
 
     /* ALL LOGS WITH SAME CUSTOMER CODE */
     /*  */
     Route::post('/status/{id}', 'HenkouController@update');
+    Route::patch('/henkou/plan/{plan_id}/product/{product_id}', 'ProductController@update');
 
     /* Kouzou Pending */
     Route::post('/henkou/plans/pending', 'PendingController@store');
-    // Route::get('/henkou/plans/pending/{customer_code}', 'PendingController@showByCustomerCode');
-    Route::get('/henkou/plans/pending/{customer_code}/{affected_id}', 'PendingController@showByCustomerCodeAffectedID');
+
 
     /* Kouzou Pending */
 
@@ -118,19 +108,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/henkou/attachments/{id}', 'AttachmentController@show');
     /* Henkou Attachments */
     Route::get('/henkou/form', 'ExcelController@readxls');
-    /* CUSTOMER & SUPPLIER */
-    // Route::get('/suppliers', 'SupplierController@index');
-    // Route::get('/supplier', 'SupplierController@show');
-    // Route::get('/customers', 'CustomerController@index');
-    // Route::get('/customer', 'CustomerController@show');
-    /* CUSTOMER & SUPPLIER */
+
 
     /* Affected Product  */
-    Route::get('/products/planstatus/{id}', 'AffectedProductController@byPlanStatus');
-    Route::post('/henkou/plans/recheck', 'ProductController@recheck');
+    Route::get('/products/planstatus/{planstatus_id}', 'AffectedProductController@ByPlanStatus');
+    Route::post('/henkou/plans/recheck', 'HenkouController@recheck');
     /* Affected Product */
     /* MASTER */
-    Route::get('/henkou/products/planstatus/{id}', 'AffectedProductController@byPlanStatus');
+    // Route::get('/henkou/products/planstatus/{id}', 'AffectedProductController@byPlanStatus');
     Route::get('/henkou/master/products', 'MasterController@ProductCategories');
+    Route::post('/henkou/master/product', 'MasterController@ProductCategoryUpsert');
+    Route::put('/henkou/master/product/{product_key}', 'MasterController@ProductCategorySoftDelete');
+    Route::post('/henkou/master/process/{plan_status_id}', 'MasterController@AffectedProductUpsert');
+    Route::post('/henkou/master/process/product/softdelete', 'MasterController@AffectedProductSoftDelete');
+
+
     /* MASTER */
 });

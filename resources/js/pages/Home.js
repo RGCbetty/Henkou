@@ -7,7 +7,7 @@ import FilterContainer from '../components/HomeComponents/FilterContainer';
 import Http from '../Http';
 import moment from 'moment';
 import { Plans } from '../utils/HenkouPlans';
-import { Table, Spin, Typography } from 'antd';
+import { Table, Spin, Modal, Transfer } from 'antd';
 
 const dateFormat = 'YYYY/MM/DD';
 const Home = ({ title, user }) => {
@@ -18,7 +18,8 @@ const Home = ({ title, user }) => {
 		teams: [],
 		planType: [],
 		planStatus: [],
-		loading: false
+		loading: false,
+		reportModalVisibility: false
 	});
 
 	// useEffect(() => {
@@ -178,6 +179,8 @@ const Home = ({ title, user }) => {
 				form.setFieldsValue({
 					TeamName: null
 				});
+				console.log(form.getFieldValue('DepartmentName'));
+
 				const { data: teams } = await Http.get(
 					'api/department/{dep_id}/section/{sec_id}/teams',
 					{
@@ -246,7 +249,74 @@ const Home = ({ title, user }) => {
 	useEffect(() => {
 		document.title = title || null;
 	}, [title]);
-	console.log(process.env.MIX_ASSET_URL);
+	const handleOnClickReports = () => {
+		setState((prevState) => ({
+			...prevState,
+			reportModalVisibility: true
+		}));
+	};
+	const handleOnCancelReports = () => {
+		setState((prevState) => ({
+			...prevState,
+			reportModalVisibility: false
+		}));
+	};
+	const handleOnOkReports = () => {
+		console.log(plans);
+		setState((prevState) => ({
+			...prevState,
+			reportModalVisibility: false
+		}));
+	};
+	const TableTransfer = ({ leftColumns, rightColumns, ...restProps }) => (
+		<Transfer {...restProps} showSelectAll={false}>
+			{({
+				direction,
+				filteredItems,
+				onItemSelectAll,
+				onItemSelect,
+				selectedKeys: listSelectedKeys,
+				disabled: listDisabled
+			}) => {
+				const columns = direction === 'left' ? leftColumns : rightColumns;
+				const rowSelection = {
+					getCheckboxProps: (item) => ({ disabled: listDisabled || item.disabled }),
+					onSelectAll(selected, selectedRows) {
+						const treeSelectedKeys = selectedRows
+							.filter((item) => !item.disabled)
+							.map(({ key }) => key);
+						const diffKeys = selected
+							? difference(treeSelectedKeys, listSelectedKeys)
+							: difference(listSelectedKeys, treeSelectedKeys);
+						onItemSelectAll(diffKeys, selected);
+					},
+					onSelect({ key }, selected) {
+						onItemSelect(key, selected);
+					},
+					selectedRowKeys: listSelectedKeys
+				};
+
+				return (
+					<Table
+						rowSelection={rowSelection}
+						columns={columns}
+						dataSource={filteredItems}
+						size="small"
+						className={'affected-products'}
+						// scroll={{ x: 'max-content', y: 'calc(100vh - 25em)' }}
+						// scroll={{ y: 'calc(100vh - 25em)' }}
+						style={{ pointerEvents: listDisabled ? 'none' : null }}
+						onRow={({ key, disabled: itemDisabled }) => ({
+							onClick: () => {
+								if (itemDisabled || listDisabled) return;
+								onItemSelect(key, !listSelectedKeys.includes(key));
+							}
+						})}
+					/>
+				);
+			}}
+		</Transfer>
+	);
 	return (
 		<>
 			<Spin tip="Loading..." wrapperClassName="ant-advanced-search-form" spinning={loading}>
@@ -256,7 +326,8 @@ const Home = ({ title, user }) => {
 						events={{
 							handleSelectOnChange,
 							handleOnEnterCustomerCode,
-							handleFetchPlans
+							handleFetchPlans,
+							handleOnClickReports
 						}}>
 						<div style={{ padding: 5 }}>
 							<div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -315,6 +386,54 @@ const Home = ({ title, user }) => {
 						</div>
 					</FilterContainer>
 				)}
+				<Modal
+					title={`Generate Report`}
+					onOk={handleOnOkReports}
+					okText="Register"
+					onCancel={handleOnCancelReports}
+					bodyStyle={{ padding: 10 }}
+					// okButtonProps={{
+					// 	disabled: state.thSelectedPlan.some((item) => !item.finished_date)
+					// }}
+					// confirmLoading={confirmLoading}
+					visible={state.reportModalVisibility}>
+					{/* <HenkouTable headers={PendingHeaders()} data={pendingItems} /> */}
+					{/* <Table
+						columns={modalHeader(getColumnSearchProps, state, {
+							handleClickPDF,
+							handleSelectOption,
+							handleOnClickEvent,
+							handleInputText,
+							handleRegistrationModal
+						})}
+						dataSource={thSelectedPlan}
+						pagination={false}
+						bordered
+					/> */}
+					<TableTransfer
+						rowKey={(record) => record.product_key}
+						titles={['Columns', 'Selected Columns']}
+						dataSource={products}
+						targetKeys={targetKeys}
+						disabled={disabled}
+						showSearch={showSearch}
+						onChange={handleTransferOnChange}
+						filterOption={(inputValue, item) => {
+							return (
+								// item.designations.findIndex(
+								// 	(item) =>
+								// 		item.department.DepartmentName.toLowerCase() ==
+								// 		inputValue.toLowerCase()
+								// ) !== -1 ||
+								item.product_name
+									.toLowerCase()
+									.indexOf(inputValue.toLowerCase()) !== -1
+							);
+						}}
+						leftColumns={leftTableColumns}
+						rightColumns={rightTableColumns}
+					/>
+				</Modal>
 			</Spin>
 		</>
 	);

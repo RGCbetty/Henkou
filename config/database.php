@@ -113,6 +113,7 @@ return [
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
+            'strict' => true,
         ],
         'HRDSQL2' => [
             'driver' => env('DB_SQLSRV_CONNECTION', 'sqlsrv'),

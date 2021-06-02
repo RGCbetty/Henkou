@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plan;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,7 +12,9 @@ class PlanController extends Controller
 {
     public function home(Request $request)
     {
-        info($request);
+        info(Schema::getColumnListing('products'));
+        info(Schema::getColumnListing('plans'));
+        info(Schema::getColumnListing('details'));
         $plan_status_id = $request->query('plan_status_id')  ? $request->query('plan_status_id') : false;
         $henkou_status_id = $request->status_type_id ?  $request->query('status_type_id') : false;
         $henkou_plans =  Plan::with([
